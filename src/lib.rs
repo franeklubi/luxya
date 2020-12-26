@@ -1,6 +1,9 @@
 use std::io::{self, Read, Write};
 use std::fs::File;
 
+mod scanner;
+
+
 pub fn run_file(path: &String) -> Result<(), io::Error> {
 	let mut f = File::open(path)?;
 
@@ -8,7 +11,7 @@ pub fn run_file(path: &String) -> Result<(), io::Error> {
 
 	f.read_to_string(&mut buffer)?;
 
-	run(&buffer);
+	run(buffer);
 
 	Ok(())
 }
@@ -27,12 +30,20 @@ pub fn run_prompt() -> Result<(), io::Error> {
 			break;
 		}
 
-		run(&buffer);
+		run(buffer);
 	}
 
 	Ok(())
 }
 
-fn run(source: &String) {
+fn run(source: String) {
 	print!("{}", source);
+
+	let scanner = scanner::Scanner::from(source);
+
+	let tokens = scanner.scan_tokens();
+
+	tokens.iter().enumerate().for_each(|(index, token)| {
+		println!("{}: {}", index, token)
+	});
 }
