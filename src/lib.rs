@@ -1,6 +1,7 @@
 use std::{io::{self, Read, Write}, fs, fmt, convert};
 
 mod scanner;
+mod token;
 
 
 pub enum RunError {
