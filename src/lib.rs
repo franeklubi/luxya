@@ -1,5 +1,4 @@
-use std::io::{self, Read, Write};
-use std::fs;
+use std::{io::{self, Read, Write}, fs, fmt};
 
 mod scanner;
 
@@ -43,4 +42,22 @@ fn run(source: String) {
 	tokens.iter().enumerate().for_each(|(index, token)| {
 		println!("{}: {}", index, token)
 	});
+}
+
+fn error<T: fmt::Display>(line: u32, message: T) {
+	report(line, None::<&str>, message);
+}
+
+fn report<T1, T2>(line: u32, location: Option<T1>, message: T2) where
+	T1: fmt::Display,
+	T2: fmt::Display,
+{
+	match location {
+		Some(l) => {
+			println!("[{}, {}] Error: {}", line, l, message)
+		},
+		None => {
+			println!("[{}] Error: {}", line, message)
+		},
+	}
 }
