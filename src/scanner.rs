@@ -1,5 +1,6 @@
 use std::{fmt, convert};
 
+
 pub struct Scanner {
 	source: String,
 }

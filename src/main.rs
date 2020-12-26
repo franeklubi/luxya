@@ -14,8 +14,16 @@ fn main() {
 	} else if args_len == 2 {
 		match jlox::run_file(&args[1]) {
 			Err(err) => {
-				println!("{}", err);
-				process::exit(exitcode::IOERR);
+				match err {
+					jlox::RunError::IO(err) => {
+						println!("{}", err);
+						process::exit(exitcode::IOERR);
+					},
+					jlox::RunError::EXEC => {
+						println!("Errors while executing the file");
+						process::exit(exitcode::DATAERR);
+					}
+				}
 			},
 			_ => (),
 		};
