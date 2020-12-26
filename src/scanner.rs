@@ -1,22 +1,24 @@
-use std::fmt;
+use std::{fmt, convert};
 
 pub struct Scanner {
 	source: String,
 }
 
-impl Scanner {
-	pub fn from(source: String) -> Scanner {
-		return Scanner {
-			source: source,
+impl convert::From<String> for Scanner {
+	fn from(source: String) -> Self {
+		Scanner {
+			source,
 		}
 	}
+}
 
+impl Scanner {
 	pub fn scan_tokens(&self) -> Vec<Token> {
-		return self.source.split(' ').map(|token| {
-			return Token {
+		self.source.split(' ').map(|token| {
+			Token {
 				token,
 			}
-		}).collect();
+		}).collect()
 	}
 }
 

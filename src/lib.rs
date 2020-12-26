@@ -1,14 +1,13 @@
 use std::io::{self, Read, Write};
-use std::fs::File;
+use std::fs;
 
 mod scanner;
 
 
 pub fn run_file(path: &String) -> Result<(), io::Error> {
-	let mut f = File::open(path)?;
+	let mut f = fs::File::open(path)?;
 
 	let mut buffer = String::new();
-
 	f.read_to_string(&mut buffer)?;
 
 	run(buffer);
@@ -17,8 +16,6 @@ pub fn run_file(path: &String) -> Result<(), io::Error> {
 }
 
 pub fn run_prompt() -> Result<(), io::Error> {
-	println!("========\nPROMPT:");
-
 	loop {
 		print!(">>> ");
 		io::stdout().flush()?;
