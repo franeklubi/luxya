@@ -29,19 +29,19 @@ impl fmt::Display for TokenType<'_> {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		match *self {
 			TokenType::Identifier(s) | TokenType::CharSlice(s) => {
-				write!(f, "{}", s)
+				write!(f, "{:?}", s)
 			},
 			TokenType::Number(n) => {
-				write!(f, "{}", n)
+				write!(f, "{:?}", n)
 			},
-			_ => write!(f, "token")
+			_ => write!(f, "TokenType")
 		}
 	}
 }
 
 pub struct Token<'a> {
-	pub offset: i32,
-	pub length: i32,
+	pub byte_offset: usize,
+	pub byte_length: usize,
 	pub token: TokenType<'a>,
 }
 
@@ -49,10 +49,10 @@ impl fmt::Display for Token<'_> {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		write!(
 			f,
-			"'{}';\n\tfrom: {};\tto: {};",
+			"{};\tfrom: {};\tto: {};",
 			self.token,
-			self.offset,
-			self.offset - self.length,
+			self.byte_offset,
+			self.byte_offset + self.byte_length,
 		)
 	}
 }
