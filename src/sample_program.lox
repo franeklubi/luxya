@@ -1,2 +1,3 @@
 const language = "lox";
+language == "lox";
 let 😍 = "🥰";
