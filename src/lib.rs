@@ -55,13 +55,18 @@ pub fn run_prompt() -> Result<(), io::Error> {
 // bool indicates if any error(s) occurred, but maybe it should return errors?
 // errors would have to be handled outside and not printed outright
 fn run(source: String) -> bool {
-	print!("{}", source);
+	println!("==== SOURCE ====");
+	println!("{}", source);
+	println!("==== END ====");
 
-	let tokens = scanner::scan_tokens(&source);
+	let (tokens, errors) = scanner::scan_tokens(&source);
 
+	println!("TOKENS:");
 	tokens.iter().enumerate().for_each(|(index, token)| {
-		println!("{}: {}", index, token)
+		println!("{}: {}", index, token);
 	});
+
+	println!("{} ERRORS", errors.len());
 
 	false
 }
