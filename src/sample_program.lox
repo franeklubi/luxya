@@ -1,3 +1,5 @@
+// comment
 const language = "lox";
 language == "lox";
 let 😍 = "🥰";
+// comment 2

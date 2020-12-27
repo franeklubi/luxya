@@ -1,12 +1,14 @@
 use crate::token::{self, TokenType};
 use std::{str, iter};
 
+
 pub struct ScanError {
 	pub offset: usize,
 	pub message: String,
 }
 
-//
+// match_to_next returns true (and consumes next char)
+// only if it maches the expected char
 fn match_to_next(
 	chars: &mut iter::Peekable<str::CharIndices>,
 	expected: char
@@ -17,13 +19,13 @@ fn match_to_next(
 	}
 }
 
+// consumes the next token's chars
 fn scan_token<'a>(
 	chars: &mut iter::Peekable<str::CharIndices>,
 	source: &'a String,
 ) -> Option<Result<token::Token<'a>, ScanError>> {
-	if let Some((i, c)) = chars.next() {
+	while let Some((i, c)) = chars.next() {
 		// We should be at the beginning of the next lexeme
-		// println!("{}: {:?} ", i, c);
 		let char_len = c.len_utf8();
 
 		let token_type = match c {
@@ -65,10 +67,22 @@ fn scan_token<'a>(
 					TokenType::Greater
 				}
 			},
+			'/' => {
+				if match_to_next(chars, '/') {
+					// comment goes until the end of the line
+					chars.take_while(|(_, c)| {
+						*c != '\n'
+					}).for_each(drop);
+
+					continue;
+				} else {
+					TokenType::Slash
+				}
+			}
 			_ => {
 				return Some(Err(ScanError {
 					offset: i,
-					message: String::from(format!("Unexpected token {}", c)),
+					message: String::from(format!("Unexpected token {:?}", c)),
 				}));
 			},
 		};
