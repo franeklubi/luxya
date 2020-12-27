@@ -79,6 +79,10 @@ fn scan_token<'a>(
 					TokenType::Slash
 				}
 			}
+			c if c.is_whitespace() => {
+				println!("whitespace");
+				continue;
+			}
 			_ => {
 				return Some(Err(ScanError {
 					offset: i,
