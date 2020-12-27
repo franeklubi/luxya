@@ -70,19 +70,38 @@ fn scan_token<'a>(
 			'/' => {
 				if match_to_next(chars, '/') {
 					// comment goes until the end of the line
-					chars.take_while(|(_, c)| {
-						*c != '\n'
-					}).for_each(drop);
+					chars.take_while(|(_, c)| *c != '\n').for_each(drop);
 
 					continue;
 				} else {
 					TokenType::Slash
 				}
-			}
+			},
+			'"' => {
+				loop {
+					break match chars.next() {
+						Some((curr_i, curr_c)) if curr_c == '"' => {
+							TokenType::CharSlice(
+								&source[i+1..curr_i+curr_c.len_utf8()-1]
+							)
+						},
+						Some(_) => {
+							continue;
+						},
+						None => {
+							return Some(Err(ScanError {
+								offset: 0,
+								message: String::from(
+									format!("Unterminated string literal")
+								),
+							}));
+						}
+					}
+				}
+			},
 			c if c.is_whitespace() => {
-				println!("whitespace");
 				continue;
-			}
+			},
 			_ => {
 				return Some(Err(ScanError {
 					offset: i,
@@ -94,6 +113,7 @@ fn scan_token<'a>(
 		return Some(Ok(token::Token {
 			token: token_type,
 			byte_offset: i,
+			// TODO: char_len does not work for longer lexemes
 			byte_length: char_len,
 		}));
 	}
