@@ -57,9 +57,7 @@ pub fn run_prompt() -> Result<(), io::Error> {
 fn run(source: String) -> bool {
 	print!("{}", source);
 
-	let scanner = scanner::Scanner::from(source);
-
-	let tokens = scanner.scan_tokens();
+	let tokens = scanner::scan_tokens(&source);
 
 	tokens.iter().enumerate().for_each(|(index, token)| {
 		println!("{}: {}", index, token)
