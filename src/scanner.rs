@@ -19,12 +19,17 @@ fn match_to_next(
 	}
 }
 
-fn consume_string(
-	chars: &mut iter::Peekable<str::CharIndices>
+// will consume chars until chars don't match the predicate,
+// consumes the first truthy char
+//
+// returns index (in bytes) of the next character or none if runs out of input
+fn consume_until(
+	chars: &mut iter::Peekable<str::CharIndices>,
+	predicate: impl Fn(char) -> bool,
 ) -> Option<usize> {
 	loop {
 		break match chars.next() {
-			Some((i, c)) if c == '"' => {
+			Some((i, c)) if predicate(c) => {
 				Some(i + c.len_utf8())
 			},
 			Some(_) => {
@@ -96,7 +101,7 @@ fn scan_token<'a>(
 				}
 			},
 			'"' => {
-				match consume_string(chars) {
+				match consume_until(chars, |c| {c == '"'}) {
 					Some(found_i) => {
 						TokenType::CharSlice(&source[i+1..found_i-1])
 					},
@@ -109,6 +114,10 @@ fn scan_token<'a>(
 						}));
 					}
 				}
+			},
+			c if c.is_ascii_digit() => {
+				println!("is ascii digit");
+				continue;
 			},
 			c if c.is_whitespace() => {
 				continue;
