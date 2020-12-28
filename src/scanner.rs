@@ -22,14 +22,18 @@ fn match_to_next(
 // will consume chars until chars don't match the predicate,
 // consumes the first truthy char
 //
-// returns index (in bytes) of the next character or none if runs out of input
+// returns index (in bytes) of where the next char would be
+// (regardless of it being there or the stream ending)
 fn consume_until(
 	chars: &mut iter::Peekable<str::CharIndices>,
-	predicate: impl Fn(char) -> bool,
+	predicate: impl Fn(char, Option<char>) -> bool,
 ) -> Option<usize> {
 	loop {
 		break match chars.next() {
-			Some((i, c)) if predicate(c) => {
+			Some((i, c)) if predicate(
+				c,
+				chars.peek().and_then(|ci| Some(ci.1)),
+			) => {
 				Some(i + c.len_utf8())
 			},
 			Some(_) => {
@@ -101,7 +105,7 @@ fn scan_token<'a>(
 				}
 			},
 			'"' => {
-				match consume_until(chars, |c| {c == '"'}) {
+				match consume_until(chars, |c, _| c == '"') {
 					Some(found_i) => {
 						TokenType::CharSlice(&source[i+1..found_i-1])
 					},
