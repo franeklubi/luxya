@@ -19,6 +19,24 @@ fn match_to_next(
 	}
 }
 
+fn consume_string(
+	chars: &mut iter::Peekable<str::CharIndices>
+) -> Option<usize> {
+	loop {
+		break match chars.next() {
+			Some((i, c)) if c == '"' => {
+				Some(i + c.len_utf8())
+			},
+			Some(_) => {
+				continue;
+			},
+			None => {
+				None
+			}
+		}
+	}
+}
+
 // consumes the next token's chars
 fn scan_token<'a>(
 	chars: &mut iter::Peekable<str::CharIndices>,
@@ -78,24 +96,17 @@ fn scan_token<'a>(
 				}
 			},
 			'"' => {
-				loop {
-					break match chars.next() {
-						Some((curr_i, curr_c)) if curr_c == '"' => {
-							TokenType::CharSlice(
-								&source[i+1..curr_i+curr_c.len_utf8()-1]
-							)
-						},
-						Some(_) => {
-							continue;
-						},
-						None => {
-							return Some(Err(ScanError {
-								offset: 0,
-								message: String::from(
-									format!("Unterminated string literal")
-								),
-							}));
-						}
+				match consume_string(chars) {
+					Some(found_i) => {
+						TokenType::CharSlice(&source[i+1..found_i-1])
+					},
+					None => {
+						return Some(Err(ScanError {
+							offset: 0,
+							message: String::from(
+								format!("Unterminated string literal")
+							),
+						}));
 					}
 				}
 			},

@@ -67,6 +67,10 @@ fn run(source: String) -> bool {
 	// });
 	println!("{} TOKENS", tokens.len());
 
+	// println!("ERRORS:");
+	// errors.iter().enumerate().for_each(|(index, error)| {
+	// 	println!("{}: {}", index, error.message);
+	// });
 	println!("{} ERRORS", errors.len());
 
 	false

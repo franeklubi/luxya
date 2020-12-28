@@ -1,6 +1,6 @@
 // comment
 const language = "lox";
-language == "lox";
+language == "loxie";
 let 😍 = "🥰";
 // comment 2
 let elo = "aaaa
