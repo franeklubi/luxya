@@ -1,5 +1,5 @@
 use crate::token::{self, TokenType};
-use std::{str, iter};
+use std::{iter, str};
 
 
 pub struct ScanError {
@@ -11,7 +11,7 @@ pub struct ScanError {
 // only if it maches the expected char
 fn match_to_next(
 	chars: &mut iter::Peekable<str::CharIndices>,
-	expected: char
+	expected: char,
 ) -> bool {
 	match chars.peek() {
 		Some((_, c)) => *c == expected,
@@ -30,19 +30,16 @@ fn consume_until(
 ) -> Option<usize> {
 	loop {
 		break match chars.next() {
-			Some((i, c)) if predicate(
-				c,
-				chars.peek().and_then(|ci| Some(ci.1)),
-			) => {
+			Some((i, c))
+				if predicate(c, chars.peek().and_then(|ci| Some(ci.1))) =>
+			{
 				Some(i + c.len_utf8())
-			},
+			}
 			Some(_) => {
 				continue;
-			},
-			None => {
-				None
 			}
-		}
+			None => None,
+		};
 	}
 }
 
@@ -72,28 +69,28 @@ fn scan_token<'a>(
 				} else {
 					TokenType::Bang
 				}
-			},
+			}
 			'=' => {
 				if match_to_next(chars, '=') {
 					TokenType::EqualEqual
 				} else {
 					TokenType::Equal
 				}
-			},
+			}
 			'<' => {
 				if match_to_next(chars, '=') {
 					TokenType::LessEqual
 				} else {
 					TokenType::Less
 				}
-			},
+			}
 			'>' => {
 				if match_to_next(chars, '=') {
 					TokenType::GreaterEqual
 				} else {
 					TokenType::Greater
 				}
-			},
+			}
 			'/' => {
 				if match_to_next(chars, '/') {
 					// comment goes until the end of the line
@@ -103,35 +100,33 @@ fn scan_token<'a>(
 				} else {
 					TokenType::Slash
 				}
-			},
-			'"' => {
-				match consume_until(chars, |c, _| c == '"') {
-					Some(found_i) => {
-						TokenType::CharSlice(&source[i+1..found_i-1])
-					},
-					None => {
-						return Some(Err(ScanError {
-							offset: 0,
-							message: String::from(
-								format!("Unterminated string literal")
-							),
-						}));
-					}
+			}
+			'"' => match consume_until(chars, |c, _| c == '"') {
+				Some(found_i) => {
+					TokenType::CharSlice(&source[i + 1..found_i - 1])
+				}
+				None => {
+					return Some(Err(ScanError {
+						offset: 0,
+						message: String::from(format!(
+							"Unterminated string literal"
+						)),
+					}));
 				}
 			},
 			c if c.is_ascii_digit() => {
 				println!("is ascii digit");
 				continue;
-			},
+			}
 			c if c.is_whitespace() => {
 				continue;
-			},
+			}
 			_ => {
 				return Some(Err(ScanError {
 					offset: i,
 					message: String::from(format!("Unexpected token {:?}", c)),
 				}));
-			},
+			}
 		};
 
 		return Some(Ok(token::Token {
@@ -170,13 +165,11 @@ pub fn scan_tokens(source: &String) -> (Vec<token::Token>, Vec<ScanError>) {
 		None => 0,
 	};
 
-	tokens.push(
-		token::Token {
-			token: token::TokenType::Eof,
-			byte_offset: last_offset,
-			byte_length: 1,
-		},
-	);
+	tokens.push(token::Token {
+		token: token::TokenType::Eof,
+		byte_offset: last_offset,
+		byte_length: 1,
+	});
 
 	(tokens, errors)
 }

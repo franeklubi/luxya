@@ -1,6 +1,7 @@
+use std::{env, process};
+
 use jlox;
 
-use std::{env, process};
 use exitcode;
 
 
@@ -19,7 +20,7 @@ fn main() {
 				jlox::RunError::IO(err) => {
 					println!("{}", err);
 					process::exit(exitcode::IOERR);
-				},
+				}
 				jlox::RunError::EXEC => {
 					println!("Errors while executing the file");
 					process::exit(exitcode::DATAERR);
@@ -31,7 +32,7 @@ fn main() {
 			Err(err) => {
 				println!("{}", err);
 				process::exit(exitcode::OSERR);
-			},
+			}
 			_ => (),
 		};
 	}

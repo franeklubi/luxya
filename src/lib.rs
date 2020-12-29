@@ -1,4 +1,9 @@
-use std::{io::{self, Read, Write}, fs, fmt, convert};
+use std::{
+	convert,
+	fmt,
+	fs,
+	io::{self, Read, Write},
+};
 
 mod scanner;
 mod token;
@@ -80,16 +85,17 @@ fn error<T: fmt::Display>(line: u32, message: T) {
 	report(line, None::<&str>, message)
 }
 
-fn report<T1, T2>(line: u32, location: Option<T1>, message: T2) where
+fn report<T1, T2>(line: u32, location: Option<T1>, message: T2)
+where
 	T1: fmt::Display,
 	T2: fmt::Display,
 {
 	match location {
 		Some(l) => {
 			eprintln!("[{}, {}] Error: {}", line, l, message)
-		},
+		}
 		None => {
 			eprintln!("[{}] Error: {}", line, message)
-		},
+		}
 	}
 }

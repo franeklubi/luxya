@@ -4,14 +4,27 @@ use std::fmt;
 #[allow(dead_code)]
 pub enum TokenType<'a> {
 	// Single-character tokens.
-	LeftParen, RightParen, LeftBrace, RightBrace,
-	Comma, Dot, Minus, Plus, Semicolon, Slash, Star,
+	LeftParen,
+	RightParen,
+	LeftBrace,
+	RightBrace,
+	Comma,
+	Dot,
+	Minus,
+	Plus,
+	Semicolon,
+	Slash,
+	Star,
 
 	// One Or Two Character Tokens.
-	Bang, BangEqual,
-	Equal, EqualEqual,
-	Greater, GreaterEqual,
-	Less, LessEqual,
+	Bang,
+	BangEqual,
+	Equal,
+	EqualEqual,
+	Greater,
+	GreaterEqual,
+	Less,
+	LessEqual,
 
 	// Literals.
 	Identifier(&'a str),
@@ -19,10 +32,25 @@ pub enum TokenType<'a> {
 	Number(f64),
 
 	// Keywords.
-	And, Class, Else, False, Fun, For, If, Nil, Or,
-	Print, Return, Super, This, True, Let, Const, While,
+	And,
+	Class,
+	Else,
+	False,
+	Fun,
+	For,
+	If,
+	Nil,
+	Or,
+	Print,
+	Return,
+	Super,
+	This,
+	True,
+	Let,
+	Const,
+	While,
 
-	Eof
+	Eof,
 }
 
 impl fmt::Display for TokenType<'_> {
@@ -30,11 +58,11 @@ impl fmt::Display for TokenType<'_> {
 		match *self {
 			TokenType::Identifier(s) | TokenType::CharSlice(s) => {
 				write!(f, "{:?}", s)
-			},
+			}
 			TokenType::Number(n) => {
 				write!(f, "{:?}", n)
-			},
-			_ => write!(f, "TokenType")
+			}
+			_ => write!(f, "TokenType"),
 		}
 	}
 }
