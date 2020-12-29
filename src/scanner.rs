@@ -115,8 +115,25 @@ fn scan_token<'a>(
 				}
 			},
 			c if c.is_ascii_digit() => {
-				println!("is ascii digit");
-				continue;
+				match consume_until(chars, |curr, peek| {
+					let peek_char = peek.or(Some('\0')).unwrap();
+
+					return !(curr.is_ascii_digit()
+						|| (curr == '.' && peek_char.is_ascii_digit()));
+				}) {
+					Some(found_i) => {
+						println!("found_i: {}", found_i);
+						TokenType::CharSlice(&source[i..found_i - 1])
+					}
+					None => {
+						return Some(Err(ScanError {
+							offset: 0,
+							message: String::from(format!(
+								"I mean, the unterminated number hmm 🤔"
+							)),
+						}));
+					}
+				}
 			}
 			c if c.is_whitespace() => {
 				continue;
@@ -151,7 +168,6 @@ pub fn scan_tokens(source: &String) -> (Vec<token::Token>, Vec<ScanError>) {
 
 	while let Some(res) = scan_token(&mut chars, source) {
 		// We should be at the beginning of the next lexeme
-		// println!("{}", res);
 		match res {
 			Ok(token) => tokens.push(token),
 			Err(err) => {
