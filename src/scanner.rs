@@ -115,15 +115,31 @@ fn scan_token<'a>(
 				}
 			},
 			c if c.is_ascii_digit() => {
-				match consume_until(chars, |curr, peek| {
-					let peek_char = peek.or(Some('\0')).unwrap();
+				let consume_closure =
+					|curr: char, peek: Option<char>| -> bool {
+						let peek_char = peek.or(Some('\0')).unwrap();
 
-					return !(curr.is_ascii_digit()
-						|| (curr == '.' && peek_char.is_ascii_digit()));
-				}) {
+						return !(curr.is_ascii_digit()
+							|| (curr == '.' && peek_char.is_ascii_digit()));
+					};
+
+				match consume_until(chars, consume_closure) {
 					Some(found_i) => {
-						println!("found_i: {}", found_i);
-						TokenType::CharSlice(&source[i..found_i - 1])
+						let to_parse = &source[i..found_i - 1];
+
+						match to_parse.parse() {
+							Ok(parsed) => TokenType::Number(parsed),
+							Err(e) => {
+								return Some(Err(ScanError {
+									offset: i,
+									message: format!(
+										"Couldn't parse {}; {}",
+										to_parse,
+										e.to_string()
+									),
+								}));
+							}
+						}
 					}
 					None => {
 						return Some(Err(ScanError {
