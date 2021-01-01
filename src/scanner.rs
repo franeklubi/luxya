@@ -24,20 +24,17 @@ fn match_to_next(
 //
 // returns index (in bytes) of where the next char would be
 // (regardless of it being there or the stream ending)
-fn consume_until(
+fn consume_while_peek(
 	chars: &mut iter::Peekable<str::CharIndices>,
-	predicate: impl Fn(char, Option<char>) -> bool,
+	predicate: impl Fn(&char) -> bool,
 ) -> Option<usize> {
 	loop {
-		break match chars.next() {
-			Some((i, c))
-				if predicate(c, chars.peek().and_then(|ci| Some(ci.1))) =>
-			{
-				Some(i + c.len_utf8())
-			}
-			Some(_) => {
+		break match chars.peek() {
+			Some((i, c)) if predicate(c) => {
+				chars.next();
 				continue;
 			}
+			Some((i, c)) => Some(i + c.len_utf8()),
 			None => None,
 		};
 	}
@@ -101,8 +98,11 @@ fn scan_token<'a>(
 					TokenType::Slash
 				}
 			}
-			'"' => match consume_until(chars, |c, _| c == '"') {
+			'"' => match consume_while_peek(chars, |c| *c != '"') {
 				Some(found_i) => {
+					// consume the found peek
+					chars.next();
+
 					TokenType::CharSlice(&source[i + 1..found_i - 1])
 				}
 				None => {
@@ -114,16 +114,16 @@ fn scan_token<'a>(
 					}));
 				}
 			},
+			// the way we parse may be a lil bit problematic, because we
+			// consume the `.` if the parsing somewhat fails
+			// i mean idk, if it causes problems then TODO, but I don't think
+			// it's that problematic for me rn
 			c if c.is_ascii_digit() => {
-				let consume_closure =
-					|curr: char, peek: Option<char>| -> bool {
-						let peek_char = peek.or(Some('\0')).unwrap();
+				let consume_closure = |peek: &char| -> bool {
+					return *peek == '.' || peek.is_ascii_digit();
+				};
 
-						return !(curr.is_ascii_digit()
-							|| (curr == '.' && peek_char.is_ascii_digit()));
-					};
-
-				match consume_until(chars, consume_closure) {
+				match consume_while_peek(chars, consume_closure) {
 					Some(found_i) => {
 						let to_parse = &source[i..found_i - 1];
 

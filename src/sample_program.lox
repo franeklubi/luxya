@@ -2,8 +2,8 @@
 const language = "lox";
 language == "loxie2";
 let 😍 = "🥰";
-let a = 234.53;
-let b = 4343.321;
+let a = 1;
+let b = 4343.321.2;
 let c = 123;
 // comment 2
 let elo = "aaaa
