@@ -1,9 +1,13 @@
 // comment
 const language = "lox";
 language == "loxie2";
-let 😍 = "🥰";
+
+// this will not work for a while
+// let 😍 = "🥰";
+
 let a = 1;
-let b = 4343.321.2;
 let c = 123;
-// comment 2
+
+// errors
+let b = 4343.321.2;
 let elo = "aaaa

@@ -7,9 +7,9 @@ pub struct ScanError {
 	pub message: String,
 }
 
-// match_to_next returns true (and consumes next char)
+// match_to_peek returns true (and consumes next char)
 // only if it maches the expected char
-fn match_to_next(
+fn match_to_peek(
 	chars: &mut iter::Peekable<str::CharIndices>,
 	expected: char,
 ) -> bool {
@@ -19,23 +19,28 @@ fn match_to_next(
 	}
 }
 
-// will consume chars until chars don't match the predicate,
-// consumes the first truthy char
+// will consume chars while peek matches the predicate
 //
-// returns index (in bytes) of where the next char would be
+// returns a result with the index (in bytes) of where the next char would be
 // (regardless of it being there or the stream ending)
+//
+// returns an error with last_offset when the scanning has reached the eof
 fn consume_while_peek(
 	chars: &mut iter::Peekable<str::CharIndices>,
 	predicate: impl Fn(&char) -> bool,
-) -> Option<usize> {
+) -> Result<usize, usize> {
+	let mut last_offset = 0;
+
 	loop {
 		break match chars.peek() {
 			Some((i, c)) if predicate(c) => {
+				last_offset = i + c.len_utf8();
 				chars.next();
+
 				continue;
 			}
-			Some((i, c)) => Some(i + c.len_utf8()),
-			None => None,
+			Some((i, c)) => Ok(i + c.len_utf8()),
+			None => Err(last_offset),
 		};
 	}
 }
@@ -61,35 +66,35 @@ fn scan_token<'a>(
 			';' => TokenType::Semicolon,
 			'*' => TokenType::Star,
 			'!' => {
-				if match_to_next(chars, '=') {
+				if match_to_peek(chars, '=') {
 					TokenType::BangEqual
 				} else {
 					TokenType::Bang
 				}
 			}
 			'=' => {
-				if match_to_next(chars, '=') {
+				if match_to_peek(chars, '=') {
 					TokenType::EqualEqual
 				} else {
 					TokenType::Equal
 				}
 			}
 			'<' => {
-				if match_to_next(chars, '=') {
+				if match_to_peek(chars, '=') {
 					TokenType::LessEqual
 				} else {
 					TokenType::Less
 				}
 			}
 			'>' => {
-				if match_to_next(chars, '=') {
+				if match_to_peek(chars, '=') {
 					TokenType::GreaterEqual
 				} else {
 					TokenType::Greater
 				}
 			}
 			'/' => {
-				if match_to_next(chars, '/') {
+				if match_to_peek(chars, '/') {
 					// comment goes until the end of the line
 					chars.take_while(|(_, c)| *c != '\n').for_each(drop);
 
@@ -99,15 +104,15 @@ fn scan_token<'a>(
 				}
 			}
 			'"' => match consume_while_peek(chars, |c| *c != '"') {
-				Some(found_i) => {
+				Ok(found_i) => {
 					// consume the found peek
 					chars.next();
 
 					TokenType::CharSlice(&source[i + 1..found_i - 1])
 				}
-				None => {
+				Err(_) => {
 					return Some(Err(ScanError {
-						offset: 0,
+						offset: i,
 						message: String::from(format!(
 							"Unterminated string literal"
 						)),
@@ -124,7 +129,7 @@ fn scan_token<'a>(
 				};
 
 				match consume_while_peek(chars, consume_closure) {
-					Some(found_i) => {
+					Ok(found_i) => {
 						let to_parse = &source[i..found_i - 1];
 
 						match to_parse.parse() {
@@ -141,15 +146,24 @@ fn scan_token<'a>(
 							}
 						}
 					}
-					None => {
+					Err(_) => {
 						return Some(Err(ScanError {
-							offset: 0,
+							offset: i,
 							message: String::from(format!(
 								"I mean, the unterminated number hmm 🤔"
 							)),
 						}));
 					}
 				}
+			}
+			c if c.is_alphabetic() => {
+				let identifier_end = match consume_while_peek(chars, |peek| {
+					peek.is_alphanumeric()
+				}) {
+					Ok(found_i) | Err(found_i) => found_i,
+				};
+
+				TokenType::Identifier(&source[i..identifier_end - 1])
 			}
 			c if c.is_whitespace() => {
 				continue;

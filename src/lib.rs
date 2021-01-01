@@ -66,11 +66,11 @@ fn run(source: String) -> bool {
 
 	let (tokens, errors) = scanner::scan_tokens(&source);
 
-	println!("TOKENS:");
-	tokens.iter().enumerate().for_each(|(index, token)| {
-		println!("{}: {}", index, token);
-	});
-	// println!("{} TOKENS", tokens.len());
+	// println!("TOKENS:");
+	// tokens.iter().enumerate().for_each(|(index, token)| {
+	// 	println!("{}: {}", index, token);
+	// });
+	println!("{} TOKENS", tokens.len());
 
 	// println!("ERRORS:");
 	// errors.iter().enumerate().for_each(|(index, error)| {
