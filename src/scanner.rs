@@ -7,6 +7,29 @@ pub struct ScanError {
 	pub message: String,
 }
 
+fn resolve_identifier(identifier: &str) -> TokenType {
+	match identifier {
+		"and" => TokenType::And,
+		"class" => TokenType::Class,
+		"else" => TokenType::Else,
+		"false" => TokenType::False,
+		"for" => TokenType::For,
+		"fun" => TokenType::Fun,
+		"if" => TokenType::If,
+		"nil" => TokenType::Nil,
+		"or" => TokenType::Or,
+		"print" => TokenType::Print,
+		"return" => TokenType::Return,
+		"super" => TokenType::Super,
+		"this" => TokenType::This,
+		"true" => TokenType::True,
+		"let" => TokenType::Let,
+		"const" => TokenType::Const,
+		"while" => TokenType::While,
+		_ => TokenType::Identifier(identifier),
+	}
+}
+
 // match_to_peek returns true (and consumes next char)
 // only if it maches the expected char
 fn match_to_peek(
@@ -156,14 +179,14 @@ fn scan_token<'a>(
 					}
 				}
 			}
-			c if c.is_alphabetic() => {
+			c if c.is_alphabetic() || c == '_' => {
 				let identifier_end = match consume_while_peek(chars, |peek| {
-					peek.is_alphanumeric()
+					peek.is_alphanumeric() || *peek == '_'
 				}) {
 					Ok(found_i) | Err(found_i) => found_i,
 				};
 
-				TokenType::Identifier(&source[i..identifier_end - 1])
+				resolve_identifier(&source[i..identifier_end - 1])
 			}
 			c if c.is_whitespace() => {
 				continue;
@@ -192,9 +215,6 @@ pub fn scan_tokens(source: &String) -> (Vec<token::Token>, Vec<ScanError>) {
 	let mut errors = vec![];
 
 	let mut chars = source.char_indices().peekable();
-
-	// let mut current_index = 0;
-	// let mut current_char = ' ';
 
 	while let Some(res) = scan_token(&mut chars, source) {
 		// We should be at the beginning of the next lexeme

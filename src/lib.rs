@@ -78,7 +78,7 @@ fn run(source: String) -> bool {
 	// });
 	println!("{} ERRORS", errors.len());
 
-	false
+	errors.len() > 0
 }
 
 fn error<T: fmt::Display>(line: u32, message: T) {

@@ -10,4 +10,4 @@ let c = 123;
 
 // errors
 let b = 4343.321.2;
-let elo = "aaaa
+let _e_lo = "aaaa

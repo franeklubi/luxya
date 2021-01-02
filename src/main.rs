@@ -22,7 +22,7 @@ fn main() {
 					process::exit(exitcode::IOERR);
 				}
 				jlox::RunError::EXEC => {
-					println!("Errors while executing the file");
+					println!("Errors while executing {}", &args[1]);
 					process::exit(exitcode::DATAERR);
 				}
 			}
