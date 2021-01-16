@@ -1,8 +1,6 @@
 use std::fmt;
 
-// TODO: disallow that bby
-#[allow(dead_code)]
-pub enum TokenType<'a> {
+pub enum TokenType {
 	// Single-character tokens.
 	LeftParen,
 	RightParen,
@@ -27,8 +25,8 @@ pub enum TokenType<'a> {
 	LessEqual,
 
 	// Literals.
-	Identifier(&'a str),
-	CharSlice(&'a str),
+	Identifier(String),
+	String(String),
 	Number(f64),
 
 	// Keywords.
@@ -53,27 +51,30 @@ pub enum TokenType<'a> {
 	Eof,
 }
 
-impl fmt::Display for TokenType<'_> {
+impl fmt::Display for TokenType {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-		match *self {
-			TokenType::Identifier(s) | TokenType::CharSlice(s) => {
+		match self {
+			TokenType::Identifier(s) => {
+				write!(f, "{}", s)
+			}
+			TokenType::String(s) => {
 				write!(f, "{:?}", s)
 			}
 			TokenType::Number(n) => {
 				write!(f, "{:?}", n)
 			}
-			_ => write!(f, "TokenType"),
+			_ => write!(f, "Token"),
 		}
 	}
 }
 
-pub struct Token<'a> {
+pub struct Token {
 	pub byte_offset: usize,
 	pub byte_length: usize,
-	pub token: TokenType<'a>,
+	pub token: TokenType,
 }
 
-impl fmt::Display for Token<'_> {
+impl fmt::Display for Token {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		write!(
 			f,

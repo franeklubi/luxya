@@ -60,9 +60,9 @@ pub fn run_prompt() -> Result<(), io::Error> {
 // bool indicates if any error(s) occurred, but maybe it should return errors?
 // errors would have to be handled outside and not printed outright
 fn run(source: String) -> bool {
-	println!("==== SOURCE ====");
-	println!("{}", source);
-	println!("==== END ====");
+	// println!("==== SOURCE ====");
+	// println!("{}", source);
+	// println!("==== END ====");
 
 	let (tokens, errors) = scanner::scan_tokens(&source);
 
@@ -72,19 +72,23 @@ fn run(source: String) -> bool {
 	// });
 	println!("{} TOKENS", tokens.len());
 
-	// println!("ERRORS:");
-	// errors.iter().enumerate().for_each(|(index, error)| {
-	// 	println!("{}: {}", index, error.message);
-	// });
-	println!("{} ERRORS", errors.len());
+	println!("ERRORS:");
+	errors.iter().enumerate().for_each(|(index, error)| {
+		println!("{}: {}", index, error.message);
+	});
+	// println!("{} ERRORS", errors.len());
 
 	errors.len() > 0
 }
 
+// TODO: delete that allow
+#[allow(dead_code)]
 fn error<T: fmt::Display>(line: u32, message: T) {
 	report(line, None::<&str>, message)
 }
 
+// TODO: delete that allow
+#[allow(dead_code)]
 fn report<T1, T2>(line: u32, location: Option<T1>, message: T2)
 where
 	T1: fmt::Display,

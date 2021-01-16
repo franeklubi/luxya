@@ -26,7 +26,7 @@ fn resolve_identifier(identifier: &str) -> TokenType {
 		"let" => TokenType::Let,
 		"const" => TokenType::Const,
 		"while" => TokenType::While,
-		_ => TokenType::Identifier(identifier),
+		_ => TokenType::Identifier(identifier.into()),
 	}
 }
 
@@ -69,10 +69,10 @@ fn consume_while_peek(
 }
 
 // consumes the next token's chars
-fn scan_token<'a>(
+fn scan_token(
 	chars: &mut iter::Peekable<str::CharIndices>,
-	source: &'a String,
-) -> Option<Result<token::Token<'a>, ScanError>> {
+	source: &String,
+) -> Option<Result<token::Token, ScanError>> {
 	while let Some((i, c)) = chars.next() {
 		// We should be at the beginning of the next lexeme
 		let char_len = c.len_utf8();
@@ -131,7 +131,7 @@ fn scan_token<'a>(
 					// consume the found peek
 					chars.next();
 
-					TokenType::CharSlice(&source[i + 1..found_i - 1])
+					TokenType::String(source[i + 1..found_i - 1].into())
 				}
 				Err(_) => {
 					return Some(Err(ScanError {
