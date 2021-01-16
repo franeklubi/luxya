@@ -22,7 +22,7 @@ watch:
 	cargo watch -x "fmt; make -si sample"
 
 generate: ${generate_expr_path}
-	mypy ${generate_expr_path} && python3 ${generate_expr_path}
+	mypy --check-untyped-defs ${generate_expr_path} && python3 ${generate_expr_path}
 
 watch_generate: ${generate_expr_path}
-	echo ${generate_expr_path} | entr make -si generate
+	echo ${generate_expr_path} | entr -c make -si generate
