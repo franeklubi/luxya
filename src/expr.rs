@@ -1,17 +1,31 @@
-use crate::token;
+use crate::token::{self, TokenType};
 
-pub enum Expr {
-	// left expression, operator, right expression
-	Binary(Box<Expr>, token::TokenType, Box<Expr>),
-
-	Grouping(Box<Expr>),
-	Literal(LiteralValue),
-
-	// operator, right expression
-	Unary(token::TokenType, Box<Expr>),
-}
-
-enum LiteralValue {
+pub enum LiteralValue {
 	String(String),
 	Number(i32),
+	True,
+	False,
+	Nil,
+}
+
+pub struct BinaryValue {
+	left: Box<Expr>,
+	operator: TokenType,
+	right: Box<Expr>,
+}
+
+pub struct GroupingValue {
+	expression: Box<Expr>,
+}
+
+pub struct UnaryValue {
+	operator: TokenType,
+	right: Box<Expr>,
+}
+
+pub enum Expr {
+	Binary(BinaryValue),
+	Grouping(GroupingValue),
+	Literal(LiteralValue),
+	Unary(UnaryValue),
 }
