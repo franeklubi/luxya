@@ -200,7 +200,7 @@ fn scan_token(
 		};
 
 		return Some(Ok(token::Token {
-			token: token_type,
+			token_type,
 			byte_offset: i,
 			// TODO: char_len does not work for longer lexemes
 			byte_length: char_len,
@@ -232,7 +232,7 @@ pub fn scan_tokens(source: &String) -> (Vec<token::Token>, Vec<ScanError>) {
 	};
 
 	tokens.push(token::Token {
-		token: token::TokenType::Eof,
+		token_type: token::TokenType::Eof,
 		byte_offset: last_offset,
 		byte_length: 1,
 	});

@@ -5,9 +5,9 @@ use std::{
 	io::{self, Read, Write},
 };
 
+mod expr;
 mod scanner;
 mod token;
-
 
 pub enum RunError {
 	IO(io::Error),

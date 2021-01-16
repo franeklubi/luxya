@@ -4,3 +4,5 @@ brace_style = "SameLineWhere"
 max_width = 80
 hard_tabs = true
 imports_layout = "HorizontalVertical"
+newline_style = "Unix"
+normalize_comments = true

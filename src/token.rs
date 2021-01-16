@@ -71,7 +71,7 @@ impl fmt::Display for TokenType {
 pub struct Token {
 	pub byte_offset: usize,
 	pub byte_length: usize,
-	pub token: TokenType,
+	pub token_type: TokenType,
 }
 
 impl fmt::Display for Token {
@@ -79,7 +79,7 @@ impl fmt::Display for Token {
 		write!(
 			f,
 			"{};\tfrom: {};\tto: {};",
-			self.token,
+			self.token_type,
 			self.byte_offset,
 			self.byte_offset + self.byte_length,
 		)
