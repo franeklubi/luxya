@@ -19,7 +19,7 @@ fmt:
 	cargo fmt
 
 watch:
-	cargo watch -x "fmt; make -si sample"
+	cargo watch -x "fmt; clear; make -si sample"
 
 generate: ${generate_expr_path}
 	python3 ${generate_expr_path}

@@ -69,6 +69,9 @@ def generate_ast(
 	return generated_file
 
 
+# arrow expression is defined as such:
+#      '<p1> -> <p2>' | '<p1>'
+# the second parameter in the arrow expresssion is optionalk
 def parse_arrow_expr(expr: str) -> Optional[ArrowExpr]:
 	splout = expr.split('->')
 	len_of_splout = len(splout)
@@ -95,7 +98,7 @@ def main() -> None:
 	]
 
 	imports = [
-		'crate::token::{self, TokenType}',
+		'crate::token::TokenType',
 	]
 
 	literal_types = [

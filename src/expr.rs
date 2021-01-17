@@ -1,4 +1,4 @@
-use crate::token::{self, TokenType};
+use crate::token::TokenType;
 
 pub enum LiteralValue {
 	String(String),
