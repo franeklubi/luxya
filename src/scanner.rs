@@ -90,6 +90,7 @@ fn scan_token(
 			'*' => TokenType::Star,
 			'!' => {
 				if match_to_peek(chars, '=') {
+					chars.next();
 					TokenType::BangEqual
 				} else {
 					TokenType::Bang
@@ -97,6 +98,7 @@ fn scan_token(
 			}
 			'=' => {
 				if match_to_peek(chars, '=') {
+					chars.next();
 					TokenType::EqualEqual
 				} else {
 					TokenType::Equal
@@ -104,6 +106,7 @@ fn scan_token(
 			}
 			'<' => {
 				if match_to_peek(chars, '=') {
+					chars.next();
 					TokenType::LessEqual
 				} else {
 					TokenType::Less
@@ -111,6 +114,7 @@ fn scan_token(
 			}
 			'>' => {
 				if match_to_peek(chars, '=') {
+					chars.next();
 					TokenType::GreaterEqual
 				} else {
 					TokenType::Greater
