@@ -64,6 +64,32 @@ fn run(source: String) -> bool {
 	// println!("{}", source);
 	// println!("==== END ====");
 
+	// just for debug purposes
+	let expression = ast::Expr::Binary(ast::BinaryValue {
+		left: Box::new(ast::Expr::Unary(ast::UnaryValue {
+			operator: token::Token {
+				byte_length: 1,
+				byte_offset: 1,
+				token_type: token::TokenType::Minus,
+			},
+			right: Box::new(ast::Expr::Literal(ast::LiteralValue::Number(
+				1234.0,
+			))),
+		})),
+		operator: token::Token {
+			byte_length: 1,
+			byte_offset: 1,
+			token_type: token::TokenType::Star,
+		},
+		right: Box::new(ast::Expr::Grouping(ast::GroupingValue {
+			expression: Box::new(ast::Expr::Literal(
+				ast::LiteralValue::Number(4567.0),
+			)),
+		})),
+	});
+
+	ast::pn_print_tree(expression);
+
 	let (tokens, errors) = scanner::scan_tokens(&source);
 
 	// println!("TOKENS:");

@@ -1,4 +1,4 @@
-use crate::token::TokenType;
+use crate::token::Token;
 
 pub enum LiteralValue {
 	String(String),
@@ -9,18 +9,18 @@ pub enum LiteralValue {
 }
 
 pub struct BinaryValue {
-	left: Box<Expr>,
-	operator: TokenType,
-	right: Box<Expr>,
+	pub left: Box<Expr>,
+	pub operator: Token,
+	pub right: Box<Expr>,
 }
 
 pub struct GroupingValue {
-	expression: Box<Expr>,
+	pub expression: Box<Expr>,
 }
 
 pub struct UnaryValue {
-	operator: TokenType,
-	right: Box<Expr>,
+	pub operator: Token,
+	pub right: Box<Expr>,
 }
 
 pub enum Expr {

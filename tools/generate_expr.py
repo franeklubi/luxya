@@ -51,7 +51,12 @@ def generate_ast(
 		if member[1] is None:
 			continue
 
-		generated_file += 'pub struct {}Value {{{}}}\n\n'.format(member[0], member[1])
+		# making fields public
+		publicized: str = ', '.join(
+			['pub {}'.format(field.strip()) for field in member[1].split(',')]
+		)
+
+		generated_file += 'pub struct {}Value {{{}}}\n\n'.format(member[0], publicized)
 
 	# generate base enum
 	generated_file += 'pub enum {} {{\n'.format(base_name)
@@ -91,14 +96,14 @@ def parse_arrow_expr(expr: str) -> Optional[ArrowExpr]:
 
 def main() -> None:
 	to_generate = [
-		'Binary	-> left: Box<Expr>, operator: TokenType, right: Box<Expr>',
+		'Binary	-> left: Box<Expr>, operator: Token, right: Box<Expr>',
 		'Grouping	-> expression: Box<Expr>',
 		'Literal(LiteralValue)',
-		'Unary	-> operator: TokenType, right: Box<Expr>',
+		'Unary	-> operator: Token, right: Box<Expr>',
 	]
 
 	imports = [
-		'crate::token::TokenType',
+		'crate::token::Token',
 	]
 
 	literal_types = [
