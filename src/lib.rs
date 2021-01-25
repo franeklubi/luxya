@@ -5,7 +5,7 @@ use std::{
 	io::{self, Read, Write},
 };
 
-mod expr;
+mod ast;
 mod scanner;
 mod token;
 
@@ -66,10 +66,10 @@ fn run(source: String) -> bool {
 
 	let (tokens, errors) = scanner::scan_tokens(&source);
 
-	println!("TOKENS:");
-	tokens.iter().enumerate().for_each(|(index, token)| {
-		println!("{}: {}", index, token);
-	});
+	// println!("TOKENS:");
+	// tokens.iter().enumerate().for_each(|(index, token)| {
+	// 	println!("{}: {}", index, token);
+	// });
 	println!("{} TOKENS", tokens.len());
 
 	println!("ERRORS:");

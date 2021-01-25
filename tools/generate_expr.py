@@ -103,7 +103,7 @@ def main() -> None:
 
 	literal_types = [
 		'String	-> String',
-		'Number	-> i32',
+		'Number	-> f64',
 		'True',
 		'False',
 		'Nil',

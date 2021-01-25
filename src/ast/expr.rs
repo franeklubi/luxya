@@ -2,7 +2,7 @@ use crate::token::TokenType;
 
 pub enum LiteralValue {
 	String(String),
-	Number(i32),
+	Number(f64),
 	True,
 	False,
 	Nil,
