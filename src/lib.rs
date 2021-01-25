@@ -88,7 +88,7 @@ fn run(source: String) -> bool {
 		})),
 	});
 
-	ast::pn_print_tree(expression);
+	println!("{}", ast::pn_stringify_tree(&expression));
 
 	let (tokens, errors) = scanner::scan_tokens(&source);
 
