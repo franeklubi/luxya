@@ -65,30 +65,30 @@ fn run(source: String) -> bool {
 	// println!("==== END ====");
 
 	// just for debug purposes
-	let expression = ast::Expr::Binary(ast::BinaryValue {
-		left: Box::new(ast::Expr::Unary(ast::UnaryValue {
-			operator: token::Token {
-				byte_length: 1,
-				byte_offset: 1,
-				token_type: token::TokenType::Minus,
-			},
-			right: Box::new(ast::Expr::Literal(ast::LiteralValue::Number(
-				1234.0,
-			))),
-		})),
-		operator: token::Token {
-			byte_length: 1,
-			byte_offset: 1,
-			token_type: token::TokenType::Star,
-		},
-		right: Box::new(ast::Expr::Grouping(ast::GroupingValue {
-			expression: Box::new(ast::Expr::Literal(
-				ast::LiteralValue::Number(4567.0),
-			)),
-		})),
-	});
-
-	println!("{}", ast::pn_stringify_tree(&expression));
+	// let expression = ast::Expr::Binary(ast::BinaryValue {
+	// 	left: Box::new(ast::Expr::Unary(ast::UnaryValue {
+	// 		operator: token::Token {
+	// 			byte_length: 1,
+	// 			byte_offset: 1,
+	// 			token_type: token::TokenType::Minus,
+	// 		},
+	// 		right: Box::new(ast::Expr::Literal(ast::LiteralValue::Number(
+	// 			1234.0,
+	// 		))),
+	// 	})),
+	// 	operator: token::Token {
+	// 		byte_length: 1,
+	// 		byte_offset: 1,
+	// 		token_type: token::TokenType::Star,
+	// 	},
+	// 	right: Box::new(ast::Expr::Grouping(ast::GroupingValue {
+	// 		expression: Box::new(ast::Expr::Literal(
+	// 			ast::LiteralValue::Number(4567.0),
+	// 		)),
+	// 	})),
+	// });
+	//
+	// println!("{}", ast::pn_stringify_tree(&expression));
 
 	let (tokens, errors) = scanner::scan_tokens(&source);
 
@@ -96,7 +96,7 @@ fn run(source: String) -> bool {
 	// tokens.iter().enumerate().for_each(|(index, token)| {
 	// 	println!("{}: {}", index, token);
 	// });
-	println!("{} TOKENS", tokens.len());
+	ast::parse(&tokens);
 
 	println!("ERRORS:");
 	errors.iter().enumerate().for_each(|(index, error)| {

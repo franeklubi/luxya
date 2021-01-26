@@ -75,7 +75,7 @@ fn scan_token(
 ) -> Option<Result<token::Token, ScanError>> {
 	while let Some((i, c)) = chars.next() {
 		// We should be at the beginning of the next lexeme
-		let char_len = c.len_utf8();
+		let mut token_len = c.len_utf8();
 
 		let token_type = match c {
 			'(' => TokenType::LeftParen,
@@ -91,6 +91,9 @@ fn scan_token(
 			'!' => {
 				if match_to_peek(chars, '=') {
 					chars.next();
+
+					token_len += 1;
+
 					TokenType::BangEqual
 				} else {
 					TokenType::Bang
@@ -99,6 +102,9 @@ fn scan_token(
 			'=' => {
 				if match_to_peek(chars, '=') {
 					chars.next();
+
+					token_len += 1;
+
 					TokenType::EqualEqual
 				} else {
 					TokenType::Equal
@@ -107,6 +113,9 @@ fn scan_token(
 			'<' => {
 				if match_to_peek(chars, '=') {
 					chars.next();
+
+					token_len += 1;
+
 					TokenType::LessEqual
 				} else {
 					TokenType::Less
@@ -115,6 +124,9 @@ fn scan_token(
 			'>' => {
 				if match_to_peek(chars, '=') {
 					chars.next();
+
+					token_len += 1;
+
 					TokenType::GreaterEqual
 				} else {
 					TokenType::Greater
@@ -134,6 +146,8 @@ fn scan_token(
 				Ok(found_i) => {
 					// consume the found peek
 					chars.next();
+
+					token_len = found_i - i;
 
 					TokenType::String(source[i + 1..found_i - 1].into())
 				}
@@ -158,6 +172,8 @@ fn scan_token(
 				match consume_while_peek(chars, consume_closure) {
 					Ok(found_i) => {
 						let to_parse = &source[i..found_i - 1];
+
+						token_len = found_i - i - 1;
 
 						match to_parse.parse() {
 							Ok(parsed) => TokenType::Number(parsed),
@@ -190,6 +206,8 @@ fn scan_token(
 					Ok(found_i) | Err(found_i) => found_i,
 				};
 
+				token_len = identifier_end - i - 1;
+
 				resolve_identifier(&source[i..identifier_end - 1])
 			}
 			c if c.is_whitespace() => {
@@ -207,7 +225,7 @@ fn scan_token(
 			token_type,
 			byte_offset: i,
 			// TODO: char_len does not work for longer lexemes
-			byte_length: char_len,
+			byte_length: token_len,
 		}));
 	}
 
