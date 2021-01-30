@@ -5,6 +5,7 @@ use std::{
 	io::{self, Read, Write},
 };
 
+#[allow(dead_code)]
 mod ast;
 mod scanner;
 mod token;
@@ -60,43 +61,13 @@ pub fn run_prompt() -> Result<(), io::Error> {
 // bool indicates if any error(s) occurred, but maybe it should return errors?
 // errors would have to be handled outside and not printed outright
 fn run(source: String) -> bool {
-	// println!("==== SOURCE ====");
-	// println!("{}", source);
-	// println!("==== END ====");
-
-	// just for debug purposes
-	// let expression = ast::Expr::Binary(ast::BinaryValue {
-	// 	left: Box::new(ast::Expr::Unary(ast::UnaryValue {
-	// 		operator: token::Token {
-	// 			byte_length: 1,
-	// 			byte_offset: 1,
-	// 			token_type: token::TokenType::Minus,
-	// 		},
-	// 		right: Box::new(ast::Expr::Literal(ast::LiteralValue::Number(
-	// 			1234.0,
-	// 		))),
-	// 	})),
-	// 	operator: token::Token {
-	// 		byte_length: 1,
-	// 		byte_offset: 1,
-	// 		token_type: token::TokenType::Star,
-	// 	},
-	// 	right: Box::new(ast::Expr::Grouping(ast::GroupingValue {
-	// 		expression: Box::new(ast::Expr::Literal(
-	// 			ast::LiteralValue::Number(4567.0),
-	// 		)),
-	// 	})),
-	// });
-	//
-	// println!("{}", ast::pn_stringify_tree(&expression));
-
 	let (tokens, errors) = scanner::scan_tokens(&source);
 
-	// println!("TOKENS:");
-	// tokens.iter().enumerate().for_each(|(index, token)| {
-	// 	println!("{}: {}", index, token);
-	// });
-	ast::parse(&tokens);
+	let mut to_parse = tokens.into_iter().peekable();
+
+	let tree = ast::parse_next(&mut to_parse);
+
+	println!("Tree:\n{}", ast::pn_stringify_tree(&tree));
 
 	println!("ERRORS:");
 	errors.iter().enumerate().for_each(|(index, error)| {
