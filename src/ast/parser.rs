@@ -13,6 +13,31 @@ fn match_token_type(t: &TokenType, against: &Vec<TokenType>) -> bool {
 	against.iter().any(|a| a == t)
 }
 
+fn build_binary_expr(
+	tokens: ParserIter,
+	lower_precedence: impl Fn(ParserIter) -> Expr,
+	types_to_match: &Vec<TokenType>,
+) -> Expr {
+	let mut expr = lower_precedence(tokens);
+
+	while let Some(operator) = tokens.peek() {
+		if match_token_type(&operator.token_type, types_to_match) {
+			// if the peek matches we consume it
+			let operator = tokens.next().unwrap();
+
+			expr = Expr::Binary(BinaryValue {
+				left: Box::new(expr),
+				operator: operator,
+				right: Box::new(lower_precedence(tokens)),
+			});
+		} else {
+			break;
+		}
+	}
+
+	expr
+}
+
 // grammar functions down there 👇
 
 fn expression(tokens: ParserIter) -> Expr {
@@ -20,112 +45,32 @@ fn expression(tokens: ParserIter) -> Expr {
 }
 
 fn equality(tokens: ParserIter) -> Expr {
-	let mut expr = comparison(tokens);
-
-	while let Some(operator) = tokens.peek() {
-		if match_token_type(
-			&operator.token_type,
-			&vec![TokenType::BangEqual, TokenType::EqualEqual],
-		) {
-			// if the peek matches we consume it
-			let operator = tokens.next().unwrap();
-
-			let right = comparison(tokens);
-
-			expr = Expr::Binary(BinaryValue {
-				left: Box::new(expr),
-				operator: operator,
-				right: Box::new(right),
-			});
-		} else {
-			break;
-		}
-	}
-
-	expr
+	build_binary_expr(
+		tokens,
+		comparison,
+		&vec![TokenType::BangEqual, TokenType::EqualEqual],
+	)
 }
 
 fn comparison(tokens: ParserIter) -> Expr {
-	let mut expr = term(tokens);
-
-	while let Some(operator) = tokens.peek() {
-		if match_token_type(
-			&operator.token_type,
-			&vec![
-				TokenType::Greater,
-				TokenType::GreaterEqual,
-				TokenType::Less,
-				TokenType::LessEqual,
-			],
-		) {
-			// if the peek matches we consume it
-			let operator = tokens.next().unwrap();
-
-			let right = term(tokens);
-
-			expr = Expr::Binary(BinaryValue {
-				left: Box::new(expr),
-				operator: operator,
-				right: Box::new(right),
-			});
-		} else {
-			break;
-		}
-	}
-
-	expr
+	build_binary_expr(
+		tokens,
+		term,
+		&vec![
+			TokenType::Greater,
+			TokenType::GreaterEqual,
+			TokenType::Less,
+			TokenType::LessEqual,
+		],
+	)
 }
 
 fn term(tokens: ParserIter) -> Expr {
-	let mut expr = factor(tokens);
-
-	while let Some(operator) = tokens.peek() {
-		if match_token_type(
-			&operator.token_type,
-			&vec![TokenType::Minus, TokenType::Plus],
-		) {
-			// if the peek matches we consume it
-			let operator = tokens.next().unwrap();
-
-			let right = factor(tokens);
-
-			expr = Expr::Binary(BinaryValue {
-				left: Box::new(expr),
-				operator: operator,
-				right: Box::new(right),
-			});
-		} else {
-			break;
-		}
-	}
-
-	expr
+	build_binary_expr(tokens, factor, &vec![TokenType::Minus, TokenType::Plus])
 }
 
 fn factor(tokens: ParserIter) -> Expr {
-	let mut expr = unary(tokens);
-
-	while let Some(operator) = tokens.peek() {
-		if match_token_type(
-			&operator.token_type,
-			&vec![TokenType::Slash, TokenType::Star],
-		) {
-			// if the peek matches we consume it
-			let operator = tokens.next().unwrap();
-
-			let right = unary(tokens);
-
-			expr = Expr::Binary(BinaryValue {
-				left: Box::new(expr),
-				operator: operator,
-				right: Box::new(right),
-			});
-		} else {
-			break;
-		}
-	}
-
-	expr
+	build_binary_expr(tokens, unary, &vec![TokenType::Slash, TokenType::Star])
 }
 
 fn unary(tokens: ParserIter) -> Expr {
@@ -150,9 +95,7 @@ fn unary(tokens: ParserIter) -> Expr {
 }
 
 fn primary(tokens: ParserIter) -> Expr {
-	let nastepny = tokens.next();
-
-	match nastepny {
+	match tokens.next() {
 		Some(Token {
 			token_type: TokenType::False,
 			..
