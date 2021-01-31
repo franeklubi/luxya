@@ -5,7 +5,12 @@ use std::{iter, vec};
 
 type ParserIter<'a> = &'a mut iter::Peekable<vec::IntoIter<Token>>;
 
-pub fn parse_next(tokens: ParserIter) -> Expr {
+pub struct ParseError {
+	pub token: Option<Token>,
+	pub message: String,
+}
+
+pub fn parse_next(tokens: ParserIter) -> Result<Expr, ParseError> {
 	expression(tokens)
 }
 
@@ -15,36 +20,50 @@ fn match_token_type(t: &TokenType, against: &Vec<TokenType>) -> bool {
 
 fn build_binary_expr(
 	tokens: ParserIter,
-	lower_precedence: impl Fn(ParserIter) -> Expr,
+	lower_precedence: impl Fn(ParserIter) -> Result<Expr, ParseError>,
 	types_to_match: &Vec<TokenType>,
-) -> Expr {
-	let mut expr = lower_precedence(tokens);
+) -> Result<Expr, ParseError> {
+	let expr = lower_precedence(tokens);
+
+	if expr.is_err() {
+		return expr;
+	}
+
+	let mut unwrapped_expr = expr.ok().unwrap();
 
 	while let Some(operator) = tokens.peek() {
-		if match_token_type(&operator.token_type, types_to_match) {
-			// if the peek matches we consume it
-			let operator = tokens.next().unwrap();
-
-			expr = Expr::Binary(BinaryValue {
-				left: Box::new(expr),
-				operator: operator,
-				right: Box::new(lower_precedence(tokens)),
-			});
-		} else {
+		if !match_token_type(&operator.token_type, types_to_match) {
 			break;
+		}
+
+
+		// if the peek matches we consume it
+		let operator = tokens.next().unwrap();
+
+		let right = lower_precedence(tokens);
+
+		match right {
+			Ok(r) => {
+				unwrapped_expr = Expr::Binary(BinaryValue {
+					left: Box::new(unwrapped_expr),
+					operator: operator,
+					right: Box::new(r),
+				});
+			}
+			_ => return right,
 		}
 	}
 
-	expr
+	Ok(unwrapped_expr)
 }
 
 // grammar functions down there 👇
 
-fn expression(tokens: ParserIter) -> Expr {
+fn expression(tokens: ParserIter) -> Result<Expr, ParseError> {
 	equality(tokens)
 }
 
-fn equality(tokens: ParserIter) -> Expr {
+fn equality(tokens: ParserIter) -> Result<Expr, ParseError> {
 	build_binary_expr(
 		tokens,
 		comparison,
@@ -52,7 +71,7 @@ fn equality(tokens: ParserIter) -> Expr {
 	)
 }
 
-fn comparison(tokens: ParserIter) -> Expr {
+fn comparison(tokens: ParserIter) -> Result<Expr, ParseError> {
 	build_binary_expr(
 		tokens,
 		term,
@@ -65,15 +84,15 @@ fn comparison(tokens: ParserIter) -> Expr {
 	)
 }
 
-fn term(tokens: ParserIter) -> Expr {
+fn term(tokens: ParserIter) -> Result<Expr, ParseError> {
 	build_binary_expr(tokens, factor, &vec![TokenType::Minus, TokenType::Plus])
 }
 
-fn factor(tokens: ParserIter) -> Expr {
+fn factor(tokens: ParserIter) -> Result<Expr, ParseError> {
 	build_binary_expr(tokens, unary, &vec![TokenType::Slash, TokenType::Star])
 }
 
-fn unary(tokens: ParserIter) -> Expr {
+fn unary(tokens: ParserIter) -> Result<Expr, ParseError> {
 	if let Some(operator) = tokens.peek() {
 		if !match_token_type(
 			&operator.token_type,
@@ -83,43 +102,51 @@ fn unary(tokens: ParserIter) -> Expr {
 		}
 
 		let operator = tokens.next().unwrap();
+
 		let right = unary(tokens);
 
-		return Expr::Unary(UnaryValue {
-			operator,
-			right: Box::new(right),
-		});
+		match right {
+			Ok(r) => {
+				return Ok(Expr::Unary(UnaryValue {
+					operator,
+					right: Box::new(r),
+				}));
+			}
+			_ => return right,
+		}
 	}
 
 	primary(tokens)
 }
 
-fn primary(tokens: ParserIter) -> Expr {
-	match tokens.next() {
+fn primary(tokens: ParserIter) -> Result<Expr, ParseError> {
+	let token = tokens.next();
+
+	match token {
 		Some(Token {
 			token_type: TokenType::False,
 			..
-		}) => Expr::Literal(LiteralValue::False),
+		}) => Ok(Expr::Literal(LiteralValue::False)),
 
 		Some(Token {
 			token_type: TokenType::True,
 			..
-		}) => Expr::Literal(LiteralValue::True),
+		}) => Ok(Expr::Literal(LiteralValue::True)),
 
 		Some(Token {
 			token_type: TokenType::Nil,
 			..
-		}) => Expr::Literal(LiteralValue::Nil),
+		}) => Ok(Expr::Literal(LiteralValue::Nil)),
 
 		Some(Token {
 			token_type: TokenType::String(s),
 			..
-		}) => Expr::Literal(LiteralValue::String(s)),
+		}) => Ok(Expr::Literal(LiteralValue::String(s))),
 
 		Some(Token {
 			token_type: TokenType::Number(n),
 			..
-		}) => Expr::Literal(LiteralValue::Number(n)),
+		}) => Ok(Expr::Literal(LiteralValue::Number(n))),
 
 		Some(Token {
 			token_type: TokenType::LeftParen,
@@ -127,21 +154,30 @@ fn primary(tokens: ParserIter) -> Expr {
 		}) => {
 			let expr = expression(tokens);
 
-			if let Some(Token {
-				token_type: TokenType::RightParen,
-				..
-			}) = tokens.peek()
-			{
-				Expr::Grouping(GroupingValue {
-					expression: Box::new(expr),
-				})
-			} else {
-				// TODO: error handling
-				Expr::Literal(LiteralValue::Nil)
+			match expr {
+				Ok(e) => {
+					if let Some(Token {
+						token_type: TokenType::RightParen,
+						..
+					}) = tokens.peek()
+					{
+						Ok(Expr::Grouping(GroupingValue {
+							expression: Box::new(e),
+						}))
+					} else {
+						Err(ParseError {
+							token,
+							message: "Expected '('".into(),
+						})
+					}
+				}
+				_ => return expr,
 			}
 		}
 
-		// TODO: error handling
-		_ => Expr::Literal(LiteralValue::Nil),
+		_ => Err(ParseError {
+			token,
+			message: "Expected expression".into(),
+		}),
 	}
 }

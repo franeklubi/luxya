@@ -11,7 +11,7 @@ pub fn pn_stringify_tree(expr: &Expr) -> String {
 		}
 		Expr::Grouping(v) => pn_gen("group".into(), vec![&v.expression]),
 		Expr::Literal(v) => match v {
-			LiteralValue::String(s) => s.into(),
+			LiteralValue::String(s) => format!("{:?}", s),
 			LiteralValue::Number(n) => format!("{}", n),
 			LiteralValue::True => "true".into(),
 			LiteralValue::False => "false".into(),

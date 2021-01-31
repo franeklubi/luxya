@@ -63,16 +63,24 @@ pub fn run_prompt() -> Result<(), io::Error> {
 fn run(source: String) -> bool {
 	let (tokens, errors) = scanner::scan_tokens(&source);
 
+	println!("SCAN ERRORS:");
+	errors.iter().enumerate().for_each(|(index, error)| {
+		println!("{}: {}", index, error.message);
+	});
+
 	let mut to_parse = tokens.into_iter().peekable();
 
 	let tree = ast::parse_next(&mut to_parse);
 
-	println!("Tree:\n{}", ast::pn_stringify_tree(&tree));
+	match tree {
+		Ok(t) => {
+			println!("Tree:\n{}", ast::pn_stringify_tree(&t));
+		}
+		Err(s) => {
+			println!("Parse error: {}", s.message);
+		}
+	}
 
-	println!("ERRORS:");
-	errors.iter().enumerate().for_each(|(index, error)| {
-		println!("{}: {}", index, error.message);
-	});
 	// println!("{} ERRORS", errors.len());
 
 	errors.len() > 0
