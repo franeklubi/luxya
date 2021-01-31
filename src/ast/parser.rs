@@ -51,7 +51,12 @@ fn comparison(tokens: ParserIter) -> Expr {
 	while let Some(operator) = tokens.peek() {
 		if match_token_type(
 			&operator.token_type,
-			&vec![TokenType::Minus, TokenType::Plus],
+			&vec![
+				TokenType::Greater,
+				TokenType::GreaterEqual,
+				TokenType::Less,
+				TokenType::LessEqual,
+			],
 		) {
 			// if the peek matches we consume it
 			let operator = tokens.next().unwrap();
@@ -103,7 +108,7 @@ fn factor(tokens: ParserIter) -> Expr {
 	while let Some(operator) = tokens.peek() {
 		if match_token_type(
 			&operator.token_type,
-			&vec![TokenType::Minus, TokenType::Plus],
+			&vec![TokenType::Slash, TokenType::Star],
 		) {
 			// if the peek matches we consume it
 			let operator = tokens.next().unwrap();

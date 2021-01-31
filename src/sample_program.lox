@@ -1,5 +1,5 @@
 // comment
-language == ("loxie2" == (32));
+-language == (-"loxie2" / (!32 + true - false));
 const language = "lox";
 
 // this will not work for a while
