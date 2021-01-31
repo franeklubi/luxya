@@ -1,12 +1,12 @@
 // comment
+language == ("loxie2" == (32));
 const language = "lox";
-language == "loxie2";
 
 // this will not work for a while
 // let 😍 = "🥰";
 
 let a = 1;
-let c = 123;
+let c = (123);
 
 // errors
 let b = 4343.321.2;
