@@ -57,6 +57,35 @@ fn build_binary_expr(
 	Ok(unwrapped_expr)
 }
 
+// call only if the token that the parser choked on is not ';'
+fn synchronize(tokens: ParserIter) {
+	while let Some(token) = tokens.peek() {
+		match token.token_type {
+			TokenType::Class
+			| TokenType::Fun
+			| TokenType::Let
+			| TokenType::Const
+			| TokenType::For
+			| TokenType::If
+			| TokenType::While
+			| TokenType::Print
+			| TokenType::Return => {
+				break;
+			}
+
+			_ => {
+				if let Some(Token {
+					token_type: TokenType::Semicolon,
+					..
+				}) = tokens.next()
+				{
+					break;
+				}
+			}
+		}
+	}
+}
+
 // grammar functions down there 👇
 
 fn expression(tokens: ParserIter) -> Result<Expr, ParseError> {
