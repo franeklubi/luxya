@@ -1,5 +1,7 @@
 // comment
--"language" == (-"loxie2" / (!32 + true - false));
+"concat" + " test";
+
+-"language" == (-"loxie2" / (!!!32 + true - false));
 const language = "lox";
 
 // this will not work for a while

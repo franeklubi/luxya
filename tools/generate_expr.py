@@ -20,7 +20,7 @@ def generate_ast(
 	generated_file += '\n'
 
 	# generate literal values
-	generated_file += 'pub enum {} {{\n'.format(literal_types_name)
+	generated_file += '#[derive(Clone)]pub enum {} {{\n'.format(literal_types_name)
 
 	for l in literal_types:
 		lv = parse_arrow_expr(l)

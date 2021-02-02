@@ -5,7 +5,6 @@ use std::{
 	io::{self, Read, Write},
 };
 
-#[allow(dead_code)]
 mod ast;
 mod scanner;
 mod token;
@@ -63,7 +62,9 @@ pub fn run_prompt() -> Result<(), io::Error> {
 fn run(source: String) -> bool {
 	let (tokens, errors) = scanner::scan_tokens(&source);
 
-	println!("SCAN ERRORS:");
+	if errors.len() > 0 {
+		println!("SCAN ERRORS:");
+	}
 	errors.iter().enumerate().for_each(|(index, error)| {
 		println!("{}: {}", index, error.message);
 	});
@@ -72,9 +73,24 @@ fn run(source: String) -> bool {
 
 	let tree = ast::parse_next(&mut to_parse);
 
+	// that's a rzeźba
 	match tree {
 		Ok(t) => {
 			println!("Tree:\n{}", ast::pn_stringify_tree(&t));
+			match ast::evaluate(&t) {
+				Ok(v) => match v {
+					ast::LiteralValue::String(s) => {
+						println!("string: {}", s)
+					}
+					ast::LiteralValue::Number(n) => {
+						println!("number: {}", n)
+					}
+					ast::LiteralValue::Nil => println!("nil"),
+					ast::LiteralValue::True => println!("true"),
+					ast::LiteralValue::False => println!("false"),
+				},
+				Err(_) => println!("some error"),
+			}
 		}
 		Err(s) => {
 			println!("Parse error: {}", s.message);

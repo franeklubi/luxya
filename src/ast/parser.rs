@@ -23,13 +23,7 @@ fn build_binary_expr(
 	lower_precedence: impl Fn(ParserIter) -> Result<Expr, ParseError>,
 	types_to_match: &Vec<TokenType>,
 ) -> Result<Expr, ParseError> {
-	let expr = lower_precedence(tokens);
-
-	if expr.is_err() {
-		return expr;
-	}
-
-	let mut unwrapped_expr = expr.ok().unwrap();
+	let mut expr = lower_precedence(tokens)?;
 
 	while let Some(operator) = tokens.peek() {
 		if !match_token_type(&operator.token_type, types_to_match) {
@@ -44,8 +38,8 @@ fn build_binary_expr(
 
 		match right {
 			Ok(r) => {
-				unwrapped_expr = Expr::Binary(BinaryValue {
-					left: Box::new(unwrapped_expr),
+				expr = Expr::Binary(BinaryValue {
+					left: Box::new(expr),
 					operator: operator,
 					right: Box::new(r),
 				});
@@ -54,7 +48,7 @@ fn build_binary_expr(
 		}
 	}
 
-	Ok(unwrapped_expr)
+	Ok(expr)
 }
 
 // call only if the token that the parser choked on is not ';'
