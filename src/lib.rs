@@ -1,5 +1,4 @@
 use std::{
-	convert,
 	fmt,
 	fs,
 	io::{self, Read, Write},
@@ -14,7 +13,7 @@ pub enum RunError {
 	EXEC,
 }
 
-impl convert::From<io::Error> for RunError {
+impl From<io::Error> for RunError {
 	fn from(e: io::Error) -> Self {
 		RunError::IO(e)
 	}
