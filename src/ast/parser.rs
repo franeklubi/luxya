@@ -30,22 +30,16 @@ fn build_binary_expr(
 			break;
 		}
 
-
 		// if the peek matches we consume it
 		let operator = tokens.next().unwrap();
 
-		let right = lower_precedence(tokens);
+		let right = lower_precedence(tokens)?;
 
-		match right {
-			Ok(r) => {
-				expr = Expr::Binary(BinaryValue {
-					left: Box::new(expr),
-					operator: operator,
-					right: Box::new(r),
-				});
-			}
-			_ => return right,
-		}
+		expr = Expr::Binary(BinaryValue {
+			left: Box::new(expr),
+			operator: operator,
+			right: Box::new(right),
+		});
 	}
 
 	Ok(expr)
@@ -126,17 +120,12 @@ fn unary(tokens: ParserIter) -> Result<Expr, ParseError> {
 
 		let operator = tokens.next().unwrap();
 
-		let right = unary(tokens);
+		let right = unary(tokens)?;
 
-		match right {
-			Ok(r) => {
-				return Ok(Expr::Unary(UnaryValue {
-					operator,
-					right: Box::new(r),
-				}));
-			}
-			_ => return right,
-		}
+		return Ok(Expr::Unary(UnaryValue {
+			operator,
+			right: Box::new(right),
+		}));
 	}
 
 	primary(tokens)
@@ -175,26 +164,19 @@ fn primary(tokens: ParserIter) -> Result<Expr, ParseError> {
 			token_type: TokenType::LeftParen,
 			..
 		}) => {
-			let expr = expression(tokens);
+			let expr = expression(tokens)?;
 
-			match expr {
-				Ok(e) => {
-					if let Some(Token {
-						token_type: TokenType::RightParen,
-						..
-					}) = tokens.peek()
-					{
-						Ok(Expr::Grouping(GroupingValue {
-							expression: Box::new(e),
-						}))
-					} else {
-						Err(ParseError {
-							token,
-							message: "Expected '('".into(),
-						})
-					}
-				}
-				_ => return expr,
+			match tokens.peek() {
+				Some(Token {
+					token_type: TokenType::RightParen,
+					..
+				}) => Ok(Expr::Grouping(GroupingValue {
+					expression: Box::new(expr),
+				})),
+				_ => Err(ParseError {
+					token,
+					message: "Expected ')'".into(),
+				}),
 			}
 		}
 

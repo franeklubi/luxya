@@ -63,7 +63,7 @@ fn eval_binary(v: &BinaryValue) -> Result<InterpreterValue, ()> {
 			TokenType::Plus,
 			LiteralValue::Number(n1),
 			LiteralValue::Number(n2),
-		) => Ok(InterpreterValue::Number(n1 * n2)),
+		) => Ok(InterpreterValue::Number(n1 + n2)),
 		(
 			TokenType::Plus,
 			LiteralValue::String(s1),
