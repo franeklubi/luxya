@@ -19,6 +19,9 @@ fmt:
 	cargo fmt
 
 watch:
+	cargo watch -x "fmt; clear; make -si run"
+
+watch_sample:
 	cargo watch -x "fmt; clear; make -si sample"
 
 generate: ${generate_expr_path}

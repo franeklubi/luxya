@@ -78,7 +78,7 @@ fn run(source: String) -> bool {
 			println!("Tree:\n{}", ast::pn_stringify_tree(&t));
 			match ast::evaluate(&t) {
 				Ok(v) => println!("{}", v),
-				Err(_) => println!("some error"),
+				Err(e) => error(0, e.message),
 			}
 		}
 		Err(s) => {

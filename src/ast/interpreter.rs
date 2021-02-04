@@ -3,7 +3,13 @@ use crate::token::*;
 
 use std::fmt;
 
+pub struct RuntimeError {
+	pub message: String,
+	pub token: Token,
+}
 
+// TODO: later, use other enum than LiteralValue
+// but it'll do for now
 type InterpreterValue = LiteralValue;
 
 impl From<bool> for InterpreterValue {
@@ -28,9 +34,7 @@ impl fmt::Display for InterpreterValue {
 	}
 }
 
-// TODO: later, use other enum than LiteralValue
-// but it'll do for now
-pub fn evaluate(expr: &Expr) -> Result<InterpreterValue, ()> {
+pub fn evaluate(expr: &Expr) -> Result<InterpreterValue, RuntimeError> {
 	match expr {
 		Expr::Literal(v) => Ok(v.clone()),
 		Expr::Grouping(v) => evaluate(&v.expression),
@@ -39,7 +43,7 @@ pub fn evaluate(expr: &Expr) -> Result<InterpreterValue, ()> {
 	}
 }
 
-fn eval_unary(v: &UnaryValue) -> Result<InterpreterValue, ()> {
+fn eval_unary(v: &UnaryValue) -> Result<InterpreterValue, RuntimeError> {
 	let right_value = evaluate(&v.right)?;
 
 	match (&v.operator.token_type, &right_value) {
@@ -50,11 +54,17 @@ fn eval_unary(v: &UnaryValue) -> Result<InterpreterValue, ()> {
 		(TokenType::Bang, LiteralValue::False) => Ok(InterpreterValue::True),
 
 		// TODO: error on how we cant do this to this and etc
-		_ => Err(()),
+		_ => Err(RuntimeError {
+			message: format!(
+				"Cannot use `{}` on `{}`",
+				v.operator.token_type, right_value
+			),
+			token: v.operator.clone(),
+		}),
 	}
 }
 
-fn eval_binary(v: &BinaryValue) -> Result<InterpreterValue, ()> {
+fn eval_binary(v: &BinaryValue) -> Result<InterpreterValue, RuntimeError> {
 	let left_value = evaluate(&v.left)?;
 	let right_value = evaluate(&v.right)?;
 
@@ -77,19 +87,32 @@ fn eval_binary(v: &BinaryValue) -> Result<InterpreterValue, ()> {
 					TokenType::Less => Ok((n1 < n2).into()),
 					TokenType::LessEqual => Ok((n1 <= n2).into()),
 
-					_ => Err(()),
+					_ => unreachable!("Scanner did a bad job 😎."),
 				}
 			}
 			(LiteralValue::String(s1), LiteralValue::String(s2)) => {
 				if v.operator.token_type == TokenType::Plus {
 					Ok(InterpreterValue::String(s1.to_owned() + s2))
 				} else {
-					Err(())
+					Err(RuntimeError {
+						message: format!(
+							"You cannot use `{}` on two strings. Did you mean \
+							 +?",
+							v.operator.token_type
+						),
+						token: v.operator.clone(),
+					})
 				}
 			}
 
 			// error bby
-			_ => Err(()),
+			_ => Err(RuntimeError {
+				message: format!(
+					"Cannot use `{}` on `{}` and `{}`",
+					v.operator.token_type, left_value, right_value
+				),
+				token: v.operator.clone(),
+			}),
 		},
 	}
 }

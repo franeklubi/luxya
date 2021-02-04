@@ -6,3 +6,5 @@ hard_tabs = true
 imports_layout = "HorizontalVertical"
 newline_style = "Unix"
 normalize_comments = true
+condense_wildcard_suffixes = true
+format_strings = true
