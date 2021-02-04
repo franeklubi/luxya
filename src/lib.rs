@@ -44,7 +44,7 @@ pub fn run_prompt() -> Result<(), io::Error> {
 			break;
 		}
 
-		if let true = run(buffer) {
+		if run(buffer) {
 			eprintln!("Errors occurred, expression not merged.")
 		}
 	}
@@ -77,17 +77,7 @@ fn run(source: String) -> bool {
 		Ok(t) => {
 			println!("Tree:\n{}", ast::pn_stringify_tree(&t));
 			match ast::evaluate(&t) {
-				Ok(v) => match v {
-					ast::LiteralValue::String(s) => {
-						println!("string: {}", s)
-					}
-					ast::LiteralValue::Number(n) => {
-						println!("number: {}", n)
-					}
-					ast::LiteralValue::Nil => println!("nil"),
-					ast::LiteralValue::True => println!("true"),
-					ast::LiteralValue::False => println!("false"),
-				},
+				Ok(v) => println!("{}", v),
 				Err(_) => println!("some error"),
 			}
 		}
@@ -95,8 +85,6 @@ fn run(source: String) -> bool {
 			println!("Parse error: {}", s.message);
 		}
 	}
-
-	// println!("{} ERRORS", errors.len());
 
 	errors.len() > 0
 }

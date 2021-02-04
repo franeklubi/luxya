@@ -1,6 +1,11 @@
 use crate::ast::expr::*;
 use crate::token::*;
 
+use std::fmt;
+
+
+type InterpreterValue = LiteralValue;
+
 impl From<bool> for InterpreterValue {
 	fn from(v: bool) -> Self {
 		if v {
@@ -11,7 +16,17 @@ impl From<bool> for InterpreterValue {
 	}
 }
 
-type InterpreterValue = LiteralValue;
+impl fmt::Display for InterpreterValue {
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		match self {
+			LiteralValue::String(s) => write!(f, "{:?}", s),
+			LiteralValue::Number(n) => write!(f, "{}", n),
+			LiteralValue::Nil => write!(f, "nil"),
+			LiteralValue::True => write!(f, "true"),
+			LiteralValue::False => write!(f, "false"),
+		}
+	}
+}
 
 // TODO: later, use other enum than LiteralValue
 // but it'll do for now
@@ -43,56 +58,38 @@ fn eval_binary(v: &BinaryValue) -> Result<InterpreterValue, ()> {
 	let left_value = evaluate(&v.left)?;
 	let right_value = evaluate(&v.right)?;
 
-	match (&v.operator.token_type, &left_value, &right_value) {
-		(
-			TokenType::Minus,
-			LiteralValue::Number(n1),
-			LiteralValue::Number(n2),
-		) => Ok(InterpreterValue::Number(n1 - n2)),
-		(
-			TokenType::Slash,
-			LiteralValue::Number(n1),
-			LiteralValue::Number(n2),
-		) => Ok(InterpreterValue::Number(n1 / n2)),
-		(
-			TokenType::Star,
-			LiteralValue::Number(n1),
-			LiteralValue::Number(n2),
-		) => Ok(InterpreterValue::Number(n1 * n2)),
-		(
-			TokenType::Plus,
-			LiteralValue::Number(n1),
-			LiteralValue::Number(n2),
-		) => Ok(InterpreterValue::Number(n1 + n2)),
-		(
-			TokenType::Plus,
-			LiteralValue::String(s1),
-			LiteralValue::String(s2),
-		) => Ok(InterpreterValue::String(s1.to_owned() + s2)),
-		(
-			TokenType::Greater,
-			LiteralValue::Number(n1),
-			LiteralValue::Number(n2),
-		) => Ok((n1 > n2).into()),
-		(
-			TokenType::GreaterEqual,
-			LiteralValue::Number(n1),
-			LiteralValue::Number(n2),
-		) => Ok((n1 >= n2).into()),
-		(
-			TokenType::Less,
-			LiteralValue::Number(n1),
-			LiteralValue::Number(n2),
-		) => Ok((n1 < n2).into()),
-		(
-			TokenType::LessEqual,
-			LiteralValue::Number(n1),
-			LiteralValue::Number(n2),
-		) => Ok((n1 <= n2).into()),
-		(TokenType::BangEqual, _, _) => Ok((left_value != right_value).into()),
-		(TokenType::EqualEqual, _, _) => Ok((left_value == right_value).into()),
+	// im sorry for this, but i found that the nested matches require
+	// much simpler patterns,
+	// and with this, i can achieve less comparisons overall
+	match v.operator.token_type {
+		TokenType::BangEqual => Ok((left_value != right_value).into()),
+		TokenType::EqualEqual => Ok((left_value == right_value).into()),
 
-		// same kind of error as up above, but with binary explanation
-		_ => Err(()),
+		_ => match (&left_value, &right_value) {
+			(LiteralValue::Number(n1), LiteralValue::Number(n2)) => {
+				match v.operator.token_type {
+					TokenType::Minus => Ok(InterpreterValue::Number(n1 - n2)),
+					TokenType::Slash => Ok(InterpreterValue::Number(n1 / n2)),
+					TokenType::Star => Ok(InterpreterValue::Number(n1 * n2)),
+					TokenType::Plus => Ok(InterpreterValue::Number(n1 + n2)),
+					TokenType::Greater => Ok((n1 > n2).into()),
+					TokenType::GreaterEqual => Ok((n1 >= n2).into()),
+					TokenType::Less => Ok((n1 < n2).into()),
+					TokenType::LessEqual => Ok((n1 <= n2).into()),
+
+					_ => Err(()),
+				}
+			}
+			(LiteralValue::String(s1), LiteralValue::String(s2)) => {
+				if v.operator.token_type == TokenType::Plus {
+					Ok(InterpreterValue::String(s1.to_owned() + s2))
+				} else {
+					Err(())
+				}
+			}
+
+			// error bby
+			_ => Err(()),
+		},
 	}
 }
