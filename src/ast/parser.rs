@@ -37,7 +37,7 @@ fn build_binary_expr(
 
 		expr = Expr::Binary(BinaryValue {
 			left: Box::new(expr),
-			operator: operator,
+			operator,
 			right: Box::new(right),
 		});
 	}
@@ -46,6 +46,8 @@ fn build_binary_expr(
 }
 
 // call only if the token that the parser choked on is not ';'
+// TODO: delete that
+#[allow(dead_code)]
 fn synchronize(tokens: ParserIter) {
 	while let Some(token) = tokens.peek() {
 		match token.token_type {

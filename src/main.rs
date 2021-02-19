@@ -2,14 +2,13 @@ use std::{env, process};
 
 use jlox;
 
-use exitcode;
-
 
 fn main() {
 	let args: Vec<String> = env::args().collect();
 
 	let args_len = args.len();
 
+	// TODO: rebuild this whole section
 	if args_len > 2 {
 		// TODO: exec all scripts in the order they're passed maybe???
 		println!("Usage: jlox [script] <-- notice, only one script dummy");

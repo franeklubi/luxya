@@ -10,9 +10,11 @@ main:
 	cargo build
 
 run:
+	cargo clippy
 	cargo run
 
 sample:
+	cargo clippy
 	cargo run -- ${sample_program_path}
 
 fmt:

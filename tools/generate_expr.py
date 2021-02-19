@@ -1,5 +1,4 @@
 from typing import List, Tuple, Optional
-from sys import exit
 
 
 ArrowExpr = Tuple[str, Optional[str]]
@@ -8,7 +7,7 @@ def generate_ast(
 	base_name: str,
 	types: List[str],
 	imports: List[str],
-	literal_types_name: str,
+	literal_types_name: Optional[str],
 	literal_types: List[str],
 ) -> str:
 	generated_file: str = ''
@@ -20,22 +19,23 @@ def generate_ast(
 	generated_file += '\n'
 
 	# generate literal values
-	generated_file += '#[derive(Clone, PartialEq)]pub enum {} {{\n'.format(literal_types_name)
+	if literal_types_name != None:
+		generated_file += '#[derive(Clone, PartialEq)]pub enum {} {{\n'.format(literal_types_name)
 
-	for l in literal_types:
-		lv = parse_arrow_expr(l)
+		for l in literal_types:
+			lv = parse_arrow_expr(l)
 
-		if lv is None:
-			continue
+			if lv is None:
+				continue
 
-		generated_file += '\t' + lv[0]
+			generated_file += '\t' + lv[0]
 
-		if lv[1] != None:
-			generated_file += '({})'.format(lv[1])
+			if lv[1] != None:
+				generated_file += '({})'.format(lv[1])
 
-		generated_file += ',\n'
+			generated_file += ',\n'
 
-	generated_file += '}\n\n'
+		generated_file += '}\n\n'
 
 	enum_members: List[ArrowExpr] = []
 
@@ -94,7 +94,7 @@ def parse_arrow_expr(expr: str) -> Optional[ArrowExpr]:
 	return (p1, p2)
 
 
-def main() -> None:
+def gen_expr() -> str:
 	to_generate = [
 		'Binary	-> left: Box<Expr>, operator: Token, right: Box<Expr>',
 		'Grouping	-> expression: Box<Expr>',
@@ -114,7 +114,7 @@ def main() -> None:
 		'Nil',
 	]
 
-	generated = generate_ast(
+	return generate_ast(
 		'Expr',
 		to_generate,
 		imports,
@@ -122,7 +122,35 @@ def main() -> None:
 		literal_types,
 	)
 
-	print(generated, end='')
+
+def gen_stmt() -> str:
+	to_generate = [
+		'Expression	-> expression: Box<Expr>',
+		'Print	-> expression: Box<Expr>',
+	]
+
+	imports = [
+		'crate::ast::expr::Expr',
+	]
+
+	literal_types: List[str] = []
+
+	return generate_ast(
+		'Stmt',
+		to_generate,
+		imports,
+		None,
+		literal_types,
+	)
+
+def write_to_file(text: str, path: str) -> None:
+	with open(path, 'w') as f:
+		f.write(text)
+
+
+def main() -> None:
+	write_to_file(gen_expr(), './src/ast/expr.rs')
+	write_to_file(gen_stmt(), './src/ast/stmt.rs')
 
 
 if __name__ == '__main__':
