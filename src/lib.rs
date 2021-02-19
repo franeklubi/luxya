@@ -9,24 +9,24 @@ mod scanner;
 mod token;
 
 pub enum RunError {
-	IO(io::Error),
-	EXEC,
+	Io(io::Error),
+	Exec,
 }
 
 impl From<io::Error> for RunError {
 	fn from(e: io::Error) -> Self {
-		RunError::IO(e)
+		RunError::Io(e)
 	}
 }
 
-pub fn run_file(path: &String) -> Result<(), RunError> {
+pub fn run_file(path: &str) -> Result<(), RunError> {
 	let mut f = fs::File::open(path)?;
 
 	let mut buffer = String::new();
 	f.read_to_string(&mut buffer)?;
 
 	if let true = run(buffer) {
-		return Err(RunError::EXEC);
+		return Err(RunError::Exec);
 	};
 
 	Ok(())
@@ -40,7 +40,7 @@ pub fn run_prompt() -> Result<(), io::Error> {
 		let mut buffer = String::new();
 		io::stdin().read_line(&mut buffer)?;
 
-		if buffer.len() == 0 {
+		if buffer.is_empty() {
 			break;
 		}
 
@@ -61,7 +61,7 @@ pub fn run_prompt() -> Result<(), io::Error> {
 fn run(source: String) -> bool {
 	let (tokens, errors) = scanner::scan_tokens(&source);
 
-	if errors.len() > 0 {
+	if !errors.is_empty() {
 		println!("SCAN ERRORS:");
 	}
 	errors.iter().enumerate().for_each(|(index, error)| {
@@ -86,7 +86,7 @@ fn run(source: String) -> bool {
 		}
 	}
 
-	errors.len() > 0
+	!errors.is_empty()
 }
 
 // TODO: delete that allow

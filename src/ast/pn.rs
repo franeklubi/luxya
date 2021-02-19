@@ -21,8 +21,8 @@ pub fn pn_stringify_tree(expr: &Expr) -> String {
 }
 
 // fn pn_gen(name: String, expr: &Box<Expr>) -> String {
-fn pn_gen(name: String, exprs: Vec<&Box<Expr>>) -> String {
-	let mut res = String::from(format!("({}", name));
+fn pn_gen(name: String, exprs: Vec<&Expr>) -> String {
+	let mut res = format!("({}", name);
 
 	exprs.iter().for_each(|expr| {
 		res += " ";

@@ -71,7 +71,7 @@ fn consume_while_peek(
 // consumes the next token's chars
 fn scan_token(
 	chars: &mut iter::Peekable<str::CharIndices>,
-	source: &String,
+	source: &str,
 ) -> Option<Result<token::Token, ScanError>> {
 	while let Some((i, c)) = chars.next() {
 		// We should be at the beginning of the next lexeme
@@ -154,9 +154,7 @@ fn scan_token(
 				Err(_) => {
 					return Some(Err(ScanError {
 						offset: i,
-						message: String::from(format!(
-							"Unterminated string literal"
-						)),
+						message: "Unterminated string literal".to_owned(),
 					}));
 				}
 			},
@@ -166,7 +164,7 @@ fn scan_token(
 			// it's that problematic for me rn
 			c if c.is_ascii_digit() => {
 				let consume_closure = |peek: &char| -> bool {
-					return *peek == '.' || peek.is_ascii_digit();
+					*peek == '.' || peek.is_ascii_digit()
 				};
 
 				match consume_while_peek(chars, consume_closure) {
@@ -192,9 +190,8 @@ fn scan_token(
 					Err(_) => {
 						return Some(Err(ScanError {
 							offset: i,
-							message: String::from(format!(
-								"I mean, the unterminated number hmm 🤔"
-							)),
+							message: "I mean, the unterminated number hmm 🤔"
+								.to_owned(),
 						}));
 					}
 				}
@@ -216,7 +213,7 @@ fn scan_token(
 			_ => {
 				return Some(Err(ScanError {
 					offset: i,
-					message: String::from(format!("Unexpected token {:?}", c)),
+					message: format!("Unexpected token {:?}", c),
 				}));
 			}
 		};
@@ -232,7 +229,7 @@ fn scan_token(
 	None
 }
 
-pub fn scan_tokens(source: &String) -> (Vec<token::Token>, Vec<ScanError>) {
+pub fn scan_tokens(source: &str) -> (Vec<token::Token>, Vec<ScanError>) {
 	let mut tokens = vec![];
 	let mut errors = vec![];
 

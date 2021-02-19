@@ -14,14 +14,14 @@ pub fn parse_next(tokens: ParserIter) -> Result<Expr, ParseError> {
 	expression(tokens)
 }
 
-fn match_token_type(t: &TokenType, against: &Vec<TokenType>) -> bool {
+fn match_token_type(t: &TokenType, against: &[TokenType]) -> bool {
 	against.iter().any(|a| a == t)
 }
 
 fn build_binary_expr(
 	tokens: ParserIter,
 	lower_precedence: impl Fn(ParserIter) -> Result<Expr, ParseError>,
-	types_to_match: &Vec<TokenType>,
+	types_to_match: &[TokenType],
 ) -> Result<Expr, ParseError> {
 	let mut expr = lower_precedence(tokens)?;
 
@@ -86,7 +86,7 @@ fn equality(tokens: ParserIter) -> Result<Expr, ParseError> {
 	build_binary_expr(
 		tokens,
 		comparison,
-		&vec![TokenType::BangEqual, TokenType::EqualEqual],
+		&[TokenType::BangEqual, TokenType::EqualEqual],
 	)
 }
 
@@ -94,7 +94,7 @@ fn comparison(tokens: ParserIter) -> Result<Expr, ParseError> {
 	build_binary_expr(
 		tokens,
 		term,
-		&vec![
+		&[
 			TokenType::Greater,
 			TokenType::GreaterEqual,
 			TokenType::Less,
@@ -104,18 +104,18 @@ fn comparison(tokens: ParserIter) -> Result<Expr, ParseError> {
 }
 
 fn term(tokens: ParserIter) -> Result<Expr, ParseError> {
-	build_binary_expr(tokens, factor, &vec![TokenType::Minus, TokenType::Plus])
+	build_binary_expr(tokens, factor, &[TokenType::Minus, TokenType::Plus])
 }
 
 fn factor(tokens: ParserIter) -> Result<Expr, ParseError> {
-	build_binary_expr(tokens, unary, &vec![TokenType::Slash, TokenType::Star])
+	build_binary_expr(tokens, unary, &[TokenType::Slash, TokenType::Star])
 }
 
 fn unary(tokens: ParserIter) -> Result<Expr, ParseError> {
 	if let Some(operator) = tokens.peek() {
 		if !match_token_type(
 			&operator.token_type,
-			&vec![TokenType::Bang, TokenType::Minus],
+			&[TokenType::Bang, TokenType::Minus],
 		) {
 			return primary(tokens);
 		}

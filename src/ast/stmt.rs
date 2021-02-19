@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use crate::ast::expr::Expr;
 
 pub struct ExpressionValue {
