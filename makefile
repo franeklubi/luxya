@@ -9,28 +9,31 @@ generate_expr_path=./tools/generate_expr.py
 main:
 	cargo build
 
+clippy:
+	cargo clippy --all-features -- -D warnings
+
 run:
-	cargo clippy
+	make -s clippy
 	cargo run
 
 sample:
-	cargo clippy
+	make -s clippy
 	cargo run -- ${sample_program_path}
 
 fmt:
 	cargo fmt
 
 watch:
-	cargo watch -x "fmt; clear; make -si run"
+	cargo watch -x "fmt; clear; make -s run"
 
 watch_sample:
-	cargo watch -x "fmt; clear; make -si sample"
+	cargo watch -x "fmt; clear; make -s sample"
 
 generate: ${generate_expr_path}
 	python3 ${generate_expr_path}
 
 generate_check: ${generate_expr_path}
-	mypy --check-untyped-defs ${generate_expr_path} && make -si generate
+	mypy --check-untyped-defs ${generate_expr_path} && make -s generate
 
 watch_generate: ${generate_expr_path}
-	echo ${generate_expr_path} | entr -c make -si generate_check
+	echo ${generate_expr_path} | entr -c make -s generate_check
