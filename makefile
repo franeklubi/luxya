@@ -10,24 +10,27 @@ main:
 	cargo build
 
 clippy:
+	clear
 	cargo clippy --all-features -- -D warnings
 
 run:
 	make -s clippy
+	clear
 	cargo run
 
 sample:
 	make -s clippy
+	clear
 	cargo run -- ${sample_program_path}
 
 fmt:
 	cargo fmt
 
 watch:
-	cargo watch -x "fmt; clear; make -s run"
+	cargo watch -x "fmt; make -s run"
 
 watch_sample:
-	cargo watch -x "fmt; clear; make -s sample"
+	cargo watch -x "fmt; make -s sample"
 
 generate: ${generate_expr_path}
 	python3 ${generate_expr_path}
