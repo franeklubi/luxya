@@ -10,6 +10,26 @@ pub struct ParseError {
 	pub message: String,
 }
 
+fn match_token_type(t: &TokenType, to: &[TokenType]) -> bool {
+	to.iter().any(|a| a == t)
+}
+
+/// Tries peek of ParserIter against provided token types
+///
+/// Returns `Some(Token)` if successful and consumes the token, `None` otherwise
+fn match_then_consume(tokens: ParserIter, to: &[TokenType]) -> Option<Token> {
+	if let Some(token) = tokens.peek() {
+		if match_token_type(&token.token_type, to) {
+			// consume the token that was matched
+			Some(tokens.next().unwrap())
+		} else {
+			None
+		}
+	} else {
+		None
+	}
+}
+
 pub fn parse(tokens: Vec<Token>) -> (Vec<Stmt>, Vec<ParseError>) {
 	let mut tokens = tokens.into_iter().peekable();
 
@@ -22,16 +42,13 @@ pub fn parse(tokens: Vec<Token>) -> (Vec<Stmt>, Vec<ParseError>) {
 		}
 
 		match statement(&mut tokens) {
-			Ok(s) => statements.push(s),
+			Ok(Some(s)) => statements.push(s),
 			Err(s) => errors.push(s),
+			_ => (),
 		}
 	}
 
 	(statements, errors)
-}
-
-fn match_token_type(t: &TokenType, against: &[TokenType]) -> bool {
-	against.iter().any(|a| a == t)
 }
 
 fn build_binary_expr(
@@ -94,21 +111,44 @@ fn synchronize(tokens: ParserIter) {
 
 // grammar functions down there 👇
 
-fn statement(tokens: ParserIter) -> Result<Stmt, ParseError> {
-	if let Some(Token {
-		token_type: TokenType::Print,
-		..
-	}) = tokens.peek()
-	{
-		tokens.next();
+/// Statement is the first grammar function.
+///
+/// It is the only function that can return Ok(None)
+fn statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
+	let consumed_token =
+		match_then_consume(tokens, &[TokenType::Print, TokenType::Semicolon]);
 
-		Ok(Stmt::Print(PrintValue {
-			expression: Box::new(expression(tokens)?),
-		}))
-	} else {
-		Ok(Stmt::Expression(ExpressionValue {
-			expression: Box::new(expression(tokens)?),
-		}))
+	let token_type = consumed_token.map(|ct| ct.token_type);
+
+	match token_type {
+		Some(TokenType::Print) => {
+			let stmt = Stmt::Print(PrintValue {
+				expression: Box::new(expression(tokens)?),
+			});
+
+			match_then_consume(tokens, &[TokenType::Semicolon, TokenType::Eof])
+				.ok_or(ParseError {
+					message: "`;` expected".to_owned(),
+					token: tokens.peek().cloned(),
+				})?;
+
+			Ok(Some(stmt))
+		}
+		// that's an empty statement of sorts 🤔
+		Some(TokenType::Semicolon) => Ok(None),
+		_ => {
+			let stmt = Stmt::Expression(ExpressionValue {
+				expression: Box::new(expression(tokens)?),
+			});
+
+			match_then_consume(tokens, &[TokenType::Semicolon, TokenType::Eof])
+				.ok_or(ParseError {
+					message: "`;` expected".to_owned(),
+					token: tokens.peek().cloned(),
+				})?;
+
+			Ok(Some(stmt))
+		}
 	}
 }
 
