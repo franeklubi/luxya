@@ -1,4 +1,4 @@
-use crate::ast::expr::*;
+use crate::ast::{expr::*, stmt::*};
 use crate::token::*;
 use std::{iter, vec};
 
@@ -10,8 +10,24 @@ pub struct ParseError {
 	pub message: String,
 }
 
-pub fn parse_next(tokens: ParserIter) -> Result<Expr, ParseError> {
-	expression(tokens)
+pub fn parse(tokens: Vec<Token>) -> (Vec<Stmt>, Vec<ParseError>) {
+	let mut tokens = tokens.into_iter().peekable();
+
+	let mut statements = Vec::new();
+	let mut errors = Vec::new();
+
+	while let Some(token) = tokens.peek() {
+		if token.token_type == TokenType::Eof {
+			break;
+		}
+
+		match statement(&mut tokens) {
+			Ok(s) => statements.push(s),
+			Err(s) => errors.push(s),
+		}
+	}
+
+	(statements, errors)
 }
 
 fn match_token_type(t: &TokenType, against: &[TokenType]) -> bool {
@@ -77,6 +93,24 @@ fn synchronize(tokens: ParserIter) {
 }
 
 // grammar functions down there 👇
+
+fn statement(tokens: ParserIter) -> Result<Stmt, ParseError> {
+	if let Some(Token {
+		token_type: TokenType::Print,
+		..
+	}) = tokens.peek()
+	{
+		tokens.next();
+
+		Ok(Stmt::Print(PrintValue {
+			expression: Box::new(expression(tokens)?),
+		}))
+	} else {
+		Ok(Stmt::Expression(ExpressionValue {
+			expression: Box::new(expression(tokens)?),
+		}))
+	}
+}
 
 fn expression(tokens: ParserIter) -> Result<Expr, ParseError> {
 	equality(tokens)

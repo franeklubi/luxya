@@ -45,7 +45,7 @@ pub fn run_prompt() -> Result<(), io::Error> {
 		}
 
 		if run(buffer) {
-			eprintln!("Errors occurred, expression not merged.")
+			eprintln!("Errors occurred, statement not merged.")
 		}
 	}
 
@@ -59,34 +59,41 @@ pub fn run_prompt() -> Result<(), io::Error> {
 // bool indicates if any error(s) occurred, but maybe it should return errors?
 // errors would have to be handled outside and not printed outright
 fn run(source: String) -> bool {
-	let (tokens, errors) = scanner::scan_tokens(&source);
+	let (tokens, scan_errors) = scanner::scan_tokens(&source);
 
-	if !errors.is_empty() {
+	if !scan_errors.is_empty() {
 		println!("SCAN ERRORS:");
 	}
-	errors.iter().enumerate().for_each(|(index, error)| {
+	scan_errors.iter().enumerate().for_each(|(index, error)| {
 		println!("{}: {}", index, error.message);
 	});
 
-	let mut to_parse = tokens.into_iter().peekable();
+	// tokens.iter().enumerate().for_each(|(index, token)| {
+	// 	println!("{}: {}", index, token);
+	// });
 
-	let tree = ast::parse_next(&mut to_parse);
+	let (statements, parse_errors) = ast::parse(tokens);
 
-	// that's a rzeźba
-	match tree {
-		Ok(t) => {
-			println!("Tree:\n{}", ast::pn_stringify_tree(&t));
-			match ast::evaluate(&t) {
-				Ok(v) => println!("{}", v),
-				Err(e) => error(0, e.message),
-			}
-		}
-		Err(s) => {
-			println!("Parse error: {}", s.message);
-		}
+	if !parse_errors.is_empty() {
+		println!("PARSE ERRORS:");
 	}
+	parse_errors.iter().enumerate().for_each(|(index, error)| {
+		println!("{}: {:?}", index, error.token);
+	});
 
-	!errors.is_empty()
+	statements.iter().enumerate().for_each(
+		// |(index, stmt)| match ast::evaluate(&stmt) {
+		// 	Ok(v) => println!("{}: {}", index, v),
+		// 	Err(e) => error(index as u32, e.message),
+		// },
+		|(index, stmt)| {
+			if let Err(e) = ast::evaluate(&stmt) {
+				error(index as u32, e.message)
+			}
+		},
+	);
+
+	!scan_errors.is_empty() || !parse_errors.is_empty()
 }
 
 // TODO: delete that allow

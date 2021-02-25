@@ -1,4 +1,4 @@
-use crate::ast::expr::*;
+use crate::ast::{expr::*, stmt::*};
 use crate::token::*;
 
 use std::fmt;
@@ -15,9 +15,9 @@ type InterpreterValue = LiteralValue;
 impl From<bool> for InterpreterValue {
 	fn from(v: bool) -> Self {
 		if v {
-			LiteralValue::True
+			InterpreterValue::True
 		} else {
-			LiteralValue::False
+			InterpreterValue::False
 		}
 	}
 }
@@ -34,17 +34,32 @@ impl fmt::Display for InterpreterValue {
 	}
 }
 
-pub fn evaluate(expr: &Expr) -> Result<InterpreterValue, RuntimeError> {
+pub fn evaluate(stmt: &Stmt) -> Result<InterpreterValue, RuntimeError> {
+	match stmt {
+		Stmt::Expression(v) => eval_expression(&v.expression),
+		Stmt::Print(v) => {
+			let evaluated = eval_expression(&v.expression);
+
+			if let Ok(value) = &evaluated {
+				println!("{}", value);
+			}
+
+			evaluated
+		}
+	}
+}
+
+pub fn eval_expression(expr: &Expr) -> Result<InterpreterValue, RuntimeError> {
 	match expr {
 		Expr::Literal(v) => Ok(v.clone()),
-		Expr::Grouping(v) => evaluate(&v.expression),
+		Expr::Grouping(v) => eval_expression(&v.expression),
 		Expr::Unary(v) => eval_unary(v),
 		Expr::Binary(v) => eval_binary(v),
 	}
 }
 
 fn eval_unary(v: &UnaryValue) -> Result<InterpreterValue, RuntimeError> {
-	let right_value = evaluate(&v.right)?;
+	let right_value = eval_expression(&v.right)?;
 
 	match (&v.operator.token_type, &right_value) {
 		(TokenType::Minus, LiteralValue::Number(n)) => {
@@ -65,8 +80,8 @@ fn eval_unary(v: &UnaryValue) -> Result<InterpreterValue, RuntimeError> {
 }
 
 fn eval_binary(v: &BinaryValue) -> Result<InterpreterValue, RuntimeError> {
-	let left_value = evaluate(&v.left)?;
-	let right_value = evaluate(&v.right)?;
+	let left_value = eval_expression(&v.left)?;
+	let right_value = eval_expression(&v.right)?;
 
 	// im sorry for this, but i found that the nested matches require
 	// much simpler patterns,

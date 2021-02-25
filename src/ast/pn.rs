@@ -1,5 +1,6 @@
 use crate::ast::expr::*;
 
+#[allow(dead_code)]
 pub fn pn_stringify_tree(expr: &Expr) -> String {
 	match expr {
 		Expr::Binary(v) => pn_gen(
@@ -20,7 +21,7 @@ pub fn pn_stringify_tree(expr: &Expr) -> String {
 	}
 }
 
-// fn pn_gen(name: String, expr: &Box<Expr>) -> String {
+#[allow(dead_code)]
 fn pn_gen(name: String, exprs: Vec<&Expr>) -> String {
 	let mut res = format!("({}", name);
 
