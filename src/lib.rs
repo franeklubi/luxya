@@ -78,7 +78,7 @@ fn run(source: String) -> bool {
 		println!("PARSE ERRORS:");
 	}
 	parse_errors.iter().enumerate().for_each(|(index, error)| {
-		println!("{}: {:?}", index, error.token);
+		println!("{}: {} at {:?}", index, error.message, error.token);
 	});
 
 	statements.iter().enumerate().for_each(
