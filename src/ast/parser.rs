@@ -282,18 +282,11 @@ fn primary(tokens: ParserIter) -> Result<Expr, ParseError> {
 		}) => {
 			let expr = expression(tokens)?;
 
-			match tokens.peek() {
-				Some(Token {
-					token_type: TokenType::RightParen,
-					..
-				}) => Ok(Expr::Grouping(GroupingValue {
+			expect(tokens, &[TokenType::RightParen], None).and(Ok(
+				Expr::Grouping(GroupingValue {
 					expression: Box::new(expr),
-				})),
-				_ => Err(ParseError {
-					token,
-					message: "Expected ')'".into(),
 				}),
-			}
+			))
 		}
 
 		_ => Err(ParseError {
