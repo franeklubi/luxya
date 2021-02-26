@@ -25,11 +25,11 @@ impl From<bool> for InterpreterValue {
 impl fmt::Display for InterpreterValue {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		match self {
-			LiteralValue::String(s) => write!(f, "{:?}", s),
-			LiteralValue::Number(n) => write!(f, "{}", n),
-			LiteralValue::Nil => write!(f, "nil"),
-			LiteralValue::True => write!(f, "true"),
-			LiteralValue::False => write!(f, "false"),
+			InterpreterValue::String(s) => write!(f, "{:?}", s),
+			InterpreterValue::Number(n) => write!(f, "{}", n),
+			InterpreterValue::Nil => write!(f, "nil"),
+			InterpreterValue::True => write!(f, "true"),
+			InterpreterValue::False => write!(f, "false"),
 		}
 	}
 }

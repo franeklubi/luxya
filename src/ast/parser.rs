@@ -21,16 +21,10 @@ fn match_then_consume(
 	tokens: ParserIter,
 	expected: &[TokenType],
 ) -> Option<Token> {
-	if let Some(token) = tokens.peek() {
-		if match_token_type(&token.token_type, expected) {
-			// consume the token that was matched
-			Some(tokens.next().unwrap())
-		} else {
-			None
-		}
-	} else {
-		None
-	}
+	tokens
+		.peek()
+		.map(|t| match_token_type(&t.token_type, expected))
+		.and_then(|b| b.then(|| tokens.next().unwrap()))
 }
 
 fn expect(
