@@ -88,11 +88,7 @@ fn run(source: String) -> bool {
 		println!("{}: {} at {:?}", index, error.message, error.token);
 	});
 
-	statements.iter().enumerate().for_each(|(index, stmt)| {
-		if let Err(e) = ast::evaluate(&stmt) {
-			error(index as u32, e.message)
-		}
-	});
+	ast::interpret(&statements);
 
 	!scan_errors.is_empty() || !parse_errors.is_empty()
 }

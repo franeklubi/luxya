@@ -10,6 +10,11 @@ pub struct RuntimeError {
 
 // TODO: later, use other enum than LiteralValue
 // but it'll do for now
+//
+// IDEAS TODO:
+// - LiteralValue should know if it's a child of some identifier or smth
+// - If it is /\, then we can print the identifier, rather than it's value
+// - Should mimic LiteralValue's fields
 type InterpreterValue = LiteralValue;
 
 impl From<bool> for InterpreterValue {
@@ -34,7 +39,15 @@ impl fmt::Display for InterpreterValue {
 	}
 }
 
-pub fn evaluate(stmt: &Stmt) -> Result<InterpreterValue, RuntimeError> {
+pub fn interpret(statements: &[Stmt]) {
+	statements.iter().enumerate().for_each(|(index, stmt)| {
+		if let Err(e) = evaluate(&stmt) {
+			println!("Error [{}]:\n\t{}", index, e.message)
+		}
+	});
+}
+
+fn evaluate(stmt: &Stmt) -> Result<InterpreterValue, RuntimeError> {
 	match stmt {
 		Stmt::Expression(v) => eval_expression(&v.expression),
 		Stmt::Print(v) => {
@@ -50,7 +63,7 @@ pub fn evaluate(stmt: &Stmt) -> Result<InterpreterValue, RuntimeError> {
 	}
 }
 
-pub fn eval_expression(expr: &Expr) -> Result<InterpreterValue, RuntimeError> {
+fn eval_expression(expr: &Expr) -> Result<InterpreterValue, RuntimeError> {
 	match expr {
 		Expr::Literal(v) => Ok(v.clone()),
 		Expr::Grouping(v) => eval_expression(&v.expression),
@@ -64,11 +77,15 @@ fn eval_unary(v: &UnaryValue) -> Result<InterpreterValue, RuntimeError> {
 	let right_value = eval_expression(&v.right)?;
 
 	match (&v.operator.token_type, &right_value) {
-		(TokenType::Minus, LiteralValue::Number(n)) => {
+		(TokenType::Minus, InterpreterValue::Number(n)) => {
 			Ok(InterpreterValue::Number(-n))
 		}
-		(TokenType::Bang, LiteralValue::True) => Ok(InterpreterValue::False),
-		(TokenType::Bang, LiteralValue::False) => Ok(InterpreterValue::True),
+		(TokenType::Bang, InterpreterValue::True) => {
+			Ok(InterpreterValue::False)
+		}
+		(TokenType::Bang, InterpreterValue::False) => {
+			Ok(InterpreterValue::True)
+		}
 
 		// TODO: error on how we cant do this to this and etc
 		_ => Err(RuntimeError {
@@ -93,7 +110,7 @@ fn eval_binary(v: &BinaryValue) -> Result<InterpreterValue, RuntimeError> {
 		TokenType::EqualEqual => Ok((left_value == right_value).into()),
 
 		_ => match (&left_value, &right_value) {
-			(LiteralValue::Number(n1), LiteralValue::Number(n2)) => {
+			(InterpreterValue::Number(n1), InterpreterValue::Number(n2)) => {
 				match v.operator.token_type {
 					TokenType::Minus => Ok(InterpreterValue::Number(n1 - n2)),
 					TokenType::Slash => Ok(InterpreterValue::Number(n1 / n2)),
@@ -107,14 +124,14 @@ fn eval_binary(v: &BinaryValue) -> Result<InterpreterValue, RuntimeError> {
 					_ => unreachable!("Scanner did a bad job 😎."),
 				}
 			}
-			(LiteralValue::String(s1), LiteralValue::String(s2)) => {
+			(InterpreterValue::String(s1), InterpreterValue::String(s2)) => {
 				if v.operator.token_type == TokenType::Plus {
 					Ok(InterpreterValue::String(s1.to_owned() + s2))
 				} else {
 					Err(RuntimeError {
 						message: format!(
 							"You cannot use `{}` on two strings. Did you mean \
-							 +?",
+							 `+`?",
 							v.operator.token_type
 						),
 						token: v.operator.clone(),
