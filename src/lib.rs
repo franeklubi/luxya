@@ -44,6 +44,13 @@ pub fn run_prompt() -> Result<(), io::Error> {
 			break;
 		}
 
+		// In REPL mode, we always add `;` at the end so that
+		// the user doesn't have to 😇
+		//
+		// That also saves us the check for EOF, every time I expect
+		// a semicolon
+		buffer += ";";
+
 		if run(buffer) {
 			eprintln!("Errors occurred, statement not merged.")
 		}

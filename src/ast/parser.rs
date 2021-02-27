@@ -57,11 +57,7 @@ fn expect(
 }
 
 fn expect_semicolon(tokens: ParserIter) -> Result<Token, ParseError> {
-	expect(
-		tokens,
-		&[TokenType::Semicolon, TokenType::Eof],
-		Some("Expected `;`"),
-	)
+	expect(tokens, &[TokenType::Semicolon], None)
 }
 
 pub fn parse(tokens: Vec<Token>) -> (Vec<Stmt>, Vec<ParseError>) {
