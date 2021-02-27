@@ -103,11 +103,7 @@ fn synchronize(tokens: ParserIter) {
 			}
 
 			_ => {
-				if let Some(Token {
-					token_type: TokenType::Semicolon,
-					..
-				}) = tokens.next()
-				{
+				if TokenType::Semicolon == tokens.next().unwrap().token_type {
 					break;
 				}
 			}
@@ -161,6 +157,8 @@ fn declaration(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 			} else {
 				None
 			};
+
+		expect_semicolon(tokens)?;
 
 		Ok(Some(Stmt::Declaration(DeclarationValue {
 			mutable: TokenType::Let == matched,
