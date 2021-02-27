@@ -33,20 +33,18 @@ fn expect(
 	override_message: Option<&str>,
 ) -> Result<Token, ParseError> {
 	match_then_consume(tokens, expected).ok_or_else(|| {
-		let message = {
-			if let Some(m) = override_message {
-				m.to_string()
+		let message = if let Some(m) = override_message {
+			m.to_string()
+		} else {
+			let msg = if expected.len() > 1 {
+				"Expected one of: "
 			} else {
-				let msg = if expected.len() > 1 {
-					"Expected one of: "
-				} else {
-					"Expected: "
-				};
+				"Expected: "
+			};
 
-				expected
-					.iter()
-					.fold(msg.to_string(), |acc, tt| acc + &format!("`{}`", tt))
-			}
+			expected
+				.iter()
+				.fold(msg.to_string(), |acc, tt| acc + &format!("`{}`", tt))
 		};
 
 		ParseError {
@@ -58,29 +56,6 @@ fn expect(
 
 fn expect_semicolon(tokens: ParserIter) -> Result<Token, ParseError> {
 	expect(tokens, &[TokenType::Semicolon], None)
-}
-
-pub fn parse(tokens: Vec<Token>) -> (Vec<Stmt>, Vec<ParseError>) {
-	let mut tokens = tokens.into_iter().peekable();
-
-	let mut statements = Vec::new();
-	let mut errors = Vec::new();
-
-	while let Some(token) = tokens.peek() {
-		if token.token_type == TokenType::Eof {
-			break;
-		}
-
-		match statement(&mut tokens) {
-			Ok(Some(s)) => statements.push(s),
-
-			// TODO: synchronize here or smth
-			Err(s) => errors.push(s),
-			_ => (),
-		}
-	}
-
-	(statements, errors)
 }
 
 fn build_binary_expr(
@@ -111,8 +86,7 @@ fn build_binary_expr(
 }
 
 // call only if the token that the parser choked on is not ';'
-// TODO: delete that
-#[allow(dead_code)]
+// TODO: rethink/rewrite this
 fn synchronize(tokens: ParserIter) {
 	while let Some(token) = tokens.peek() {
 		match token.token_type {
@@ -141,11 +115,71 @@ fn synchronize(tokens: ParserIter) {
 	}
 }
 
+pub fn parse(tokens: Vec<Token>) -> (Vec<Stmt>, Vec<ParseError>) {
+	let tokens: ParserIter = &mut tokens.into_iter().peekable();
+
+	let mut statements = Vec::new();
+	let mut errors = Vec::new();
+
+	while let Some(token) = tokens.peek() {
+		if token.token_type == TokenType::Eof {
+			break;
+		}
+
+		match declaration(tokens) {
+			Ok(Some(s)) => statements.push(s),
+
+			Err(s) => {
+				synchronize(tokens);
+
+				errors.push(s);
+			}
+			_ => (),
+		}
+	}
+
+	(statements, errors)
+}
+
 // grammar functions down there 👇
 
-/// Statement is the first grammar function.
-///
-/// It is the only function that can return Ok(None)
+fn declaration(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
+	fn value_declaration(
+		tokens: ParserIter,
+		matched: TokenType,
+	) -> Result<Option<Stmt>, ParseError> {
+		// TODO: optimize expect
+		let name = expect(
+			tokens,
+			&[TokenType::Identifier("".into())],
+			Some("Expected identifier"),
+		)?;
+
+		let initializer =
+			if match_then_consume(tokens, &[TokenType::Equal]).is_some() {
+				Some(Box::new(expression(tokens)?))
+			} else {
+				None
+			};
+
+		Ok(Some(Stmt::Declaration(DeclarationValue {
+			mutable: TokenType::Let == matched,
+			initializer,
+			name,
+		})))
+	}
+
+	if let Some(token) =
+		match_then_consume(tokens, &[TokenType::Let, TokenType::Const])
+	{
+		value_declaration(tokens, token.token_type)
+	} else {
+		statement(tokens)
+	}
+}
+
+/// Statement can not fail and produce None for a statement, because it wouldn't
+/// be significant (e.g. lone `;`)
 fn statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 	fn print_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 		let stmt = Stmt::Print(PrintValue {
@@ -272,12 +306,19 @@ fn primary(tokens: ParserIter) -> Result<Expr, ParseError> {
 		}) => {
 			let expr = expression(tokens)?;
 
-			expect(tokens, &[TokenType::RightParen], None).and(Ok(
-				Expr::Grouping(GroupingValue {
-					expression: Box::new(expr),
-				}),
-			))
+			expect(tokens, &[TokenType::RightParen], None)?;
+
+			Ok(Expr::Grouping(GroupingValue {
+				expression: Box::new(expr),
+			}))
 		}
+
+		Some(Token {
+			token_type: TokenType::Identifier(_),
+			..
+		}) => Ok(Expr::Identifier(IdentifierValue {
+			name: token.unwrap(),
+		})),
 
 		_ => Err(ParseError {
 			token,

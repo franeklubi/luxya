@@ -24,9 +24,14 @@ pub struct UnaryValue {
 	pub right: Box<Expr>,
 }
 
+pub struct IdentifierValue {
+	pub name: Token,
+}
+
 pub enum Expr {
 	Binary(BinaryValue),
 	Grouping(GroupingValue),
 	Literal(LiteralValue),
 	Unary(UnaryValue),
+	Identifier(IdentifierValue),
 }

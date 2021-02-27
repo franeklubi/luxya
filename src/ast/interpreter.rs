@@ -46,6 +46,7 @@ pub fn evaluate(stmt: &Stmt) -> Result<InterpreterValue, RuntimeError> {
 
 			evaluated
 		}
+		Stmt::Declaration(_v) => unimplemented!("VARIABLE DECLARATION"),
 	}
 }
 
@@ -55,6 +56,7 @@ pub fn eval_expression(expr: &Expr) -> Result<InterpreterValue, RuntimeError> {
 		Expr::Grouping(v) => eval_expression(&v.expression),
 		Expr::Unary(v) => eval_unary(v),
 		Expr::Binary(v) => eval_binary(v),
+		Expr::Identifier(_v) => unimplemented!("IDENTIFIER DEREFERENCE"),
 	}
 }
 

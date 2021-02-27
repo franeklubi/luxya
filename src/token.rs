@@ -1,6 +1,6 @@
-use std::fmt;
+use std::{fmt, mem};
 
-#[derive(PartialEq, Clone, Debug)]
+#[derive(Clone, Debug)]
 pub enum TokenType {
 	// Single-character tokens.
 	LeftParen,
@@ -74,8 +74,8 @@ impl fmt::Display for Token {
 impl fmt::Display for TokenType {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		match self {
-			TokenType::Identifier(s) => write!(f, "{}", s),
 			TokenType::String(s) => write!(f, "{:?}", s),
+			TokenType::Identifier(s) => write!(f, "{}", s),
 			TokenType::Number(n) => write!(f, "{:?}", n),
 			TokenType::LeftParen => write!(f, "("),
 			TokenType::RightParen => write!(f, ")"),
@@ -115,5 +115,11 @@ impl fmt::Display for TokenType {
 			TokenType::While => write!(f, "while"),
 			TokenType::Eof => write!(f, "EOF"),
 		}
+	}
+}
+
+impl PartialEq for TokenType {
+	fn eq(&self, other: &Self) -> bool {
+		mem::discriminant(self) == mem::discriminant(other)
 	}
 }

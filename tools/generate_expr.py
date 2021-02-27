@@ -96,10 +96,11 @@ def parse_arrow_expr(expr: str) -> Optional[ArrowExpr]:
 
 def gen_expr() -> str:
 	to_generate = [
-		'Binary	-> left: Box<Expr>, operator: Token, right: Box<Expr>',
-		'Grouping	-> expression: Box<Expr>',
+		'Binary -> left: Box<Expr>, operator: Token, right: Box<Expr>',
+		'Grouping -> expression: Box<Expr>',
 		'Literal(LiteralValue)',
-		'Unary	-> operator: Token, right: Box<Expr>',
+		'Unary -> operator: Token, right: Box<Expr>',
+		'Identifier -> name: Token',
 	]
 
 	imports = [
@@ -107,8 +108,8 @@ def gen_expr() -> str:
 	]
 
 	literal_types = [
-		'String	-> String',
-		'Number	-> f64',
+		'String -> String',
+		'Number -> f64',
 		'True',
 		'False',
 		'Nil',
@@ -125,11 +126,13 @@ def gen_expr() -> str:
 
 def gen_stmt() -> str:
 	to_generate = [
-		'Expression	-> expression: Box<Expr>',
-		'Print	-> expression: Box<Expr>',
+		'Expression -> expression: Box<Expr>',
+		'Print -> expression: Box<Expr>',
+		'Declaration -> name: Token, initializer: Option<Box<Expr>>, mutable: bool',
 	]
 
 	imports = [
+		'crate::token::Token',
 		'crate::ast::expr::Expr',
 	]
 
