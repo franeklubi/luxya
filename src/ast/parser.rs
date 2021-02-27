@@ -145,7 +145,7 @@ fn declaration(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 		matched: TokenType,
 	) -> Result<Option<Stmt>, ParseError> {
 		// TODO: optimize expect
-		let name = expect(
+		let token = expect(
 			tokens,
 			&[TokenType::Identifier("".into())],
 			Some("Expected identifier"),
@@ -161,9 +161,9 @@ fn declaration(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 		expect_semicolon(tokens)?;
 
 		Ok(Some(Stmt::Declaration(DeclarationValue {
-			mutable: TokenType::Let == matched,
+			name: token,
 			initializer,
-			name,
+			mutable: TokenType::Let == matched,
 		})))
 	}
 

@@ -1,12 +1,22 @@
 use crate::ast::{expr::*, stmt::*};
 use crate::token::*;
 
+use std::collections::HashMap;
 use std::fmt;
+
 
 pub struct RuntimeError {
 	pub message: String,
 	pub token: Token,
 }
+
+#[allow(dead_code)]
+struct DeclaredValue {
+	mutable: bool,
+	value: InterpreterValue,
+}
+
+type InterpreterEnvironment<'a> = &'a mut HashMap<String, DeclaredValue>;
 
 // TODO: later, use other enum than LiteralValue
 // but it'll do for now
@@ -39,19 +49,33 @@ impl fmt::Display for InterpreterValue {
 	}
 }
 
+pub fn extract_token_identifier(t: &Token) -> String {
+	if let TokenType::Identifier(i) = &t.token_type {
+		i.to_owned()
+	} else {
+		unreachable!("Couldn't extract identifier")
+	}
+}
+
+
 pub fn interpret(statements: &[Stmt]) {
+	let env: InterpreterEnvironment = &mut HashMap::new();
+
 	statements.iter().enumerate().for_each(|(index, stmt)| {
-		if let Err(e) = evaluate(&stmt) {
+		if let Err(e) = evaluate(&stmt, env) {
 			println!("Error [{}]:\n\t{}", index, e.message)
 		}
 	});
 }
 
-fn evaluate(stmt: &Stmt) -> Result<InterpreterValue, RuntimeError> {
+fn evaluate(
+	stmt: &Stmt,
+	env: InterpreterEnvironment,
+) -> Result<InterpreterValue, RuntimeError> {
 	match stmt {
-		Stmt::Expression(v) => eval_expression(&v.expression),
+		Stmt::Expression(v) => eval_expression(&v.expression, env),
 		Stmt::Print(v) => {
-			let evaluated = eval_expression(&v.expression);
+			let evaluated = eval_expression(&v.expression, env);
 
 			if let Ok(value) = &evaluated {
 				println!("{}", value);
@@ -59,22 +83,53 @@ fn evaluate(stmt: &Stmt) -> Result<InterpreterValue, RuntimeError> {
 
 			evaluated
 		}
-		Stmt::Declaration(_v) => unimplemented!("VARIABLE DECLARATION"),
+		Stmt::Declaration(v) => {
+			// let value = v
+			// 	.initializer
+			// 	.map_or(InterpreterValue::Nil, |i| eval_expression(i, env)?);
+			let value = if let Some(initializer) = &v.initializer {
+				eval_expression(&initializer, env)?
+			} else {
+				InterpreterValue::Nil
+			};
+
+			env.insert(
+				extract_token_identifier(&v.name),
+				DeclaredValue {
+					mutable: v.mutable,
+					value,
+				},
+			);
+
+			// TODO: move the declared value here
+			Ok(InterpreterValue::Nil)
+		}
 	}
 }
 
-fn eval_expression(expr: &Expr) -> Result<InterpreterValue, RuntimeError> {
+fn eval_expression(
+	expr: &Expr,
+	env: InterpreterEnvironment,
+) -> Result<InterpreterValue, RuntimeError> {
 	match expr {
 		Expr::Literal(v) => Ok(v.clone()),
-		Expr::Grouping(v) => eval_expression(&v.expression),
-		Expr::Unary(v) => eval_unary(v),
-		Expr::Binary(v) => eval_binary(v),
-		Expr::Identifier(_v) => unimplemented!("IDENTIFIER DEREFERENCE"),
+		Expr::Grouping(v) => eval_expression(&v.expression, env),
+		Expr::Unary(v) => eval_unary(v, env),
+		Expr::Binary(v) => eval_binary(v, env),
+		Expr::Identifier(_v) => {
+			unimplemented!()
+			// env.get(v.name).ok_or(RuntimeError {
+			// 	token: v.
+			// })
+		}
 	}
 }
 
-fn eval_unary(v: &UnaryValue) -> Result<InterpreterValue, RuntimeError> {
-	let right_value = eval_expression(&v.right)?;
+fn eval_unary(
+	v: &UnaryValue,
+	env: InterpreterEnvironment,
+) -> Result<InterpreterValue, RuntimeError> {
+	let right_value = eval_expression(&v.right, env)?;
 
 	match (&v.operator.token_type, &right_value) {
 		(TokenType::Minus, InterpreterValue::Number(n)) => {
@@ -98,9 +153,12 @@ fn eval_unary(v: &UnaryValue) -> Result<InterpreterValue, RuntimeError> {
 	}
 }
 
-fn eval_binary(v: &BinaryValue) -> Result<InterpreterValue, RuntimeError> {
-	let left_value = eval_expression(&v.left)?;
-	let right_value = eval_expression(&v.right)?;
+fn eval_binary(
+	v: &BinaryValue,
+	env: InterpreterEnvironment,
+) -> Result<InterpreterValue, RuntimeError> {
+	let left_value = eval_expression(&v.left, env)?;
+	let right_value = eval_expression(&v.right, env)?;
 
 	// im sorry for this, but i found that the nested matches require
 	// much simpler patterns,
