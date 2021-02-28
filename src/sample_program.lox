@@ -1,4 +1,5 @@
 const test = "heja";
 print test;
 
-print "siema " + "mati";
+const elo = "test";
+print elo;

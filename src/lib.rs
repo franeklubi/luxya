@@ -66,29 +66,32 @@ pub fn run_prompt() -> Result<(), io::Error> {
 // bool indicates if any error(s) occurred, but maybe it should return errors?
 // errors would have to be handled outside and not printed outright
 fn run(source: String) -> bool {
+	// scanning
 	let (tokens, scan_errors) = scanner::scan_tokens(&source);
 
+	// parsing
+	let (statements, parse_errors) = ast::parse(tokens);
+
+	// interpreting 😇
+	if scan_errors.is_empty() && parse_errors.is_empty() {
+		ast::interpret(&statements);
+	}
+
 	if !scan_errors.is_empty() {
-		println!("SCAN ERRORS:");
+		println!("\nSCAN ERRORS:");
 	}
 	scan_errors.iter().enumerate().for_each(|(index, error)| {
 		println!("{}: {}", index, error.message);
 	});
 
-	// tokens.iter().enumerate().for_each(|(index, token)| {
-	// 	println!("{}: {}", index, token);
-	// });
-
-	let (statements, parse_errors) = ast::parse(tokens);
-
 	if !parse_errors.is_empty() {
-		println!("PARSE ERRORS:");
+		println!("\nPARSE ERRORS:");
 	}
 	parse_errors.iter().enumerate().for_each(|(index, error)| {
 		println!("{}: {} at {:?}", index, error.message, error.token);
 	});
 
-	ast::interpret(&statements);
+	println!();
 
 	!scan_errors.is_empty() || !parse_errors.is_empty()
 }

@@ -87,15 +87,12 @@ fn evaluate(
 			evaluated
 		}
 		Stmt::Declaration(v) => {
-			// let value = v
-			// 	.initializer
-			// 	.map_or(InterpreterValue::Nil, |i| eval_expression(i, env)?);
-
-			let value = if let Some(initializer) = &v.initializer {
-				eval_expression(&initializer, env)?
-			} else {
-				InterpreterValue::Nil
-			};
+			let value = v
+				.initializer
+				.as_ref()
+				.map_or(Ok(InterpreterValue::Nil), |initializer| {
+					eval_expression(&initializer, env)
+				})?;
 
 			env.insert(
 				assert_identifier(&v.name).to_owned(),
@@ -105,7 +102,6 @@ fn evaluate(
 				},
 			);
 
-			// TODO: copy the declared value here
 			Ok(InterpreterValue::Nil)
 		}
 	}
@@ -156,7 +152,6 @@ fn eval_unary(
 			Ok(InterpreterValue::True)
 		}
 
-		// TODO: error on how we cant do this to this and etc
 		_ => Err(RuntimeError {
 			message: format!(
 				"Cannot use `{}` on `{}`",
