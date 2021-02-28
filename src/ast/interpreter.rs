@@ -49,9 +49,9 @@ impl fmt::Display for InterpreterValue {
 	}
 }
 
-pub fn extract_token_identifier(t: &Token) -> String {
+pub fn assert_identifier(t: &Token) -> &String {
 	if let TokenType::Identifier(i) = &t.token_type {
-		i.to_owned()
+		i
 	} else {
 		unreachable!("Couldn't extract identifier")
 	}
@@ -87,6 +87,7 @@ fn evaluate(
 			// let value = v
 			// 	.initializer
 			// 	.map_or(InterpreterValue::Nil, |i| eval_expression(i, env)?);
+
 			let value = if let Some(initializer) = &v.initializer {
 				eval_expression(&initializer, env)?
 			} else {
@@ -94,14 +95,14 @@ fn evaluate(
 			};
 
 			env.insert(
-				extract_token_identifier(&v.name),
+				assert_identifier(&v.name).to_owned(),
 				DeclaredValue {
 					mutable: v.mutable,
 					value,
 				},
 			);
 
-			// TODO: move the declared value here
+			// TODO: copy the declared value here
 			Ok(InterpreterValue::Nil)
 		}
 	}
@@ -116,11 +117,21 @@ fn eval_expression(
 		Expr::Grouping(v) => eval_expression(&v.expression, env),
 		Expr::Unary(v) => eval_unary(v, env),
 		Expr::Binary(v) => eval_binary(v, env),
-		Expr::Identifier(_v) => {
-			unimplemented!()
-			// env.get(v.name).ok_or(RuntimeError {
-			// 	token: v.
-			// })
+		Expr::Identifier(v) => {
+			env.get(assert_identifier(&v.token)).map_or_else(
+				|| {
+					Err(RuntimeError {
+						token: v.token.clone(),
+						message: format!(
+							"Identifier {} not defined",
+							assert_identifier(&v.token)
+						),
+					})
+				},
+				// TODO: very inefficient towards strings :((((
+				// I need to use Cow
+				|dv| Ok(dv.value.clone()),
+			)
 		}
 	}
 }

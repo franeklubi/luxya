@@ -1,15 +1,4 @@
-// comment
-"concat" + " test";
+const test = "heja";
+print test;
 
--"language" == (-"loxie2" / (!!!32 + true - false));
-const language = "lox";
-
-// this will not work for a while
-// let 😍 = "🥰";
-
-let a = 1;
-let c = (123);
-
-// errors
-let b = 4343.321.2;
-let _e_lo = "aaaa
+print "siema " + "mati";
