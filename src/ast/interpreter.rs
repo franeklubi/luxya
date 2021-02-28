@@ -49,11 +49,14 @@ impl fmt::Display for InterpreterValue {
 	}
 }
 
+// A shorthand way to extract identifier's name
+//
+// TODO: Will probably disappear when Cow gets here
 pub fn assert_identifier(t: &Token) -> &String {
 	if let TokenType::Identifier(i) = &t.token_type {
 		i
 	} else {
-		unreachable!("Couldn't extract identifier")
+		unreachable!("Couldn't extract identifier. This shouldn't happen")
 	}
 }
 
