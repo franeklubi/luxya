@@ -1,8 +1,7 @@
 use crate::ast::{expr::*, stmt::*};
 use crate::token::*;
 
-use std::collections::HashMap;
-use std::fmt;
+use std::{collections::HashMap, fmt, rc};
 
 
 pub struct RuntimeError {
@@ -22,10 +21,17 @@ type InterpreterEnvironment<'a> = &'a mut HashMap<String, DeclaredValue>;
 // but it'll do for now
 //
 // IDEAS TODO:
-// - LiteralValue should know if it's a child of some identifier or smth
+// - InterpreterValue should know if it's a child of some identifier or smth
 // - If it is /\, then we can print the identifier, rather than it's value
 // - Should mimic LiteralValue's fields
-type InterpreterValue = LiteralValue;
+#[derive(Clone, PartialEq)]
+enum InterpreterValue {
+	String(rc::Rc<str>),
+	Number(f64),
+	True,
+	False,
+	Nil,
+}
 
 impl From<bool> for InterpreterValue {
 	fn from(v: bool) -> Self {
@@ -33,6 +39,20 @@ impl From<bool> for InterpreterValue {
 			InterpreterValue::True
 		} else {
 			InterpreterValue::False
+		}
+	}
+}
+
+impl From<LiteralValue> for InterpreterValue {
+	fn from(v: LiteralValue) -> Self {
+		match v {
+			LiteralValue::String(s) => {
+				InterpreterValue::String(rc::Rc::from(s))
+			}
+			LiteralValue::Number(n) => InterpreterValue::Number(n),
+			LiteralValue::True => InterpreterValue::True,
+			LiteralValue::False => InterpreterValue::False,
+			LiteralValue::Nil => InterpreterValue::Nil,
 		}
 	}
 }
@@ -112,7 +132,7 @@ fn eval_expression(
 	env: InterpreterEnvironment,
 ) -> Result<InterpreterValue, RuntimeError> {
 	match expr {
-		Expr::Literal(v) => Ok(v.clone()),
+		Expr::Literal(v) => Ok(v.clone().into()),
 		Expr::Grouping(v) => eval_expression(&v.expression, env),
 		Expr::Unary(v) => eval_unary(v, env),
 		Expr::Binary(v) => eval_binary(v, env),
@@ -127,8 +147,6 @@ fn eval_expression(
 						),
 					})
 				},
-				// TODO: very inefficient towards strings :((((
-				// I need to use Cow
 				|dv| Ok(dv.value.clone()),
 			)
 		}
@@ -193,7 +211,9 @@ fn eval_binary(
 			}
 			(InterpreterValue::String(s1), InterpreterValue::String(s2)) => {
 				if v.operator.token_type == TokenType::Plus {
-					Ok(InterpreterValue::String(s1.to_owned() + s2))
+					Ok(InterpreterValue::String(rc::Rc::from(
+						s1.to_string() + s2,
+					)))
 				} else {
 					Err(RuntimeError {
 						message: format!(
