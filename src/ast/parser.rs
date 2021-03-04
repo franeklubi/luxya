@@ -58,7 +58,6 @@ fn expect_semicolon(tokens: ParserIter) -> Result<Token, ParseError> {
 	expect(tokens, &[TokenType::Semicolon], None)
 }
 
-// TODO: update this
 fn build_binary_expr(
 	tokens: ParserIter,
 	lower_precedence: impl Fn(ParserIter) -> Result<Expr, ParseError>,
@@ -66,14 +65,7 @@ fn build_binary_expr(
 ) -> Result<Expr, ParseError> {
 	let mut expr = lower_precedence(tokens)?;
 
-	while let Some(operator) = tokens.peek() {
-		if !match_token_type(&operator.token_type, types_to_match) {
-			break;
-		}
-
-		// if the peek matches we consume it
-		let operator = tokens.next().unwrap();
-
+	while let Some(operator) = match_then_consume(tokens, types_to_match) {
 		let right = lower_precedence(tokens)?;
 
 		expr = Expr::Binary(BinaryValue {
