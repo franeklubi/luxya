@@ -147,6 +147,7 @@ fn eval_expression(
 				|dv| Ok(dv.value.clone()),
 			)
 		}
+		Expr::Assignment(_v) => unimplemented!("Assignment"),
 	}
 }
 

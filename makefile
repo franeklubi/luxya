@@ -4,7 +4,7 @@ ifndef VERBOSE
 endif
 
 sample_program_path=./src/sample_program.lox
-generate_expr_path=./tools/generate_expr.py
+generate_ast_path=./tools/generate_ast.py
 
 main:
 	cargo build
@@ -32,11 +32,11 @@ watch:
 watch_sample:
 	cargo watch -x "fmt; make -s sample"
 
-generate: ${generate_expr_path}
-	python3 ${generate_expr_path}
+generate: ${generate_ast_path}
+	python3 ${generate_ast_path}
 
-generate_check: ${generate_expr_path}
-	mypy --check-untyped-defs ${generate_expr_path} && make -s generate
+generate_check: ${generate_ast_path}
+	mypy --check-untyped-defs ${generate_ast_path} && make -s generate
 
-watch_generate: ${generate_expr_path}
-	echo ${generate_expr_path} | entr -c make -s generate_check
+watch_generate: ${generate_ast_path}
+	echo ${generate_ast_path} | entr -c make -s generate_check

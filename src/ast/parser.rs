@@ -58,6 +58,7 @@ fn expect_semicolon(tokens: ParserIter) -> Result<Token, ParseError> {
 	expect(tokens, &[TokenType::Semicolon], None)
 }
 
+// TODO: update this
 fn build_binary_expr(
 	tokens: ParserIter,
 	lower_precedence: impl Fn(ParserIter) -> Result<Expr, ParseError>,
@@ -215,7 +216,24 @@ fn statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 }
 
 fn expression(tokens: ParserIter) -> Result<Expr, ParseError> {
-	equality(tokens)
+	assignment(tokens)
+}
+
+fn assignment(tokens: ParserIter) -> Result<Expr, ParseError> {
+	let expr = equality(tokens)?;
+
+	if match_then_consume(tokens, &[TokenType::Equal]).is_some() {
+		let value = assignment(tokens)?;
+
+		if let Expr::Identifier(i) = expr {
+			return Ok(Expr::Assignment(AssignmentValue {
+				name: i.name,
+				value: Box::new(value),
+			}));
+		}
+	}
+
+	Ok(expr)
 }
 
 fn equality(tokens: ParserIter) -> Result<Expr, ParseError> {
