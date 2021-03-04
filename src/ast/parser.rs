@@ -10,6 +10,19 @@ pub struct ParseError {
 	pub message: String,
 }
 
+impl Expr {
+	fn to_human_readable(&self) -> &str {
+		match self {
+			Expr::Assignment(_) => "An assignment",
+			Expr::Binary(_) => "A binary expression",
+			Expr::Grouping(_) => "A grouping",
+			Expr::Literal(_) => "A literal",
+			Expr::Unary(_) => "A unary expression",
+			Expr::Identifier(_) => "An identifier",
+		}
+	}
+}
+
 fn match_token_type(t: &TokenType, expected: &[TokenType]) -> bool {
 	expected.iter().any(|a| a == t)
 }
@@ -214,15 +227,21 @@ fn expression(tokens: ParserIter) -> Result<Expr, ParseError> {
 fn assignment(tokens: ParserIter) -> Result<Expr, ParseError> {
 	let expr = equality(tokens)?;
 
-	if match_then_consume(tokens, &[TokenType::Equal]).is_some() {
-		let value = assignment(tokens)?;
-
-		if let Expr::Identifier(i) = expr {
-			return Ok(Expr::Assignment(AssignmentValue {
+	if let Some(equals) = match_then_consume(tokens, &[TokenType::Equal]) {
+		return if let Expr::Identifier(i) = expr {
+			Ok(Expr::Assignment(AssignmentValue {
 				name: i.name,
-				value: Box::new(value),
-			}));
-		}
+				value: Box::new(assignment(tokens)?),
+			}))
+		} else {
+			Err(ParseError {
+				token: Some(equals),
+				message: format!(
+					"Invalid l-value. Cannot assign to {}",
+					expr.to_human_readable().to_lowercase()
+				),
+			})
+		};
 	}
 
 	Ok(expr)
