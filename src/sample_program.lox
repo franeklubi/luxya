@@ -1,5 +1,14 @@
-const test = "heja";
-print test;
 
-const elo = "test";
-print elo;
+print "Const:";
+const one = "heja";
+print one;
+
+one = "joł";
+print one;
+
+print "Let:";
+let two = "heja";
+print two;
+
+two = "joł";
+print two;

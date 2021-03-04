@@ -60,7 +60,7 @@ impl From<LiteralValue> for InterpreterValue {
 impl fmt::Display for InterpreterValue {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		match self {
-			InterpreterValue::String(s) => write!(f, "{:?}", s),
+			InterpreterValue::String(s) => write!(f, "{}", s),
 			InterpreterValue::Number(n) => write!(f, "{}", n),
 			InterpreterValue::Nil => write!(f, "nil"),
 			InterpreterValue::True => write!(f, "true"),
@@ -147,7 +147,34 @@ fn eval_expression(
 				|dv| Ok(dv.value.clone()),
 			)
 		}
-		Expr::Assignment(_v) => unimplemented!("Assignment"),
+		Expr::Assignment(v) => {
+			let name = assume_identifier(&v.name);
+
+			if env.contains_key(name) {
+				let value = eval_expression(&v.value, env)?;
+
+				let entry = env.get_mut(name).unwrap();
+
+				if entry.mutable {
+					*entry = DeclaredValue {
+						mutable: entry.mutable,
+						value: value.clone(),
+					};
+
+					Ok(value)
+				} else {
+					Err(RuntimeError {
+						message: format!("Cannot assign to a const {}", name),
+						token: v.name.clone(),
+					})
+				}
+			} else {
+				Err(RuntimeError {
+					token: v.name.clone(),
+					message: format!("Identifier {} not defined", name),
+				})
+			}
+		}
 	}
 }
 
