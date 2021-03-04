@@ -25,7 +25,7 @@ pub struct UnaryValue {
 }
 
 pub struct IdentifierValue {
-	pub token: Token,
+	pub name: Token,
 }
 
 pub enum Expr {

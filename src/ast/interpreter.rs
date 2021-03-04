@@ -70,9 +70,7 @@ impl fmt::Display for InterpreterValue {
 }
 
 // A shorthand way to extract identifier's name
-//
-// TODO: Will probably disappear when Cow gets here
-pub fn assert_identifier(t: &Token) -> &String {
+pub fn assume_identifier(t: &Token) -> &String {
 	if let TokenType::Identifier(i) = &t.token_type {
 		i
 	} else {
@@ -115,7 +113,7 @@ fn evaluate(
 				})?;
 
 			env.insert(
-				assert_identifier(&v.name).to_owned(),
+				assume_identifier(&v.name).to_owned(),
 				DeclaredValue {
 					mutable: v.mutable,
 					value,
@@ -137,14 +135,13 @@ fn eval_expression(
 		Expr::Unary(v) => eval_unary(v, env),
 		Expr::Binary(v) => eval_binary(v, env),
 		Expr::Identifier(v) => {
-			env.get(assert_identifier(&v.token)).map_or_else(
+			let name = assume_identifier(&v.name);
+
+			env.get(name).map_or_else(
 				|| {
 					Err(RuntimeError {
-						token: v.token.clone(),
-						message: format!(
-							"Identifier {} not defined",
-							assert_identifier(&v.token)
-						),
+						token: v.name.clone(),
+						message: format!("Identifier {} not defined", name),
 					})
 				},
 				|dv| Ok(dv.value.clone()),

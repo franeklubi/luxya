@@ -315,7 +315,7 @@ fn primary(tokens: ParserIter) -> Result<Expr, ParseError> {
 			token_type: TokenType::Identifier(_),
 			..
 		}) => Ok(Expr::Identifier(IdentifierValue {
-			token: token.unwrap(),
+			name: token.unwrap(),
 		})),
 
 		_ => Err(ParseError {
