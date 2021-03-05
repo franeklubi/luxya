@@ -1,7 +1,12 @@
 use crate::ast::{expr::*, stmt::*};
 use crate::token::*;
 
-use std::{collections::HashMap, fmt, rc};
+use std::{
+	collections::HashMap,
+	fmt,
+	ops::{Deref, DerefMut},
+	rc,
+};
 
 
 pub struct RuntimeError {
@@ -15,7 +20,50 @@ struct DeclaredValue {
 	value: InterpreterValue,
 }
 
-type InterpreterEnvironment<'a> = &'a mut HashMap<String, DeclaredValue>;
+type InterpreterEnvironment<'a> = &'a mut EnvironmentHolder;
+
+struct EnvironmentHolder {
+	parent: Option<Box<EnvironmentHolder>>,
+	current: HashMap<String, DeclaredValue>,
+}
+
+impl EnvironmentHolder {
+	fn new() -> Self {
+		Self {
+			parent: None,
+			current: HashMap::new(),
+		}
+	}
+
+	fn get(&self, identifier: &Token) -> Result<&DeclaredValue, RuntimeError> {
+		let name = assume_identifier(&identifier);
+
+		if let Some(v) = self.current.get(name) {
+			Ok(v)
+		} else if let Some(p) = &self.parent {
+			p.get(identifier)
+		} else {
+			Err(RuntimeError {
+				token: identifier.clone(),
+				message: format!("Identifier {} not defined", name),
+			})
+		}
+	}
+}
+
+impl Deref for EnvironmentHolder {
+	type Target = HashMap<String, DeclaredValue>;
+
+	fn deref(&self) -> &Self::Target {
+		&self.current
+	}
+}
+
+impl DerefMut for EnvironmentHolder {
+	fn deref_mut(&mut self) -> &mut Self::Target {
+		&mut self.current
+	}
+}
 
 // TODO: later, use other enum than LiteralValue
 // but it'll do for now
@@ -80,10 +128,10 @@ pub fn assume_identifier(t: &Token) -> &String {
 
 
 pub fn interpret(statements: &[Stmt]) {
-	let env: InterpreterEnvironment = &mut HashMap::new();
+	let mut env = EnvironmentHolder::new();
 
 	statements.iter().enumerate().for_each(|(index, stmt)| {
-		if let Err(e) = evaluate(&stmt, env) {
+		if let Err(e) = evaluate(&stmt, &mut env) {
 			println!("Error [{}]:\n\t{}", index, e.message)
 		}
 	});
@@ -134,19 +182,7 @@ fn eval_expression(
 		Expr::Grouping(v) => eval_expression(&v.expression, env),
 		Expr::Unary(v) => eval_unary(v, env),
 		Expr::Binary(v) => eval_binary(v, env),
-		Expr::Identifier(v) => {
-			let name = assume_identifier(&v.name);
-
-			env.get(name).map_or_else(
-				|| {
-					Err(RuntimeError {
-						token: v.name.clone(),
-						message: format!("Identifier {} not defined", name),
-					})
-				},
-				|dv| Ok(dv.value.clone()),
-			)
-		}
+		Expr::Identifier(v) => env.get(&v.name).map(|dv| dv.value.clone()),
 		Expr::Assignment(v) => {
 			let name = assume_identifier(&v.name);
 
@@ -164,7 +200,7 @@ fn eval_expression(
 					Ok(value)
 				} else {
 					Err(RuntimeError {
-						message: format!("Cannot assign to a const {}", name),
+						message: format!("Cannot assign to a const `{}`", name),
 						token: v.name.clone(),
 					})
 				}

@@ -12,3 +12,6 @@ print two;
 
 two = "joł";
 print two;
+
+three = "heja";
+print three;
