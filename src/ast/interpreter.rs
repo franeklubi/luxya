@@ -78,7 +78,7 @@ pub fn assume_identifier(t: &Token) -> &String {
 
 
 pub fn interpret(statements: &[Stmt]) {
-	let mut env = EnvironmentHolder::new();
+	let mut env = InterpreterEnvironment::new();
 
 	statements.iter().enumerate().for_each(|(index, stmt)| {
 		if let Err(e) = evaluate(&stmt, &mut env) {
@@ -89,7 +89,7 @@ pub fn interpret(statements: &[Stmt]) {
 
 fn evaluate(
 	stmt: &Stmt,
-	env: InterpreterEnvironment,
+	env: &mut InterpreterEnvironment,
 ) -> Result<InterpreterValue, RuntimeError> {
 	match stmt {
 		Stmt::Expression(v) => eval_expression(&v.expression, env),
@@ -125,7 +125,7 @@ fn evaluate(
 
 fn eval_expression(
 	expr: &Expr,
-	env: InterpreterEnvironment,
+	env: &mut InterpreterEnvironment,
 ) -> Result<InterpreterValue, RuntimeError> {
 	match expr {
 		Expr::Literal(v) => Ok(v.clone().into()),
@@ -162,7 +162,7 @@ fn eval_expression(
 
 fn eval_unary(
 	v: &UnaryValue,
-	env: InterpreterEnvironment,
+	env: &mut InterpreterEnvironment,
 ) -> Result<InterpreterValue, RuntimeError> {
 	let right_value = eval_expression(&v.right, env)?;
 
@@ -189,7 +189,7 @@ fn eval_unary(
 
 fn eval_binary(
 	v: &BinaryValue,
-	env: InterpreterEnvironment,
+	env: &mut InterpreterEnvironment,
 ) -> Result<InterpreterValue, RuntimeError> {
 	let left_value = eval_expression(&v.left, env)?;
 	let right_value = eval_expression(&v.right, env)?;

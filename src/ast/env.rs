@@ -3,14 +3,12 @@ use crate::token::*;
 
 use std::collections::HashMap;
 
-pub type InterpreterEnvironment<'a> = &'a mut EnvironmentHolder;
-
-pub struct EnvironmentHolder {
-	parent: Option<Box<EnvironmentHolder>>,
+pub struct InterpreterEnvironment {
+	parent: Option<Box<InterpreterEnvironment>>,
 	current: HashMap<String, DeclaredValue>,
 }
 
-impl EnvironmentHolder {
+impl InterpreterEnvironment {
 	pub fn new() -> Self {
 		Self {
 			parent: None,
