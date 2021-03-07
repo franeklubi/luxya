@@ -1,12 +1,7 @@
-use crate::ast::{expr::*, stmt::*};
+use crate::ast::{env::*, expr::*, stmt::*};
 use crate::token::*;
 
-use std::{
-	collections::HashMap,
-	fmt,
-	ops::{Deref, DerefMut},
-	rc,
-};
+use std::{fmt, rc};
 
 
 pub struct RuntimeError {
@@ -15,54 +10,9 @@ pub struct RuntimeError {
 }
 
 #[allow(dead_code)]
-struct DeclaredValue {
+pub struct DeclaredValue {
 	mutable: bool,
 	value: InterpreterValue,
-}
-
-type InterpreterEnvironment<'a> = &'a mut EnvironmentHolder;
-
-struct EnvironmentHolder {
-	parent: Option<Box<EnvironmentHolder>>,
-	current: HashMap<String, DeclaredValue>,
-}
-
-impl EnvironmentHolder {
-	fn new() -> Self {
-		Self {
-			parent: None,
-			current: HashMap::new(),
-		}
-	}
-
-	fn get(&self, identifier: &Token) -> Result<&DeclaredValue, RuntimeError> {
-		let name = assume_identifier(&identifier);
-
-		if let Some(v) = self.current.get(name) {
-			Ok(v)
-		} else if let Some(p) = &self.parent {
-			p.get(identifier)
-		} else {
-			Err(RuntimeError {
-				token: identifier.clone(),
-				message: format!("Identifier {} not defined", name),
-			})
-		}
-	}
-}
-
-impl Deref for EnvironmentHolder {
-	type Target = HashMap<String, DeclaredValue>;
-
-	fn deref(&self) -> &Self::Target {
-		&self.current
-	}
-}
-
-impl DerefMut for EnvironmentHolder {
-	fn deref_mut(&mut self) -> &mut Self::Target {
-		&mut self.current
-	}
 }
 
 // TODO: later, use other enum than LiteralValue
@@ -189,7 +139,7 @@ fn eval_expression(
 			if env.contains_key(name) {
 				let value = eval_expression(&v.value, env)?;
 
-				let entry = env.get_mut(name).unwrap();
+				let entry = env.get_mut(&v.name)?;
 
 				if entry.mutable {
 					*entry = DeclaredValue {
