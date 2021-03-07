@@ -27,6 +27,12 @@ fn match_token_type(t: &TokenType, expected: &[TokenType]) -> bool {
 	expected.iter().any(|a| a == t)
 }
 
+fn peek_matches(tokens: ParserIter, expected: &[TokenType]) -> bool {
+	tokens
+		.peek()
+		.map_or(false, |v| match_token_type(&v.token_type, expected))
+}
+
 /// Tries peek of ParserIter against provided token types
 ///
 /// Returns `Some(Token)` if successful and consumes the token, `None` otherwise
@@ -207,15 +213,37 @@ fn statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 		Ok(Some(stmt))
 	}
 
-	let consumed_token =
-		match_then_consume(tokens, &[TokenType::Print, TokenType::Semicolon]);
+	fn block_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
+		let mut statements = Vec::new();
+
+		while !peek_matches(tokens, &[TokenType::RightBrace]) {
+			if let Some(d) = declaration(tokens)? {
+				statements.push(d);
+			}
+		}
+
+		expect(tokens, &[TokenType::RightBrace], None)?;
+
+
+		if statements.is_empty() {
+			Ok(None)
+		} else {
+			Ok(Some(Stmt::Block(BlockValue { statements })))
+		}
+	}
+
+	let consumed_token = match_then_consume(
+		tokens,
+		&[TokenType::Print, TokenType::Semicolon, TokenType::LeftBrace],
+	);
 
 	let token_type = consumed_token.map(|ct| ct.token_type);
 
 	match token_type {
-		Some(TokenType::Print) => print_statement(tokens),
 		// that's an empty statement of sorts 🤔
 		Some(TokenType::Semicolon) => Ok(None),
+		Some(TokenType::Print) => print_statement(tokens),
+		Some(TokenType::LeftBrace) => block_statement(tokens),
 		_ => expression_statement(tokens),
 	}
 }

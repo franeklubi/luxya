@@ -127,6 +127,7 @@ def gen_expr() -> str:
 
 def gen_stmt() -> str:
 	to_generate = [
+		'Block -> statements: Vec<Stmt>',
 		'Expression -> expression: Box<Expr>',
 		'Print -> expression: Box<Expr>',
 		'Declaration -> name: Token, initializer: Option<Box<Expr>>, mutable: bool',

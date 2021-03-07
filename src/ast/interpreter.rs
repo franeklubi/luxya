@@ -120,6 +120,7 @@ fn evaluate(
 
 			Ok(InterpreterValue::Nil)
 		}
+		Stmt::Block(_) => unimplemented!(),
 	}
 }
 

@@ -1,6 +1,10 @@
 use crate::ast::expr::Expr;
 use crate::token::Token;
 
+pub struct BlockValue {
+	pub statements: Vec<Stmt>,
+}
+
 pub struct ExpressionValue {
 	pub expression: Box<Expr>,
 }
@@ -16,6 +20,7 @@ pub struct DeclarationValue {
 }
 
 pub enum Stmt {
+	Block(BlockValue),
 	Expression(ExpressionValue),
 	Print(PrintValue),
 	Declaration(DeclarationValue),
