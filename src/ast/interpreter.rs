@@ -120,7 +120,12 @@ fn evaluate(
 
 			Ok(InterpreterValue::Nil)
 		}
-		Stmt::Block(_) => unimplemented!(),
+		Stmt::Block(v) => {
+			// TODO: add working environment scope
+			interpret(&v.statements);
+
+			Ok(InterpreterValue::Nil)
+		}
 	}
 }
 
