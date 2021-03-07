@@ -110,7 +110,7 @@ fn evaluate(
 					eval_expression(&initializer, env)
 				})?;
 
-			env.insert(
+			env.declare(
 				assume_identifier(&v.name).to_owned(),
 				DeclaredValue {
 					mutable: v.mutable,
@@ -134,30 +134,26 @@ fn eval_expression(
 		Expr::Binary(v) => eval_binary(v, env),
 		Expr::Identifier(v) => env.get(&v.name).map(|dv| dv.value.clone()),
 		Expr::Assignment(v) => {
-			let name = assume_identifier(&v.name);
+			let value = eval_expression(&v.value, env)?;
 
-			if env.contains_key(name) {
-				let value = eval_expression(&v.value, env)?;
+			let entry = env.get_mut(&v.name)?;
 
-				let entry = env.get_mut(&v.name)?;
+			let mutable = entry.mutable;
 
-				if entry.mutable {
-					*entry = DeclaredValue {
-						mutable: entry.mutable,
-						value: value.clone(),
-					};
+			if mutable {
+				*entry = DeclaredValue {
+					mutable,
+					value: value.clone(),
+				};
 
-					Ok(value)
-				} else {
-					Err(RuntimeError {
-						message: format!("Cannot assign to a const `{}`", name),
-						token: v.name.clone(),
-					})
-				}
+				Ok(value)
 			} else {
 				Err(RuntimeError {
+					message: format!(
+						"Cannot assign to a const `{}`",
+						assume_identifier(&v.name)
+					),
 					token: v.name.clone(),
-					message: format!("Identifier {} not defined", name),
 				})
 			}
 		}

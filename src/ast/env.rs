@@ -18,6 +18,7 @@ impl EnvironmentHolder {
 		}
 	}
 
+	/// Returns a reference to the value if exists in any node
 	pub fn get(
 		&self,
 		identifier: &Token,
@@ -29,13 +30,11 @@ impl EnvironmentHolder {
 		} else if let Some(p) = &self.parent {
 			p.get(identifier)
 		} else {
-			Err(RuntimeError {
-				token: identifier.clone(),
-				message: format!("Identifier {} not defined", name),
-			})
+			Err(no_identifier(identifier, name))
 		}
 	}
 
+	/// Returns a mutable reference to the value if exists in any node
 	pub fn get_mut(
 		&mut self,
 		identifier: &Token,
@@ -47,28 +46,23 @@ impl EnvironmentHolder {
 		} else if let Some(p) = &mut self.parent {
 			p.get_mut(identifier)
 		} else {
-			Err(RuntimeError {
-				token: identifier.clone(),
-				message: format!("Identifier {} not defined", name),
-			})
+			Err(no_identifier(identifier, name))
 		}
 	}
 
-	pub fn contains_key(&self, name: &str) -> bool {
-		if self.current.contains_key(name) {
-			true
-		} else if let Some(p) = &self.parent {
-			p.contains_key(name)
-		} else {
-			false
-		}
-	}
-
-	pub fn insert(
+	/// Declares value in the current node
+	pub fn declare(
 		&mut self,
 		name: String,
 		value: DeclaredValue,
 	) -> Option<DeclaredValue> {
 		self.current.insert(name, value)
+	}
+}
+
+fn no_identifier(token: &Token, name: &str) -> RuntimeError {
+	RuntimeError {
+		token: token.clone(),
+		message: format!("Identifier {} not defined", name),
 	}
 }
