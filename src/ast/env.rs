@@ -3,17 +3,36 @@ use crate::token::*;
 
 use std::collections::HashMap;
 
+pub struct InterpreterEnvironmentScope<'a> {
+	environment: &'a mut InterpreterEnvironment,
+}
+
+impl Drop for InterpreterEnvironmentScope<'_> {
+	fn drop(&mut self) {
+		self.environment.scopes.pop();
+	}
+}
+
 pub struct InterpreterEnvironment {
-	parent: Option<Box<InterpreterEnvironment>>,
-	current: HashMap<String, DeclaredValue>,
+	scopes: Vec<HashMap<String, DeclaredValue>>,
 }
 
 impl InterpreterEnvironment {
 	pub fn new() -> Self {
-		Self {
-			parent: None,
-			current: HashMap::new(),
-		}
+		Self { scopes: Vec::new() }
+	}
+
+	#[allow(dead_code)]
+	pub fn acquire_scope(&mut self) -> InterpreterEnvironmentScope {
+		self.scopes.push(HashMap::new());
+
+		InterpreterEnvironmentScope { environment: self }
+	}
+}
+
+impl InterpreterEnvironmentScope<'_> {
+	pub fn nest(&mut self) -> InterpreterEnvironmentScope {
+		self.environment.acquire_scope()
 	}
 
 	/// Returns a reference to the value if exists in any node
@@ -23,13 +42,13 @@ impl InterpreterEnvironment {
 	) -> Result<&DeclaredValue, RuntimeError> {
 		let name = assume_identifier(&identifier);
 
-		if let Some(v) = self.current.get(name) {
-			Ok(v)
-		} else if let Some(p) = &self.parent {
-			p.get(identifier)
-		} else {
-			Err(no_identifier(identifier, name))
+		for map in self.environment.scopes.iter().rev() {
+			if let Some(dv) = map.get(name) {
+				return Ok(dv);
+			}
 		}
+
+		Err(no_identifier(identifier, name))
 	}
 
 	/// Returns a mutable reference to the value if exists in any node
@@ -39,13 +58,13 @@ impl InterpreterEnvironment {
 	) -> Result<&mut DeclaredValue, RuntimeError> {
 		let name = assume_identifier(&identifier);
 
-		if let Some(v) = self.current.get_mut(name) {
-			Ok(v)
-		} else if let Some(p) = &mut self.parent {
-			p.get_mut(identifier)
-		} else {
-			Err(no_identifier(identifier, name))
+		for map in self.environment.scopes.iter_mut().rev() {
+			if let Some(dv) = map.get_mut(name) {
+				return Ok(dv);
+			}
 		}
+
+		Err(no_identifier(identifier, name))
 	}
 
 	/// Declares value in the current node
@@ -54,10 +73,15 @@ impl InterpreterEnvironment {
 		name: String,
 		value: DeclaredValue,
 	) -> Option<DeclaredValue> {
-		self.current.insert(name, value)
+		self.environment
+			.scopes
+			.last_mut()
+			.unwrap()
+			.insert(name, value)
 	}
 }
 
+#[allow(dead_code)]
 fn no_identifier(token: &Token, name: &str) -> RuntimeError {
 	RuntimeError {
 		token: token.clone(),

@@ -79,9 +79,17 @@ pub fn assume_identifier(t: &Token) -> &String {
 
 pub fn interpret(statements: &[Stmt]) {
 	let mut env = InterpreterEnvironment::new();
+	let mut scope = env.acquire_scope();
 
+	evaluate_statements(statements, &mut scope)
+}
+
+fn evaluate_statements(
+	statements: &[Stmt],
+	env: &mut InterpreterEnvironmentScope,
+) {
 	statements.iter().enumerate().for_each(|(index, stmt)| {
-		if let Err(e) = evaluate(&stmt, &mut env) {
+		if let Err(e) = evaluate(&stmt, env) {
 			println!("Error [{}]:\n\t{}", index, e.message)
 		}
 	});
@@ -89,7 +97,7 @@ pub fn interpret(statements: &[Stmt]) {
 
 fn evaluate(
 	stmt: &Stmt,
-	env: &mut InterpreterEnvironment,
+	env: &mut InterpreterEnvironmentScope,
 ) -> Result<InterpreterValue, RuntimeError> {
 	match stmt {
 		Stmt::Expression(v) => eval_expression(&v.expression, env),
@@ -122,7 +130,9 @@ fn evaluate(
 		}
 		Stmt::Block(v) => {
 			// TODO: add working environment scope
-			interpret(&v.statements);
+			let mut scope = env.nest();
+
+			evaluate_statements(&v.statements, &mut scope);
 
 			Ok(InterpreterValue::Nil)
 		}
@@ -131,7 +141,7 @@ fn evaluate(
 
 fn eval_expression(
 	expr: &Expr,
-	env: &mut InterpreterEnvironment,
+	env: &mut InterpreterEnvironmentScope,
 ) -> Result<InterpreterValue, RuntimeError> {
 	match expr {
 		Expr::Literal(v) => Ok(v.clone().into()),
@@ -168,7 +178,7 @@ fn eval_expression(
 
 fn eval_unary(
 	v: &UnaryValue,
-	env: &mut InterpreterEnvironment,
+	env: &mut InterpreterEnvironmentScope,
 ) -> Result<InterpreterValue, RuntimeError> {
 	let right_value = eval_expression(&v.right, env)?;
 
@@ -195,7 +205,7 @@ fn eval_unary(
 
 fn eval_binary(
 	v: &BinaryValue,
-	env: &mut InterpreterEnvironment,
+	env: &mut InterpreterEnvironmentScope,
 ) -> Result<InterpreterValue, RuntimeError> {
 	let left_value = eval_expression(&v.left, env)?;
 	let right_value = eval_expression(&v.right, env)?;

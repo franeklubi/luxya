@@ -1,17 +1,33 @@
 
-print "Const:";
-const one = "heja";
-print one;
+// print "Const:";
+// const one = "heja";
+// print one;
+//
+// one = "joł";
+// print one;
+//
+// print "Let:";
+// let two = "heja";
+// print two;
+//
+// two = "joł";
+// print two;
+//
+// three = "heja";
+// print three;
 
-one = "joł";
-print one;
+let same_name = "chuj";
 
-print "Let:";
-let two = "heja";
-print two;
+print "outer: " + same_name;
 
-two = "joł";
-print two;
+{
+	same_name = "chuje dwa";
+	print "inner: " + same_name;
 
-three = "heja";
-print three;
+	{
+		same_name = "chuje trzy";
+		print "innermost: " + same_name;
+	}
+}
+
+print "outer: " + same_name;
