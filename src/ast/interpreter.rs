@@ -1,7 +1,7 @@
 use crate::ast::{env::*, expr::*, stmt::*};
 use crate::token::*;
 
-use std::{fmt, rc};
+use std::{fmt, rc::Rc};
 
 
 pub struct RuntimeError {
@@ -9,10 +9,10 @@ pub struct RuntimeError {
 	pub token: Token,
 }
 
-#[allow(dead_code)]
+#[derive(Clone)]
 pub struct DeclaredValue {
-	mutable: bool,
-	value: InterpreterValue,
+	pub mutable: bool,
+	pub value: InterpreterValue,
 }
 
 // TODO: later, use other enum than LiteralValue
@@ -23,8 +23,8 @@ pub struct DeclaredValue {
 // - If it is /\, then we can print the identifier, rather than it's value
 // - Should mimic LiteralValue's fields
 #[derive(Clone, PartialEq)]
-enum InterpreterValue {
-	String(rc::Rc<str>),
+pub enum InterpreterValue {
+	String(Rc<str>),
 	Number(f64),
 	True,
 	False,
@@ -44,9 +44,7 @@ impl From<bool> for InterpreterValue {
 impl From<LiteralValue> for InterpreterValue {
 	fn from(v: LiteralValue) -> Self {
 		match v {
-			LiteralValue::String(s) => {
-				InterpreterValue::String(rc::Rc::from(s))
-			}
+			LiteralValue::String(s) => InterpreterValue::String(Rc::from(s)),
 			LiteralValue::Number(n) => InterpreterValue::Number(n),
 			LiteralValue::True => InterpreterValue::True,
 			LiteralValue::False => InterpreterValue::False,
@@ -78,15 +76,14 @@ pub fn assume_identifier(t: &Token) -> &String {
 
 
 pub fn interpret(statements: &[Stmt]) {
-	let mut env = InterpreterEnvironment::new();
-	let mut scope = env.acquire_scope();
+	let env = InterpreterEnvironment::new(None).wrap();
 
-	evaluate_statements(statements, &mut scope)
+	evaluate_statements(statements, &env)
 }
 
 fn evaluate_statements(
 	statements: &[Stmt],
-	env: &mut InterpreterEnvironmentScope,
+	env: &WrappedInterpreterEnvironment,
 ) {
 	statements.iter().enumerate().for_each(|(index, stmt)| {
 		if let Err(e) = evaluate(&stmt, env) {
@@ -97,7 +94,7 @@ fn evaluate_statements(
 
 fn evaluate(
 	stmt: &Stmt,
-	env: &mut InterpreterEnvironmentScope,
+	env: &WrappedInterpreterEnvironment,
 ) -> Result<InterpreterValue, RuntimeError> {
 	match stmt {
 		Stmt::Expression(v) => eval_expression(&v.expression, env),
@@ -130,9 +127,9 @@ fn evaluate(
 		}
 		Stmt::Block(v) => {
 			// TODO: add working environment scope
-			let mut scope = env.nest();
+			let new_scope = env.fork();
 
-			evaluate_statements(&v.statements, &mut scope);
+			evaluate_statements(&v.statements, &new_scope);
 
 			Ok(InterpreterValue::Nil)
 		}
@@ -141,44 +138,23 @@ fn evaluate(
 
 fn eval_expression(
 	expr: &Expr,
-	env: &mut InterpreterEnvironmentScope,
+	env: &WrappedInterpreterEnvironment,
 ) -> Result<InterpreterValue, RuntimeError> {
 	match expr {
 		Expr::Literal(v) => Ok(v.clone().into()),
 		Expr::Grouping(v) => eval_expression(&v.expression, env),
 		Expr::Unary(v) => eval_unary(v, env),
 		Expr::Binary(v) => eval_binary(v, env),
-		Expr::Identifier(v) => env.get(&v.name).map(|dv| dv.value.clone()),
+		Expr::Identifier(v) => Ok(env.read(&v.name)?.value),
 		Expr::Assignment(v) => {
-			let value = eval_expression(&v.value, env)?;
-
-			let entry = env.get_mut(&v.name)?;
-
-			let mutable = entry.mutable;
-
-			if mutable {
-				*entry = DeclaredValue {
-					mutable,
-					value: value.clone(),
-				};
-
-				Ok(value)
-			} else {
-				Err(RuntimeError {
-					message: format!(
-						"Cannot assign to a const `{}`",
-						assume_identifier(&v.name)
-					),
-					token: v.name.clone(),
-				})
-			}
+			env.assign(&v.name, eval_expression(&v.value, env)?)
 		}
 	}
 }
 
 fn eval_unary(
 	v: &UnaryValue,
-	env: &mut InterpreterEnvironmentScope,
+	env: &WrappedInterpreterEnvironment,
 ) -> Result<InterpreterValue, RuntimeError> {
 	let right_value = eval_expression(&v.right, env)?;
 
@@ -205,7 +181,7 @@ fn eval_unary(
 
 fn eval_binary(
 	v: &BinaryValue,
-	env: &mut InterpreterEnvironmentScope,
+	env: &WrappedInterpreterEnvironment,
 ) -> Result<InterpreterValue, RuntimeError> {
 	let left_value = eval_expression(&v.left, env)?;
 	let right_value = eval_expression(&v.right, env)?;
@@ -234,9 +210,7 @@ fn eval_binary(
 			}
 			(InterpreterValue::String(s1), InterpreterValue::String(s2)) => {
 				if v.operator.token_type == TokenType::Plus {
-					Ok(InterpreterValue::String(rc::Rc::from(
-						s1.to_string() + s2,
-					)))
+					Ok(InterpreterValue::String(Rc::from(s1.to_string() + s2)))
 				} else {
 					Err(RuntimeError {
 						message: format!(
