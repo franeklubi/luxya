@@ -126,14 +126,21 @@ fn evaluate(
 			Ok(InterpreterValue::Nil)
 		}
 		Stmt::Block(v) => {
-			// TODO: add working environment scope
 			let new_scope = env.fork();
 
 			evaluate_statements(&v.statements, &new_scope);
 
 			Ok(InterpreterValue::Nil)
 		}
-		Stmt::If(_v) => unimplemented!(),
+		Stmt::If(v) => {
+			if eval_expression(&v.condition, env)? == InterpreterValue::True {
+				evaluate(&v.then, env)
+			} else if let Some(otherwise) = &v.otherwise {
+				evaluate(otherwise, env)
+			} else {
+				Ok(InterpreterValue::Nil)
+			}
+		}
 	}
 }
 
