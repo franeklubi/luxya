@@ -133,6 +133,7 @@ fn evaluate(
 
 			Ok(InterpreterValue::Nil)
 		}
+		Stmt::If(_v) => unimplemented!(),
 	}
 }
 

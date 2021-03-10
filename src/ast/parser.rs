@@ -232,9 +232,54 @@ fn statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 		}
 	}
 
+	fn if_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
+		let condition = Box::new(expression(tokens)?);
+
+		fn gen_err(tokens: ParserIter) -> ParseError {
+			ParseError {
+				message: "If statement's branch has to be a block (`{ ... }`)"
+					.to_owned(),
+				token: tokens.peek().cloned(),
+			}
+		}
+
+		fn consume_block(tokens: ParserIter) -> Result<Stmt, ParseError> {
+			if !peek_matches(tokens, &[TokenType::LeftBrace]) {
+				Err(gen_err(tokens))
+			} else {
+				let stmt = statement(tokens)?;
+
+				if let Some(stmt) = stmt {
+					Ok(stmt)
+				} else {
+					Err(gen_err(tokens))
+				}
+			}
+		}
+
+		let then = Box::new(consume_block(tokens)?);
+		let otherwise =
+			if match_then_consume(tokens, &[TokenType::Else]).is_some() {
+				Some(Box::new(consume_block(tokens)?))
+			} else {
+				None
+			};
+
+		Ok(Some(Stmt::If(IfValue {
+			condition,
+			then,
+			otherwise,
+		})))
+	}
+
 	let consumed_token = match_then_consume(
 		tokens,
-		&[TokenType::Print, TokenType::Semicolon, TokenType::LeftBrace],
+		&[
+			TokenType::Print,
+			TokenType::Semicolon,
+			TokenType::LeftBrace,
+			TokenType::If,
+		],
 	);
 
 	let token_type = consumed_token.map(|ct| ct.token_type);
@@ -244,6 +289,7 @@ fn statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 		Some(TokenType::Semicolon) => Ok(None),
 		Some(TokenType::Print) => print_statement(tokens),
 		Some(TokenType::LeftBrace) => block_statement(tokens),
+		Some(TokenType::If) => if_statement(tokens),
 		_ => expression_statement(tokens),
 	}
 }

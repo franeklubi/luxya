@@ -1,6 +1,12 @@
 use crate::ast::expr::Expr;
 use crate::token::Token;
 
+pub struct IfValue {
+	pub condition: Box<Expr>,
+	pub then: Box<Stmt>,
+	pub otherwise: Option<Box<Stmt>>,
+}
+
 pub struct BlockValue {
 	pub statements: Vec<Stmt>,
 }
@@ -20,6 +26,7 @@ pub struct DeclarationValue {
 }
 
 pub enum Stmt {
+	If(IfValue),
 	Block(BlockValue),
 	Expression(ExpressionValue),
 	Print(PrintValue),
