@@ -1,40 +1,14 @@
 
-// print "Const:";
-// const one = "heja";
-// print one;
-//
-// one = "joł";
-// print one;
-//
-// print "Let:";
-// let two = "heja";
-// print two;
-//
-// two = "joł";
-// print two;
-//
-// three = "heja";
-// print three;
-
-let same_name = "chuj";
-
-print "outer: " + same_name;
-
-{
-	same_name = "chuje dwa";
-	print "inner: " + same_name;
-
-	{
-		same_name = "chuje trzy";
-		print "innermost: " + same_name;
-	}
-}
-
-print "outer: " + same_name;
-
 let i = 0;
 
 while i < 5 {
 	print "teraz i: " + i;
+
+	if i == 2 {
+		print "dwa";
+	} else if i == 3 {
+		print "nie dwa";
+	}
+
 	i = i + 1;
 }

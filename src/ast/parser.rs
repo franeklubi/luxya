@@ -55,15 +55,7 @@ fn expect(
 		let message = if let Some(m) = override_message {
 			m.to_string()
 		} else {
-			let msg = if expected.len() > 1 {
-				"Expected one of: "
-			} else {
-				"Expected: "
-			};
-
-			expected
-				.iter()
-				.fold(msg.to_string(), |acc, tt| acc + &format!("`{}`", tt))
+			gen_expected_msg(expected)
 		};
 
 		ParseError {
@@ -71,6 +63,23 @@ fn expect(
 			token: tokens.peek().cloned(),
 		}
 	})
+}
+
+fn gen_expected_msg(expected: &[TokenType]) -> String {
+	let msg = if expected.len() > 1 {
+		"Expected one of: "
+	} else {
+		"Expected: "
+	}
+	.to_string();
+
+	let enumerated: String = expected
+		.iter()
+		.map(|e| format!("`{}`", e))
+		.collect::<Vec<String>>()
+		.join(", ");
+
+	msg + &enumerated
 }
 
 fn expect_semicolon(tokens: ParserIter) -> Result<Token, ParseError> {
@@ -191,6 +200,29 @@ fn declaration(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 /// Statement can not fail and produce None for a statement, because it wouldn't
 /// be significant (e.g. lone `;`)
 fn statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
+	fn consume_statement(
+		tokens: ParserIter,
+		expected: &[TokenType],
+	) -> Result<Stmt, ParseError> {
+		if !peek_matches(tokens, expected) {
+			Err(ParseError {
+				message: gen_expected_msg(expected),
+				token: tokens.peek().cloned(),
+			})
+		} else {
+			let stmt = statement(tokens)?;
+
+			if let Some(stmt) = stmt {
+				Ok(stmt)
+			} else {
+				Err(ParseError {
+					message: gen_expected_msg(expected),
+					token: tokens.peek().cloned(),
+				})
+			}
+		}
+	}
+
 	fn print_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 		let stmt = Stmt::Print(PrintValue {
 			expression: Box::new(expression(tokens)?),
@@ -232,35 +264,19 @@ fn statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 		}
 	}
 
-	fn consume_block(tokens: ParserIter) -> Result<Stmt, ParseError> {
-		fn gen_err(tokens: ParserIter) -> ParseError {
-			ParseError {
-				message: "If statement's branch has to be a block (`{ ... }`)"
-					.to_owned(),
-				token: tokens.peek().cloned(),
-			}
-		}
-
-		if !peek_matches(tokens, &[TokenType::LeftBrace]) {
-			Err(gen_err(tokens))
-		} else {
-			let stmt = statement(tokens)?;
-
-			if let Some(stmt) = stmt {
-				Ok(stmt)
-			} else {
-				Err(gen_err(tokens))
-			}
-		}
-	}
-
 	fn if_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 		let condition = Box::new(expression(tokens)?);
 
-		let then = Box::new(consume_block(tokens)?);
+		let then = Box::new(consume_statement(
+			tokens,
+			&[TokenType::LeftBrace, TokenType::If],
+		)?);
 		let otherwise =
 			if match_then_consume(tokens, &[TokenType::Else]).is_some() {
-				Some(Box::new(consume_block(tokens)?))
+				Some(Box::new(consume_statement(
+					tokens,
+					&[TokenType::LeftBrace, TokenType::If],
+				)?))
 			} else {
 				None
 			};
@@ -275,7 +291,8 @@ fn statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 	fn while_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 		let condition = Box::new(expression(tokens)?);
 
-		let execute = Box::new(consume_block(tokens)?);
+		let execute =
+			Box::new(consume_statement(tokens, &[TokenType::LeftBrace])?);
 
 		Ok(Some(Stmt::While(WhileValue { condition, execute })))
 	}
