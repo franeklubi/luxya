@@ -232,9 +232,7 @@ fn statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 		}
 	}
 
-	fn if_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
-		let condition = Box::new(expression(tokens)?);
-
+	fn consume_block(tokens: ParserIter) -> Result<Stmt, ParseError> {
 		fn gen_err(tokens: ParserIter) -> ParseError {
 			ParseError {
 				message: "If statement's branch has to be a block (`{ ... }`)"
@@ -243,19 +241,21 @@ fn statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 			}
 		}
 
-		fn consume_block(tokens: ParserIter) -> Result<Stmt, ParseError> {
-			if !peek_matches(tokens, &[TokenType::LeftBrace]) {
-				Err(gen_err(tokens))
-			} else {
-				let stmt = statement(tokens)?;
+		if !peek_matches(tokens, &[TokenType::LeftBrace]) {
+			Err(gen_err(tokens))
+		} else {
+			let stmt = statement(tokens)?;
 
-				if let Some(stmt) = stmt {
-					Ok(stmt)
-				} else {
-					Err(gen_err(tokens))
-				}
+			if let Some(stmt) = stmt {
+				Ok(stmt)
+			} else {
+				Err(gen_err(tokens))
 			}
 		}
+	}
+
+	fn if_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
+		let condition = Box::new(expression(tokens)?);
 
 		let then = Box::new(consume_block(tokens)?);
 		let otherwise =
@@ -272,6 +272,14 @@ fn statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 		})))
 	}
 
+	fn while_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
+		let condition = Box::new(expression(tokens)?);
+
+		let execute = Box::new(consume_block(tokens)?);
+
+		Ok(Some(Stmt::While(WhileValue { condition, execute })))
+	}
+
 	let consumed_token = match_then_consume(
 		tokens,
 		&[
@@ -279,6 +287,7 @@ fn statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 			TokenType::Semicolon,
 			TokenType::LeftBrace,
 			TokenType::If,
+			TokenType::While,
 		],
 	);
 
@@ -290,6 +299,7 @@ fn statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 		Some(TokenType::Print) => print_statement(tokens),
 		Some(TokenType::LeftBrace) => block_statement(tokens),
 		Some(TokenType::If) => if_statement(tokens),
+		Some(TokenType::While) => while_statement(tokens),
 		_ => expression_statement(tokens),
 	}
 }

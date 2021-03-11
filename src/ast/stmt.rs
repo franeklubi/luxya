@@ -1,6 +1,11 @@
 use crate::ast::expr::Expr;
 use crate::token::Token;
 
+pub struct WhileValue {
+	pub condition: Box<Expr>,
+	pub execute: Box<Stmt>,
+}
+
 pub struct IfValue {
 	pub condition: Box<Expr>,
 	pub then: Box<Stmt>,
@@ -26,6 +31,7 @@ pub struct DeclarationValue {
 }
 
 pub enum Stmt {
+	While(WhileValue),
 	If(IfValue),
 	Block(BlockValue),
 	Expression(ExpressionValue),

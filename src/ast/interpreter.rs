@@ -85,11 +85,12 @@ fn evaluate_statements(
 	statements: &[Stmt],
 	env: &WrappedInterpreterEnvironment,
 ) {
-	statements.iter().enumerate().for_each(|(index, stmt)| {
+	for (index, stmt) in statements.iter().enumerate() {
 		if let Err(e) = evaluate(&stmt, env) {
-			println!("Error [{}]:\n\t{}", index, e.message)
+			println!("Error [{}]:\n\t{}", index, e.message);
+			break;
 		}
-	});
+	}
 }
 
 fn evaluate(
@@ -140,6 +141,14 @@ fn evaluate(
 			} else {
 				Ok(InterpreterValue::Nil)
 			}
+		}
+		Stmt::While(v) => {
+			while eval_expression(&v.condition, env)? == InterpreterValue::True
+			{
+				evaluate(&v.execute, env)?;
+			}
+
+			Ok(InterpreterValue::Nil)
 		}
 	}
 }

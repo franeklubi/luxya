@@ -127,6 +127,7 @@ def gen_expr() -> str:
 
 def gen_stmt() -> str:
 	to_generate = [
+		'While -> condition: Box<Expr>, execute: Box<Stmt>',
 		'If -> condition: Box<Expr>, then: Box<Stmt>, otherwise: Option<Box<Stmt>>',
 		'Block -> statements: Vec<Stmt>',
 		'Expression -> expression: Box<Expr>',
