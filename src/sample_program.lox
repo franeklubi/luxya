@@ -35,7 +35,7 @@ print "outer: " + same_name;
 let i = 0;
 
 while i < 5 {
-	print "teraz i: ";
+	print "teraz i: " + i;
 	print i;
 	i = i + 1;
 }

@@ -78,19 +78,22 @@ pub fn assume_identifier(t: &Token) -> &String {
 pub fn interpret(statements: &[Stmt]) {
 	let env = InterpreterEnvironment::new(None).wrap();
 
-	evaluate_statements(statements, &env)
+	if let Err(e) = evaluate_statements(statements, &env) {
+		println!("Error [{}]:\n\t{}", 0, e.message);
+	}
 }
 
 fn evaluate_statements(
 	statements: &[Stmt],
 	env: &WrappedInterpreterEnvironment,
-) {
-	for (index, stmt) in statements.iter().enumerate() {
+) -> Result<(), RuntimeError> {
+	for stmt in statements.iter() {
 		if let Err(e) = evaluate(&stmt, env) {
-			println!("Error [{}]:\n\t{}", index, e.message);
-			break;
+			return Err(e);
 		}
 	}
+
+	Ok(())
 }
 
 fn evaluate(
@@ -129,7 +132,7 @@ fn evaluate(
 		Stmt::Block(v) => {
 			let new_scope = env.fork();
 
-			evaluate_statements(&v.statements, &new_scope);
+			evaluate_statements(&v.statements, &new_scope)?;
 
 			Ok(InterpreterValue::Nil)
 		}
