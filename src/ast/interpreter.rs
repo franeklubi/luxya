@@ -203,6 +203,30 @@ fn eval_binary(
 	v: &BinaryValue,
 	env: &WrappedInterpreterEnvironment,
 ) -> Result<InterpreterValue, RuntimeError> {
+	// first, match the logical operators, so that we can have short-circuiting
+	match v.operator.token_type {
+		TokenType::Or => {
+			return Ok(
+				if eval_expression(&v.left, env)? == InterpreterValue::True {
+					InterpreterValue::True
+				} else {
+					eval_expression(&v.right, env)?
+				},
+			)
+		}
+		TokenType::And => {
+			let left_value = eval_expression(&v.left, env)?;
+
+			return Ok(if left_value == InterpreterValue::True {
+				eval_expression(&v.right, env)?
+			} else {
+				left_value
+			});
+		}
+		_ => (),
+	}
+
+	// then evaluate both sides normally
 	let left_value = eval_expression(&v.left, env)?;
 	let right_value = eval_expression(&v.right, env)?;
 

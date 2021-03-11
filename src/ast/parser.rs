@@ -200,13 +200,13 @@ fn declaration(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 /// Statement can not fail and produce None for a statement, because it wouldn't
 /// be significant (e.g. lone `;`)
 fn statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
-	fn consume_statement(
+	fn expect_statement(
 		tokens: ParserIter,
-		expected: &[TokenType],
+		starts_with: &[TokenType],
 	) -> Result<Stmt, ParseError> {
-		if !peek_matches(tokens, expected) {
+		if !peek_matches(tokens, starts_with) {
 			Err(ParseError {
-				message: gen_expected_msg(expected),
+				message: gen_expected_msg(starts_with),
 				token: tokens.peek().cloned(),
 			})
 		} else {
@@ -216,7 +216,7 @@ fn statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 				Ok(stmt)
 			} else {
 				Err(ParseError {
-					message: gen_expected_msg(expected),
+					message: gen_expected_msg(starts_with),
 					token: tokens.peek().cloned(),
 				})
 			}
@@ -267,13 +267,13 @@ fn statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 	fn if_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 		let condition = Box::new(expression(tokens)?);
 
-		let then = Box::new(consume_statement(
+		let then = Box::new(expect_statement(
 			tokens,
 			&[TokenType::LeftBrace, TokenType::If],
 		)?);
 		let otherwise =
 			if match_then_consume(tokens, &[TokenType::Else]).is_some() {
-				Some(Box::new(consume_statement(
+				Some(Box::new(expect_statement(
 					tokens,
 					&[TokenType::LeftBrace, TokenType::If],
 				)?))
@@ -292,7 +292,7 @@ fn statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 		let condition = Box::new(expression(tokens)?);
 
 		let execute =
-			Box::new(consume_statement(tokens, &[TokenType::LeftBrace])?);
+			Box::new(expect_statement(tokens, &[TokenType::LeftBrace])?);
 
 		Ok(Some(Stmt::While(WhileValue { condition, execute })))
 	}
@@ -326,7 +326,7 @@ fn expression(tokens: ParserIter) -> Result<Expr, ParseError> {
 }
 
 fn assignment(tokens: ParserIter) -> Result<Expr, ParseError> {
-	let expr = equality(tokens)?;
+	let expr = logic_or(tokens)?;
 
 	if let Some(equals) = match_then_consume(tokens, &[TokenType::Equal]) {
 		return if let Expr::Identifier(i) = expr {
@@ -346,6 +346,14 @@ fn assignment(tokens: ParserIter) -> Result<Expr, ParseError> {
 	}
 
 	Ok(expr)
+}
+
+fn logic_or(tokens: ParserIter) -> Result<Expr, ParseError> {
+	build_binary_expr(tokens, logic_and, &[TokenType::Or])
+}
+
+fn logic_and(tokens: ParserIter) -> Result<Expr, ParseError> {
+	build_binary_expr(tokens, equality, &[TokenType::And])
 }
 
 fn equality(tokens: ParserIter) -> Result<Expr, ParseError> {
