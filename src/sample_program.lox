@@ -36,6 +36,5 @@ let i = 0;
 
 while i < 5 {
 	print "teraz i: " + i;
-	print i;
 	i = i + 1;
 }

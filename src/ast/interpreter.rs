@@ -242,6 +242,22 @@ fn eval_binary(
 					})
 				}
 			}
+			(InterpreterValue::String(s1), InterpreterValue::Number(n1)) => {
+				if v.operator.token_type == TokenType::Plus {
+					Ok(InterpreterValue::String(Rc::from(
+						s1.to_string() + &n1.to_string(),
+					)))
+				} else {
+					Err(RuntimeError {
+						message: format!(
+							"You cannot use `{}` on string and a number. Did \
+							 you mean `+`?",
+							v.operator.token_type
+						),
+						token: v.operator.clone(),
+					})
+				}
+			}
 
 			// error bby
 			_ => Err(RuntimeError {
