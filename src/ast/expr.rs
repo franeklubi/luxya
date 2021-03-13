@@ -1,8 +1,9 @@
 use crate::token::Token;
+use std::rc::Rc;
 
 #[derive(Clone, PartialEq)]
 pub enum LiteralValue {
-	String(String),
+	String(Rc<str>),
 	Number(f64),
 	True,
 	False,

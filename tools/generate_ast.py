@@ -106,10 +106,11 @@ def gen_expr() -> str:
 
 	imports = [
 		'crate::token::Token',
+		'std::rc::Rc',
 	]
 
 	literal_types = [
-		'String -> String',
+		'String -> Rc<str>',
 		'Number -> f64',
 		'True',
 		'False',

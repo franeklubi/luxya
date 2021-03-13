@@ -15,9 +15,6 @@ pub struct DeclaredValue {
 	pub value: InterpreterValue,
 }
 
-// TODO: later, use other enum than LiteralValue
-// but it'll do for now
-//
 // IDEAS TODO:
 // - InterpreterValue should know if it's a child of some identifier or smth
 // - If it is /\, then we can print the identifier, rather than it's value
@@ -44,7 +41,7 @@ impl From<bool> for InterpreterValue {
 impl From<LiteralValue> for InterpreterValue {
 	fn from(v: LiteralValue) -> Self {
 		match v {
-			LiteralValue::String(s) => InterpreterValue::String(Rc::from(s)),
+			LiteralValue::String(s) => InterpreterValue::String(Rc::clone(&s)),
 			LiteralValue::Number(n) => InterpreterValue::Number(n),
 			LiteralValue::True => InterpreterValue::True,
 			LiteralValue::False => InterpreterValue::False,
@@ -66,7 +63,7 @@ impl fmt::Display for InterpreterValue {
 }
 
 // A shorthand way to extract identifier's name
-pub fn assume_identifier(t: &Token) -> &String {
+pub fn assume_identifier(t: &Token) -> &str {
 	if let TokenType::Identifier(i) = &t.token_type {
 		i
 	} else {

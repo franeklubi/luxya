@@ -1,8 +1,8 @@
-use std::{fmt, mem};
+use std::{fmt, mem, rc::Rc};
 
 #[derive(Clone, Debug)]
 pub enum TokenType {
-	// Single-character tokens.
+	// Single-character tokens
 	LeftParen,
 	RightParen,
 	LeftBrace,
@@ -15,7 +15,7 @@ pub enum TokenType {
 	Slash,
 	Star,
 
-	// One Or Two Character Tokens.
+	// One Or Two Character Tokens
 	Bang,
 	BangEqual,
 	Equal,
@@ -25,12 +25,12 @@ pub enum TokenType {
 	Less,
 	LessEqual,
 
-	// Literals.
-	Identifier(String),
-	String(String),
+	// Literals
+	Identifier(Rc<str>),
+	String(Rc<str>),
 	Number(f64),
 
-	// Keywords.
+	// Keywords
 	And,
 	Class,
 	Else,
