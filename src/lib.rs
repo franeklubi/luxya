@@ -88,7 +88,12 @@ fn run(source: String) -> bool {
 		println!("\nPARSE ERRORS:");
 	}
 	parse_errors.iter().enumerate().for_each(|(index, error)| {
-		println!("{}: {} at {:?}", index, error.message, error.token);
+		println!(
+			"{}: {} at {}",
+			index,
+			error.message,
+			get_line(&source, error.token.clone().map_or(0, |t| t.byte_offset))
+		);
 	});
 
 	println!();
@@ -116,5 +121,43 @@ where
 		None => {
 			eprintln!("[{}] Error: {}", line, message)
 		}
+	}
+}
+
+fn get_line(source: &str, byte_offset: usize) -> Line {
+	let mut line_start_offset = 0;
+	let mut line_end_offset = usize::MAX;
+	let mut lines = 0;
+
+	// getting the start and end of the line
+	for (i, c) in source.as_bytes().iter().enumerate() {
+		if *c == b'\n' {
+			if i > byte_offset {
+				line_end_offset = i;
+				break;
+			} else {
+				line_start_offset = i;
+			}
+
+			lines += 1;
+		}
+	}
+
+	Line {
+		content: source[line_start_offset..line_end_offset].to_string(),
+		number: lines,
+		offset: byte_offset - line_start_offset,
+	}
+}
+
+struct Line {
+	number: u32,
+	offset: usize,
+	content: String,
+}
+
+impl fmt::Display for Line {
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		write!(f, "[{}:{}]: {}", self.number, self.offset, self.content)
 	}
 }
