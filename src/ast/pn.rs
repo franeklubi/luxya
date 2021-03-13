@@ -19,6 +19,10 @@ pub fn pn_stringify_tree(expr: &Expr) -> String {
 		},
 		Expr::Identifier(v) => v.name.token_type.to_string(),
 		Expr::Assignment(v) => pn_gen(&format!("= {}", v.name), &[&v.value]),
+		Expr::Call(v) => pn_gen(
+			&format!("call {}", pn_stringify_tree(&v.calee)),
+			v.arguments.iter().collect::<Vec<&Expr>>().as_slice(),
+		),
 	}
 }
 

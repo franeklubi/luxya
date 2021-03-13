@@ -10,6 +10,12 @@ pub enum LiteralValue {
 	Nil,
 }
 
+pub struct CallValue {
+	pub calee: Box<Expr>,
+	pub closing_paren: Token,
+	pub arguments: Vec<Expr>,
+}
+
 pub struct AssignmentValue {
 	pub name: Token,
 	pub value: Box<Expr>,
@@ -35,6 +41,7 @@ pub struct IdentifierValue {
 }
 
 pub enum Expr {
+	Call(CallValue),
 	Assignment(AssignmentValue),
 	Binary(BinaryValue),
 	Grouping(GroupingValue),

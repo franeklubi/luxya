@@ -96,6 +96,7 @@ def parse_arrow_expr(expr: str) -> Optional[ArrowExpr]:
 
 def gen_expr() -> str:
 	to_generate = [
+		'Call -> calee: Box<Expr>, closing_paren: Token, arguments: Vec<Expr>',
 		'Assignment -> name: Token, value: Box<Expr>',
 		'Binary -> left: Box<Expr>, operator: Token, right: Box<Expr>',
 		'Grouping -> expression: Box<Expr>',

@@ -19,6 +19,7 @@ impl Expr {
 			Expr::Literal(_) => "A literal",
 			Expr::Unary(_) => "A unary expression",
 			Expr::Identifier(_) => "An identifier",
+			Expr::Call(_) => "A function/method call",
 		}
 	}
 }
@@ -478,7 +479,7 @@ fn unary(tokens: ParserIter) -> Result<Expr, ParseError> {
 			&operator.token_type,
 			&[TokenType::Bang, TokenType::Minus],
 		) {
-			return primary(tokens);
+			return call(tokens);
 		}
 
 		let operator = tokens.next().unwrap();
@@ -491,7 +492,40 @@ fn unary(tokens: ParserIter) -> Result<Expr, ParseError> {
 		}));
 	}
 
-	primary(tokens)
+	call(tokens)
+}
+
+fn call(tokens: ParserIter) -> Result<Expr, ParseError> {
+	fn finish_call(
+		tokens: ParserIter,
+		calee: Expr,
+	) -> Result<Expr, ParseError> {
+		let mut arguments = Vec::new();
+
+		if !peek_matches(tokens, &[TokenType::RightParen]) {
+			loop {
+				arguments.push(expression(tokens)?);
+
+				if match_then_consume(tokens, &[TokenType::Comma]).is_none() {
+					break;
+				}
+			}
+		}
+
+		Ok(Expr::Call(CallValue {
+			arguments,
+			calee: Box::new(calee),
+			closing_paren: expect(tokens, &[TokenType::RightParen], None)?,
+		}))
+	}
+
+	let mut expr = primary(tokens)?;
+
+	while match_then_consume(tokens, &[TokenType::LeftParen]).is_some() {
+		expr = finish_call(tokens, expr)?;
+	}
+
+	Ok(expr)
 }
 
 fn primary(tokens: ParserIter) -> Result<Expr, ParseError> {
