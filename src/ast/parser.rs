@@ -297,7 +297,11 @@ fn statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 	}
 
 	fn while_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
-		let condition = Box::new(expression(tokens)?);
+		let condition = if peek_matches(tokens, &[TokenType::LeftBrace]) {
+			None
+		} else {
+			Some(Box::new(expression(tokens)?))
+		};
 
 		let execute =
 			Box::new(expect_statement(tokens, &[TokenType::LeftBrace])?);
@@ -325,12 +329,17 @@ fn statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 			}
 		};
 
-		println!("before condition");
 		// parse condition
-		let condition = Box::new(expression(tokens)?);
-		println!("after condition");
+		let condition =
+			if match_then_consume(tokens, &[TokenType::Semicolon]).is_some() {
+				None
+			} else {
+				let expr = expression(tokens)?;
 
-		expect(tokens, &[TokenType::Semicolon], None)?;
+				expect(tokens, &[TokenType::Semicolon], None)?;
+
+				Some(Box::new(expr))
+			};
 
 		// parse increment
 		let increment = if peek_matches(tokens, &[TokenType::LeftBrace]) {

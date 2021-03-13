@@ -141,9 +141,15 @@ fn evaluate(
 			}
 		}
 		Stmt::While(v) => {
-			while eval_expression(&v.condition, env)? == InterpreterValue::True
-			{
-				evaluate(&v.execute, env)?;
+			if let Some(condition) = &v.condition {
+				while eval_expression(condition, env)? == InterpreterValue::True
+				{
+					evaluate(&v.execute, env)?;
+				}
+			} else {
+				loop {
+					evaluate(&v.execute, env)?;
+				}
 			}
 
 			Ok(InterpreterValue::Nil)

@@ -2,7 +2,7 @@ use crate::ast::expr::Expr;
 use crate::token::Token;
 
 pub struct WhileValue {
-	pub condition: Box<Expr>,
+	pub condition: Option<Box<Expr>>,
 	pub execute: Box<Stmt>,
 }
 
