@@ -200,26 +200,34 @@ fn declaration(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 /// Statement can not fail and produce None for a statement, because it wouldn't
 /// be significant (e.g. lone `;`)
 fn statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
+	fn unwrap_statement(
+		tokens: ParserIter,
+		stmt: Option<Stmt>,
+		expected: &[TokenType],
+		override_message: Option<&str>,
+	) -> Result<Stmt, ParseError> {
+		stmt.ok_or_else(|| ParseError {
+			message: if let Some(msg) = override_message {
+				msg.into()
+			} else if expected.is_empty() {
+				"Expected statement".into()
+			} else {
+				gen_expected_msg(expected)
+			},
+			token: tokens.peek().cloned(),
+		})
+	}
+
 	fn expect_statement(
 		tokens: ParserIter,
 		starts_with: &[TokenType],
 	) -> Result<Stmt, ParseError> {
 		if !peek_matches(tokens, starts_with) {
-			Err(ParseError {
-				message: gen_expected_msg(starts_with),
-				token: tokens.peek().cloned(),
-			})
+			unwrap_statement(tokens, None, starts_with, None)
 		} else {
 			let stmt = statement(tokens)?;
 
-			if let Some(stmt) = stmt {
-				Ok(stmt)
-			} else {
-				Err(ParseError {
-					message: gen_expected_msg(starts_with),
-					token: tokens.peek().cloned(),
-				})
-			}
+			unwrap_statement(tokens, stmt, starts_with, None)
 		}
 	}
 
@@ -297,26 +305,96 @@ fn statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 		Ok(Some(Stmt::While(WhileValue { condition, execute })))
 	}
 
+	fn for_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
+		let expected =
+			&[TokenType::Semicolon, TokenType::Let, TokenType::Const];
+
+		if !peek_matches(tokens, expected) {
+			return Err(ParseError {
+				message: gen_expected_msg(expected),
+				token: tokens.peek().cloned(),
+			});
+		}
+
+		// parse initializer
+		let initializer = match tokens.peek().unwrap().token_type {
+			TokenType::Let | TokenType::Const => declaration(tokens)?,
+			_ => {
+				tokens.next();
+				None
+			}
+		};
+
+		println!("before condition");
+		// parse condition
+		let condition = Box::new(expression(tokens)?);
+		println!("after condition");
+
+		expect(tokens, &[TokenType::Semicolon], None)?;
+
+		// parse increment
+		let increment = if peek_matches(tokens, &[TokenType::LeftBrace]) {
+			None
+		} else {
+			Some(expression(tokens)?)
+		};
+
+		// parse while body
+		let mut while_body = expect_statement(tokens, &[TokenType::LeftBrace])?;
+
+		// if increment is present, push it into the while body
+		if let Some(increment) = increment {
+			let bv = if let Stmt::Block(bv) = &mut while_body {
+				bv
+			} else {
+				unreachable!()
+			};
+
+			bv.statements.push(Stmt::Expression(ExpressionValue {
+				expression: Box::new(increment),
+			}));
+		}
+
+		let while_stmt = Stmt::While(WhileValue {
+			condition,
+			execute: Box::new(while_body),
+		});
+
+		// determine if for body requires to be in a separate block
+		let for_body = if let Some(initializer) = initializer {
+			Stmt::Block(BlockValue {
+				statements: vec![initializer, while_stmt],
+			})
+		} else {
+			while_stmt
+		};
+
+		Ok(Some(for_body))
+	}
+
 	let consumed_token = match_then_consume(
 		tokens,
 		&[
-			TokenType::Print,
-			TokenType::Semicolon,
-			TokenType::LeftBrace,
 			TokenType::If,
+			TokenType::For,
+			TokenType::Print,
 			TokenType::While,
+			TokenType::LeftBrace,
+			TokenType::Semicolon,
 		],
 	);
 
 	let token_type = consumed_token.map(|ct| ct.token_type);
 
 	match token_type {
-		// that's an empty statement of sorts 🤔
-		Some(TokenType::Semicolon) => Ok(None),
-		Some(TokenType::Print) => print_statement(tokens),
-		Some(TokenType::LeftBrace) => block_statement(tokens),
 		Some(TokenType::If) => if_statement(tokens),
+		Some(TokenType::For) => for_statement(tokens),
+		Some(TokenType::Print) => print_statement(tokens),
 		Some(TokenType::While) => while_statement(tokens),
+		Some(TokenType::LeftBrace) => block_statement(tokens),
+
+		// that's an empty statement so we ignore it later
+		Some(TokenType::Semicolon) => Ok(None),
 		_ => expression_statement(tokens),
 	}
 }

@@ -72,12 +72,10 @@ pub fn assume_identifier(t: &Token) -> &str {
 }
 
 
-pub fn interpret(statements: &[Stmt]) {
+pub fn interpret(statements: &[Stmt]) -> Result<(), RuntimeError> {
 	let env = InterpreterEnvironment::new(None).wrap();
 
-	if let Err(e) = evaluate_statements(statements, &env) {
-		println!("Error [{}]:\n\t{}", 0, e.message);
-	}
+	evaluate_statements(statements, &env)
 }
 
 fn evaluate_statements(

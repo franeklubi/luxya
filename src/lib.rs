@@ -74,7 +74,13 @@ fn run(source: String) -> bool {
 
 	// interpreting 😇
 	if scan_errors.is_empty() && parse_errors.is_empty() {
-		ast::interpret(&statements);
+		if let Err(e) = ast::interpret(&statements) {
+			println!(
+				"Runtime error {}:\n\t{}",
+				get_line(&source, e.token.byte_offset),
+				e.message
+			);
+		}
 	}
 
 	if !scan_errors.is_empty() {
@@ -126,17 +132,17 @@ where
 
 fn get_line(source: &str, byte_offset: usize) -> Line {
 	let mut line_start_offset = 0;
-	let mut line_end_offset = usize::MAX;
-	let mut lines = 0;
+	let mut line_end_offset = source.len();
+	let mut lines = 1;
 
 	// getting the start and end of the line
 	for (i, c) in source.as_bytes().iter().enumerate() {
 		if *c == b'\n' {
-			if i > byte_offset {
+			if i < byte_offset {
+				line_start_offset = i + 1;
+			} else {
 				line_end_offset = i;
 				break;
-			} else {
-				line_start_offset = i;
 			}
 
 			lines += 1;
@@ -146,7 +152,7 @@ fn get_line(source: &str, byte_offset: usize) -> Line {
 	Line {
 		content: source[line_start_offset..line_end_offset].to_string(),
 		number: lines,
-		offset: byte_offset - line_start_offset,
+		offset: byte_offset - line_start_offset + 1,
 	}
 }
 

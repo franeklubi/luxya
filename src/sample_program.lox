@@ -10,20 +10,17 @@ while i < 5 {
 		print "nie dwa";
 	}
 
-
 	i = i + 1;
 }
 
 print "";
-print "andy:";
-print true and true;	// true
-print true and false;	// false
-print false and true;	// false
-print false and false;	// false
 
-print "";
-print "ory:";
-print true or true;	// true
-print true or false;	// true
-print false or true;	// true
-print false or false;	// false
+for let x = 0; x < 5; x = x + 1 {
+	print "teraz x: " + x;
+
+	if x == 2 {
+		print "dwa";
+	} else if x == 3 {
+		print "nie dwa";
+	}
+}
