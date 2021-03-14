@@ -96,7 +96,7 @@ def parse_arrow_expr(expr: str) -> Optional[ArrowExpr]:
 
 def gen_expr() -> str:
 	to_generate = [
-		'Function -> keyword: Token, name: Option<Token>, params: Option<Vec<Token>>, body: Option<Rc<Stmt>>',
+		'Function -> keyword: Token, name: Option<Token>, params: Option<Vec<Token>>, body: Option<Rc<Vec<Stmt>>>',
 		'Call -> calee: Box<Expr>, closing_paren: Token, arguments: Vec<Expr>',
 		'Assignment -> name: Token, value: Box<Expr>',
 		'Binary -> left: Box<Expr>, operator: Token, right: Box<Expr>',

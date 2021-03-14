@@ -37,3 +37,5 @@ fun elo() {
 }
 
 let a = elo;
+
+elo();

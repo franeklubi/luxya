@@ -532,8 +532,14 @@ fn function_declaration(tokens: ParserIter) -> Result<Expr, ParseError> {
 
 		let body = block_statement(tokens)?;
 
+		let statements = if let Some(Stmt::Block(bv)) = body {
+			Some(Rc::new(bv.statements))
+		} else {
+			None
+		};
+
 		Ok(Expr::Function(FunctionValue {
-			body: body.map(Rc::new),
+			body: statements,
 			keyword,
 			name,
 			params: if params.is_empty() {

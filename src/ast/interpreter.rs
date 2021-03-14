@@ -215,8 +215,91 @@ fn eval_expression(
 		Expr::Assignment(v) => {
 			env.assign(&v.name, eval_expression(&v.value, env)?)
 		}
-		Expr::Call(_v) => {
-			unimplemented!("Function call")
+		Expr::Call(v) => {
+			fn confirm_arity(
+				blame: &Token,
+				target: usize,
+				value: usize,
+			) -> Result<(), RuntimeError> {
+				if target != value {
+					Err(RuntimeError {
+						message: format!(
+							"{} arguments",
+							if value > target {
+								"Too many"
+							} else {
+								"Not enough"
+							}
+						),
+						token: blame.clone(),
+					})
+				} else {
+					Ok(())
+				}
+			}
+
+			fn map_arguments(
+				parameters: &[Token],
+				arguments: &[InterpreterValue],
+				fun_env: &WrappedInterpreterEnvironment,
+			) {
+				parameters.iter().zip(arguments).for_each(|(param, arg)| {
+					let name = assume_identifier(param);
+
+					fun_env.declare(
+						name.to_string(),
+						DeclaredValue {
+							mutable: true,
+							value: arg.clone(),
+						},
+					);
+				})
+			}
+
+			let callee = eval_expression(&v.calee, env)?;
+
+			let (fun_env, fun) =
+				if let InterpreterValue::Function { env, fun } = callee {
+					Ok((env, fun))
+				} else {
+					Err(RuntimeError {
+						message: format!(
+							"Cannot call {}",
+							callee.to_human_readable()
+						),
+						token: v.closing_paren.clone(),
+					})
+				}?;
+
+			// pub keyword: Token,
+			// pub name: Option<Token>,
+			// pub params: Option<Vec<Token>>,
+			// pub body: Option<Rc<Stmt>>,
+			let arguments = v
+				.arguments
+				.iter()
+				.map(|a| eval_expression(a, env))
+				.collect::<Result<Vec<_>, RuntimeError>>()?;
+
+			match &*fun {
+				InterpreterFunction::LoxDefined(fv) => {
+					confirm_arity(
+						&v.closing_paren,
+						fv.params.as_ref().map_or(0, |p| p.len()),
+						arguments.len(),
+					)?;
+
+					if let Some(params) = &fv.params {
+						map_arguments(params, &arguments, &fun_env)
+					}
+
+					if let Some(statements) = &fv.body {
+						evaluate_statements(&*statements, &fun_env)?;
+					}
+				}
+			}
+
+			Ok(InterpreterValue::Nil)
 		}
 		Expr::Function(v) => {
 			let fun = InterpreterValue::Function {
