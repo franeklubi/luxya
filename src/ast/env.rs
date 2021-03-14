@@ -24,6 +24,13 @@ impl InterpreterEnvironment {
 #[derive(Clone)]
 pub struct WrappedInterpreterEnvironment(Rc<RefCell<InterpreterEnvironment>>);
 
+impl PartialEq for WrappedInterpreterEnvironment {
+	// TODO: eq envs better
+	fn eq(&self, other: &Self) -> bool {
+		Rc::ptr_eq(&self.0, &other.0)
+	}
+}
+
 macro_rules! unwrap_scope {
 	($wie:expr) => {{
 		&$wie.0.borrow().scope
