@@ -96,6 +96,7 @@ def parse_arrow_expr(expr: str) -> Optional[ArrowExpr]:
 
 def gen_expr() -> str:
 	to_generate = [
+		'Function -> keyword: Token, name: Option<Token>, params: Option<Vec<Token>>, body: Option<Box<Stmt>>',
 		'Call -> calee: Box<Expr>, closing_paren: Token, arguments: Vec<Expr>',
 		'Assignment -> name: Token, value: Box<Expr>',
 		'Binary -> left: Box<Expr>, operator: Token, right: Box<Expr>',
@@ -106,7 +107,7 @@ def gen_expr() -> str:
 	]
 
 	imports = [
-		'crate::token::Token',
+		'crate::{ast::stmt::*, token::Token}',
 		'std::rc::Rc',
 	]
 

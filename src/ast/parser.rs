@@ -1,5 +1,6 @@
 use crate::ast::{expr::*, stmt::*};
 use crate::token::*;
+
 use std::{iter, vec};
 
 
@@ -13,13 +14,14 @@ pub struct ParseError {
 impl Expr {
 	fn to_human_readable(&self) -> &str {
 		match self {
-			Expr::Assignment(_) => "An assignment",
-			Expr::Binary(_) => "A binary expression",
-			Expr::Grouping(_) => "A grouping",
-			Expr::Literal(_) => "A literal",
-			Expr::Unary(_) => "A unary expression",
-			Expr::Identifier(_) => "An identifier",
-			Expr::Call(_) => "A function/method call",
+			Expr::Assignment(_) => "an assignment",
+			Expr::Binary(_) => "a binary expression",
+			Expr::Grouping(_) => "a grouping",
+			Expr::Literal(_) => "a literal",
+			Expr::Unary(_) => "a unary expression",
+			Expr::Identifier(_) => "an identifier",
+			Expr::Call(_) => "a function/method call",
+			Expr::Function(_) => "a function/method declaration",
 		}
 	}
 }
@@ -198,6 +200,24 @@ fn declaration(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 	}
 }
 
+fn block_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
+	let mut statements = Vec::new();
+
+	while !peek_matches(tokens, &[TokenType::RightBrace]) {
+		if let Some(d) = declaration(tokens)? {
+			statements.push(d);
+		}
+	}
+
+	expect(tokens, &[TokenType::RightBrace], None)?;
+
+	if statements.is_empty() {
+		Ok(None)
+	} else {
+		Ok(Some(Stmt::Block(BlockValue { statements })))
+	}
+}
+
 /// Statement can not fail and produce None for a statement, because it wouldn't
 /// be significant (e.g. lone `;`)
 fn statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
@@ -245,32 +265,20 @@ fn statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 	fn expression_statement(
 		tokens: ParserIter,
 	) -> Result<Option<Stmt>, ParseError> {
+		let expr = expression(tokens)?;
+
+		// expect semicolon only if the expression is not a function
+		let semicolon_expected = !matches!(expr, Expr::Function(_));
+
 		let stmt = Stmt::Expression(ExpressionValue {
-			expression: Box::new(expression(tokens)?),
+			expression: Box::new(expr),
 		});
 
-		expect_semicolon(tokens)?;
+		if semicolon_expected {
+			expect_semicolon(tokens)?;
+		}
 
 		Ok(Some(stmt))
-	}
-
-	fn block_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
-		let mut statements = Vec::new();
-
-		while !peek_matches(tokens, &[TokenType::RightBrace]) {
-			if let Some(d) = declaration(tokens)? {
-				statements.push(d);
-			}
-		}
-
-		expect(tokens, &[TokenType::RightBrace], None)?;
-
-
-		if statements.is_empty() {
-			Ok(None)
-		} else {
-			Ok(Some(Stmt::Block(BlockValue { statements })))
-		}
 	}
 
 	fn if_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
@@ -427,7 +435,7 @@ fn assignment(tokens: ParserIter) -> Result<Expr, ParseError> {
 				token: Some(equals),
 				message: format!(
 					"Invalid l-value. Cannot assign to {}",
-					expr.to_human_readable().to_lowercase()
+					expr.to_human_readable()
 				),
 			})
 		};
@@ -473,13 +481,14 @@ fn factor(tokens: ParserIter) -> Result<Expr, ParseError> {
 	build_binary_expr(tokens, unary, &[TokenType::Slash, TokenType::Star])
 }
 
+// TODO: optimize unary
 fn unary(tokens: ParserIter) -> Result<Expr, ParseError> {
 	if let Some(operator) = tokens.peek() {
 		if !match_token_type(
 			&operator.token_type,
 			&[TokenType::Bang, TokenType::Minus],
 		) {
-			return call(tokens);
+			return function_declaration(tokens);
 		}
 
 		let operator = tokens.next().unwrap();
@@ -492,7 +501,50 @@ fn unary(tokens: ParserIter) -> Result<Expr, ParseError> {
 		}));
 	}
 
-	call(tokens)
+	function_declaration(tokens)
+}
+
+fn function_declaration(tokens: ParserIter) -> Result<Expr, ParseError> {
+	if let Some(keyword) = match_then_consume(tokens, &[TokenType::Fun]) {
+		// TODO: optimize expect
+		let fake_identifier = TokenType::Identifier("".into());
+
+		// TODO: optimize expect
+		let name = match_then_consume(tokens, &[fake_identifier.clone()]);
+
+		expect(tokens, &[TokenType::LeftParen], None)?;
+
+		let mut params = Vec::new();
+
+		if !peek_matches(tokens, &[TokenType::RightParen]) {
+			loop {
+				params.push(expect(tokens, &[fake_identifier.clone()], None)?);
+
+				if match_then_consume(tokens, &[TokenType::Comma]).is_none() {
+					break;
+				}
+			}
+		}
+
+		expect(tokens, &[TokenType::RightParen], None)?;
+
+		expect(tokens, &[TokenType::LeftBrace], None)?;
+
+		let body = block_statement(tokens)?;
+
+		Ok(Expr::Function(FunctionValue {
+			body: body.map(Box::new),
+			keyword,
+			name,
+			params: if params.is_empty() {
+				None
+			} else {
+				Some(params)
+			},
+		}))
+	} else {
+		call(tokens)
+	}
 }
 
 fn call(tokens: ParserIter) -> Result<Expr, ParseError> {

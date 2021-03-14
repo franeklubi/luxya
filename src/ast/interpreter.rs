@@ -171,6 +171,7 @@ fn eval_expression(
 			env.assign(&v.name, eval_expression(&v.value, env)?)
 		}
 		Expr::Call(_v) => unimplemented!(),
+		Expr::Function(_v) => unimplemented!(),
 	}
 }
 

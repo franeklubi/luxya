@@ -24,3 +24,13 @@ for let x = 0; x < 5; x = x + 1 {
 		print "nie dwa";
 	}
 }
+
+let a = fun () {print "a";};
+
+fun elo() {
+	print "elo";
+}
+
+fun elo(a, b, c, d) {
+	print "siema";
+}

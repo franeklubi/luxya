@@ -1,4 +1,4 @@
-use crate::token::Token;
+use crate::{ast::stmt::*, token::Token};
 use std::rc::Rc;
 
 #[derive(Clone, PartialEq)]
@@ -8,6 +8,13 @@ pub enum LiteralValue {
 	True,
 	False,
 	Nil,
+}
+
+pub struct FunctionValue {
+	pub keyword: Token,
+	pub name: Option<Token>,
+	pub params: Option<Vec<Token>>,
+	pub body: Option<Box<Stmt>>,
 }
 
 pub struct CallValue {
@@ -41,6 +48,7 @@ pub struct IdentifierValue {
 }
 
 pub enum Expr {
+	Function(FunctionValue),
 	Call(CallValue),
 	Assignment(AssignmentValue),
 	Binary(BinaryValue),
