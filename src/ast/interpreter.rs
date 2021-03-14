@@ -1,7 +1,7 @@
 use crate::ast::{env::*, expr::*, stmt::*};
 use crate::token::*;
 
-use std::{fmt, rc::Rc};
+use std::{fmt, mem, rc::Rc};
 
 
 pub struct RuntimeError {
@@ -21,12 +21,42 @@ pub struct DeclaredValue {
 // - Should mimic LiteralValue's fields
 #[derive(Clone, PartialEq)]
 pub enum InterpreterValue {
+	Function(Rc<InterpreterFunction>),
 	String(Rc<str>),
 	Number(f64),
 	True,
 	False,
 	Nil,
 }
+
+impl InterpreterValue {
+	pub fn to_human_readable(&self) -> &str {
+		match self {
+			InterpreterValue::Function(_) => "function",
+			InterpreterValue::String(_) => "string",
+			InterpreterValue::Number(_) => "number",
+			InterpreterValue::True => "boolean",
+			InterpreterValue::False => "boolean",
+			InterpreterValue::Nil => "nil value",
+		}
+	}
+}
+
+pub enum InterpreterFunction {
+	// Native {
+	// 	arity: usize,
+	// 	f: fn(&[InterpreterValue]) -> InterpreterValue,
+	// },
+	LoxDefined(FunctionValue),
+}
+
+impl PartialEq for InterpreterFunction {
+	// TODO: eq functions better
+	fn eq(&self, other: &Self) -> bool {
+		mem::discriminant(self) == mem::discriminant(other)
+	}
+}
+
 
 impl From<bool> for InterpreterValue {
 	fn from(v: bool) -> Self {
@@ -53,11 +83,12 @@ impl From<LiteralValue> for InterpreterValue {
 impl fmt::Display for InterpreterValue {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		match self {
+			InterpreterValue::Function(_) => write!(f, "function"),
 			InterpreterValue::String(s) => write!(f, "{}", s),
 			InterpreterValue::Number(n) => write!(f, "{}", n),
-			InterpreterValue::Nil => write!(f, "nil"),
-			InterpreterValue::True => write!(f, "true"),
 			InterpreterValue::False => write!(f, "false"),
+			InterpreterValue::True => write!(f, "true"),
+			InterpreterValue::Nil => write!(f, "nil"),
 		}
 	}
 }
@@ -170,8 +201,38 @@ fn eval_expression(
 		Expr::Assignment(v) => {
 			env.assign(&v.name, eval_expression(&v.value, env)?)
 		}
-		Expr::Call(_v) => unimplemented!(),
-		Expr::Function(_v) => unimplemented!(),
+		Expr::Call(_v) => {
+			unimplemented!("Function call")
+		}
+		Expr::Function(v) => {
+			// pub keyword: Token,
+			// pub name: Option<Token>,
+			// pub params: Option<Vec<Token>>,
+			// pub body: Option<Box<Stmt>>,
+			let fun = InterpreterValue::Function(Rc::new(
+				InterpreterFunction::LoxDefined(FunctionValue {
+					body: v.body.as_ref().map(|b| Rc::clone(b)),
+					keyword: v.keyword.clone(),
+					name: v.name.clone(),
+					params: v.params.clone(),
+				}),
+			));
+
+
+			if let Some(t) = &v.name {
+				let iden = assume_identifier(t);
+
+				env.declare(
+					iden.to_string(),
+					DeclaredValue {
+						mutable: false,
+						value: fun.clone(),
+					},
+				);
+			}
+
+			Ok(fun)
+		}
 	}
 }
 

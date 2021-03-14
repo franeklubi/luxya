@@ -28,9 +28,12 @@ for let x = 0; x < 5; x = x + 1 {
 let a = fun () {print "a";};
 
 fun elo() {
+
+	fun elo2() {
+		print "chuj";
+	}
+
 	print "elo";
 }
 
-fun elo(a, b, c, d) {
-	print "siema";
-}
+let a = elo;

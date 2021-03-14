@@ -1,7 +1,7 @@
 use crate::ast::{expr::*, stmt::*};
 use crate::token::*;
 
-use std::{iter, vec};
+use std::{iter, rc::Rc, vec};
 
 
 type ParserIter<'a> = &'a mut iter::Peekable<vec::IntoIter<Token>>;
@@ -533,7 +533,7 @@ fn function_declaration(tokens: ParserIter) -> Result<Expr, ParseError> {
 		let body = block_statement(tokens)?;
 
 		Ok(Expr::Function(FunctionValue {
-			body: body.map(Box::new),
+			body: body.map(Rc::new),
 			keyword,
 			name,
 			params: if params.is_empty() {

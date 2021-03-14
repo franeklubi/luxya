@@ -87,7 +87,11 @@ impl WrappedInterpreterEnvironment {
 				Ok(value)
 			} else {
 				Err(RuntimeError {
-					message: format!("Cannot assign to a const `{}`", name),
+					message: format!(
+						"Cannot assign to a const {} `{}`",
+						entry.value.to_human_readable(),
+						name
+					),
 					token: identifier.clone(),
 				})
 			};

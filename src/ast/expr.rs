@@ -14,7 +14,7 @@ pub struct FunctionValue {
 	pub keyword: Token,
 	pub name: Option<Token>,
 	pub params: Option<Vec<Token>>,
-	pub body: Option<Box<Stmt>>,
+	pub body: Option<Rc<Stmt>>,
 }
 
 pub struct CallValue {
