@@ -46,10 +46,13 @@ impl InterpreterValue {
 }
 
 pub enum InterpreterFunction {
-	// Native {
-	// 	arity: usize,
-	// 	f: fn(&[InterpreterValue]) -> InterpreterValue,
-	// },
+	Native {
+		arity: usize,
+		fun: fn(
+			&WrappedInterpreterEnvironment,
+			&[InterpreterValue],
+		) -> Result<InterpreterValue, RuntimeError>,
+	},
 	LoxDefined(FunctionValue),
 }
 
@@ -107,6 +110,26 @@ impl fmt::Display for InterpreterValue {
 	}
 }
 
+fn declare_native_functions(env: &WrappedInterpreterEnvironment) {
+	env.declare(
+		"string".to_string(),
+		DeclaredValue {
+			mutable: true,
+			value: InterpreterValue::Function {
+				fun: Rc::new(InterpreterFunction::Native {
+					arity: 1,
+					fun: |_env, args| {
+						Ok(InterpreterValue::String(Rc::from(
+							args[0].to_string(),
+						)))
+					},
+				}),
+				enclosing_env: env.clone(),
+			},
+		},
+	);
+}
+
 // A shorthand way to extract identifier's name
 pub fn assume_identifier(t: &Token) -> &str {
 	if let TokenType::Identifier(i) = &t.token_type {
@@ -119,6 +142,8 @@ pub fn assume_identifier(t: &Token) -> &str {
 
 pub fn interpret(statements: &[Stmt]) -> Result<(), RuntimeError> {
 	let env = InterpreterEnvironment::new(None).wrap();
+
+	declare_native_functions(&env);
 
 	evaluate_statements(statements, &env)
 }
@@ -217,9 +242,9 @@ fn eval_expression(
 		}
 		Expr::Call(v) => {
 			fn confirm_arity(
-				blame: &Token,
 				target: usize,
 				value: usize,
+				blame: &Token,
 			) -> Result<(), RuntimeError> {
 				if target != value {
 					Err(RuntimeError {
@@ -282,9 +307,9 @@ fn eval_expression(
 			match &*fun {
 				InterpreterFunction::LoxDefined(fv) => {
 					confirm_arity(
-						&v.closing_paren,
 						fv.params.as_ref().map_or(0, |p| p.len()),
 						arguments.len(),
+						&v.closing_paren,
 					)?;
 
 					let fun_env = &enclosing_env.fork();
@@ -296,6 +321,11 @@ fn eval_expression(
 					if let Some(statements) = &fv.body {
 						evaluate_statements(&*statements, fun_env)?;
 					}
+				}
+				InterpreterFunction::Native { arity, fun } => {
+					confirm_arity(*arity, arguments.len(), &v.closing_paren)?;
+
+					fun(&enclosing_env.fork(), &arguments)?;
 				}
 			}
 

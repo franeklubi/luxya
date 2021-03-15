@@ -1,9 +1,8 @@
 
 fun printer(what) {
-	print what + "1";
+	print what;
 }
 
+print string("chuj");
 
 printer("hijaaaa");
-
-print what;
