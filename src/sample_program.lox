@@ -1,41 +1,9 @@
 
-let i = 0;
-
-while i < 5 {
-	print "teraz i: " + i;
-
-	if i == 2 {
-		print "dwa";
-	} else if i == 3 {
-		print "nie dwa";
-	}
-
-	i = i + 1;
+fun printer(what) {
+	print what + "1";
 }
 
-print "";
 
-for let x = 0; x < 5; x = x + 1 {
-	print "teraz x: " + x;
+printer("hijaaaa");
 
-	if x == 2 {
-		print "dwa";
-	} else if x == 3 {
-		print "nie dwa";
-	}
-}
-
-let a = fun () {print "a";};
-
-fun elo() {
-
-	fun elo2() {
-		print "chuj";
-	}
-
-	print "elo";
-}
-
-let a = elo;
-
-elo();
+print what;

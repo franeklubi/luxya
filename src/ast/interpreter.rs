@@ -23,7 +23,7 @@ pub struct DeclaredValue {
 pub enum InterpreterValue {
 	Function {
 		fun: Rc<InterpreterFunction>,
-		env: WrappedInterpreterEnvironment,
+		enclosing_env: WrappedInterpreterEnvironment,
 	},
 	String(Rc<str>),
 	Number(f64),
@@ -258,9 +258,11 @@ fn eval_expression(
 
 			let callee = eval_expression(&v.calee, env)?;
 
-			let (fun_env, fun) =
-				if let InterpreterValue::Function { env, fun } = callee {
-					Ok((env, fun))
+			let (enclosing_env, fun) =
+				if let InterpreterValue::Function { enclosing_env, fun } =
+					callee
+				{
+					Ok((enclosing_env, fun))
 				} else {
 					Err(RuntimeError {
 						message: format!(
@@ -271,10 +273,6 @@ fn eval_expression(
 					})
 				}?;
 
-			// pub keyword: Token,
-			// pub name: Option<Token>,
-			// pub params: Option<Vec<Token>>,
-			// pub body: Option<Rc<Stmt>>,
 			let arguments = v
 				.arguments
 				.iter()
@@ -289,12 +287,14 @@ fn eval_expression(
 						arguments.len(),
 					)?;
 
+					let fun_env = &enclosing_env.fork();
+
 					if let Some(params) = &fv.params {
-						map_arguments(params, &arguments, &fun_env)
+						map_arguments(params, &arguments, fun_env)
 					}
 
 					if let Some(statements) = &fv.body {
-						evaluate_statements(&*statements, &fun_env)?;
+						evaluate_statements(&*statements, fun_env)?;
 					}
 				}
 			}
@@ -303,7 +303,7 @@ fn eval_expression(
 		}
 		Expr::Function(v) => {
 			let fun = InterpreterValue::Function {
-				env: env.clone(),
+				enclosing_env: env.clone(),
 				fun: Rc::new(InterpreterFunction::LoxDefined(FunctionValue {
 					body: v.body.as_ref().map(|b| Rc::clone(b)),
 					keyword: v.keyword.clone(),
@@ -423,28 +423,13 @@ fn eval_binary(
 					})
 				}
 			}
-			(InterpreterValue::String(s1), InterpreterValue::Number(n1)) => {
-				if v.operator.token_type == TokenType::Plus {
-					Ok(InterpreterValue::String(Rc::from(
-						s1.to_string() + &n1.to_string(),
-					)))
-				} else {
-					Err(RuntimeError {
-						message: format!(
-							"You cannot use `{}` on string and a number. Did \
-							 you mean `+`?",
-							v.operator.token_type
-						),
-						token: v.operator.clone(),
-					})
-				}
-			}
-
 			// error bby
 			_ => Err(RuntimeError {
 				message: format!(
-					"Cannot use `{}` on `{}` and `{}`",
-					v.operator.token_type, left_value, right_value
+					"Cannot use `{}` on {} and {}",
+					v.operator.token_type,
+					left_value.to_human_readable(),
+					right_value.to_human_readable()
 				),
 				token: v.operator.clone(),
 			}),

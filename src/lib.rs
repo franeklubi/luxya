@@ -76,7 +76,7 @@ fn run(source: String) -> bool {
 	if scan_errors.is_empty() && parse_errors.is_empty() {
 		if let Err(e) = ast::interpret(&statements) {
 			println!(
-				"Runtime error {}:\n\t{}",
+				"Runtime error {}\n\t{}",
 				get_line(&source, e.token.byte_offset),
 				e.message
 			);
