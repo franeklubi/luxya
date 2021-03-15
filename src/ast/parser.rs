@@ -390,6 +390,42 @@ fn statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 		Ok(Some(for_body))
 	}
 
+	fn return_statement(
+		tokens: ParserIter,
+		keyword: Token,
+	) -> Result<Option<Stmt>, ParseError> {
+		let expression = if !peek_matches(tokens, &[TokenType::Semicolon]) {
+			Some(expression(tokens)?)
+		} else {
+			None
+		};
+
+		expect_semicolon(tokens)?;
+
+		Ok(Some(Stmt::Return(ReturnValue {
+			expression,
+			keyword,
+		})))
+	}
+
+	fn break_statement(
+		tokens: ParserIter,
+		keyword: Token,
+	) -> Result<Option<Stmt>, ParseError> {
+		expect_semicolon(tokens)?;
+
+		Ok(Some(Stmt::Break(BreakValue { keyword })))
+	}
+
+	fn continue_statement(
+		tokens: ParserIter,
+		keyword: Token,
+	) -> Result<Option<Stmt>, ParseError> {
+		expect_semicolon(tokens)?;
+
+		Ok(Some(Stmt::Continue(ContinueValue { keyword })))
+	}
+
 	let consumed_token = match_then_consume(
 		tokens,
 		&[
@@ -397,12 +433,15 @@ fn statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 			TokenType::For,
 			TokenType::Print,
 			TokenType::While,
+			TokenType::Break,
+			TokenType::Return,
+			TokenType::Continue,
 			TokenType::LeftBrace,
 			TokenType::Semicolon,
 		],
 	);
 
-	let token_type = consumed_token.map(|ct| ct.token_type);
+	let token_type = consumed_token.clone().map(|ct| ct.token_type);
 
 	match token_type {
 		Some(TokenType::If) => if_statement(tokens),
@@ -410,9 +449,19 @@ fn statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 		Some(TokenType::Print) => print_statement(tokens),
 		Some(TokenType::While) => while_statement(tokens),
 		Some(TokenType::LeftBrace) => block_statement(tokens),
+		Some(TokenType::Break) => {
+			break_statement(tokens, consumed_token.unwrap())
+		}
+		Some(TokenType::Return) => {
+			return_statement(tokens, consumed_token.unwrap())
+		}
+		Some(TokenType::Continue) => {
+			continue_statement(tokens, consumed_token.unwrap())
+		}
 
 		// that's an empty statement so we ignore it later
 		Some(TokenType::Semicolon) => Ok(None),
+
 		_ => expression_statement(tokens),
 	}
 }

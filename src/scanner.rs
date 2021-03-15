@@ -26,6 +26,8 @@ fn resolve_identifier(identifier: &str) -> TokenType {
 		"let" => TokenType::Let,
 		"const" => TokenType::Const,
 		"while" => TokenType::While,
+		"break" => TokenType::Break,
+		"continue" => TokenType::Continue,
 		_ => TokenType::Identifier(identifier.into()),
 	}
 }

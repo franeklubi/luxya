@@ -1,8 +1,9 @@
 
-fun printer(what) {
-	print what;
+fun fib(n) {
+	if (n <= 1) {return n;};
+	return fib(n - 2) + fib(n - 1);
 }
 
-print string("chuj");
-
-printer("hijaaaa");
+for let i = 0; i < 30; i = i + 1 {
+	print str(i) + ": " + str(fib(i));
+}

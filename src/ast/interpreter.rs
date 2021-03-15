@@ -45,6 +45,16 @@ impl InterpreterValue {
 	}
 }
 
+pub enum InterpreterStmtValue {
+	Return {
+		keyword: Token,
+		value: InterpreterValue,
+	},
+	Break(Token),
+	Continue(Token),
+	Noop,
+}
+
 pub enum InterpreterFunction {
 	Native {
 		arity: usize,
@@ -112,16 +122,22 @@ impl fmt::Display for InterpreterValue {
 
 fn declare_native_functions(env: &WrappedInterpreterEnvironment) {
 	env.declare(
-		"string".to_string(),
+		"str".to_string(),
 		DeclaredValue {
 			mutable: true,
 			value: InterpreterValue::Function {
 				fun: Rc::new(InterpreterFunction::Native {
 					arity: 1,
 					fun: |_env, args| {
-						Ok(InterpreterValue::String(Rc::from(
-							args[0].to_string(),
-						)))
+						let input = &args[0];
+
+						if let InterpreterValue::String(_) = input {
+							Ok(input.clone())
+						} else {
+							Ok(InterpreterValue::String(Rc::from(
+								args[0].to_string(),
+							)))
+						}
 					},
 				}),
 				enclosing_env: env.clone(),
@@ -139,42 +155,76 @@ pub fn assume_identifier(t: &Token) -> &str {
 	}
 }
 
+pub fn guard_function(
+	ibv: InterpreterStmtValue,
+) -> Result<InterpreterValue, RuntimeError> {
+	match ibv {
+		InterpreterStmtValue::Break(token) => Err(RuntimeError {
+			message: "Cannot use `break` outside of a loop".into(),
+			token,
+		}),
+		InterpreterStmtValue::Continue(token) => Err(RuntimeError {
+			message: "Cannot use `continue` outside of a loop".into(),
+			token,
+		}),
+		InterpreterStmtValue::Return { value, .. } => Ok(value),
+		InterpreterStmtValue::Noop => Ok(InterpreterValue::Nil),
+	}
+}
 
 pub fn interpret(statements: &[Stmt]) -> Result<(), RuntimeError> {
 	let env = InterpreterEnvironment::new(None).wrap();
 
 	declare_native_functions(&env);
 
-	evaluate_statements(statements, &env)
+	match evaluate_statements(statements, &env)? {
+		InterpreterStmtValue::Noop => Ok(()),
+		InterpreterStmtValue::Break(token) => Err(RuntimeError {
+			message: "Cannot use `break` outside of a loop".into(),
+			token,
+		}),
+		InterpreterStmtValue::Continue(token) => Err(RuntimeError {
+			message: "Cannot use `continue` outside of a loop".into(),
+			token,
+		}),
+		InterpreterStmtValue::Return { keyword, .. } => Err(RuntimeError {
+			message: "Cannot use `return` outside of a function".into(),
+			token: keyword,
+		}),
+	}
 }
 
 fn evaluate_statements(
 	statements: &[Stmt],
 	env: &WrappedInterpreterEnvironment,
-) -> Result<(), RuntimeError> {
+) -> Result<InterpreterStmtValue, RuntimeError> {
 	for stmt in statements.iter() {
-		if let Err(e) = evaluate(&stmt, env) {
-			return Err(e);
+		let e = evaluate(&stmt, env)?;
+
+		if !matches!(e, InterpreterStmtValue::Noop) {
+			return Ok(e);
 		}
 	}
 
-	Ok(())
+	Ok(InterpreterStmtValue::Noop)
 }
 
 fn evaluate(
 	stmt: &Stmt,
 	env: &WrappedInterpreterEnvironment,
-) -> Result<InterpreterValue, RuntimeError> {
+) -> Result<InterpreterStmtValue, RuntimeError> {
 	match stmt {
-		Stmt::Expression(v) => eval_expression(&v.expression, env),
+		Stmt::Expression(v) => {
+			eval_expression(&v.expression, env)?;
+
+			Ok(InterpreterStmtValue::Noop)
+		}
 		Stmt::Print(v) => {
-			let evaluated = eval_expression(&v.expression, env);
+			let evaluated = eval_expression(&v.expression, env)?;
 
-			if let Ok(value) = &evaluated {
-				println!("{}", value);
-			}
+			println!("{}", evaluated);
 
-			evaluated
+			Ok(InterpreterStmtValue::Noop)
 		}
 		Stmt::Declaration(v) => {
 			let value = v
@@ -192,14 +242,12 @@ fn evaluate(
 				},
 			);
 
-			Ok(InterpreterValue::Nil)
+			Ok(InterpreterStmtValue::Noop)
 		}
 		Stmt::Block(v) => {
 			let new_scope = env.fork();
 
-			evaluate_statements(&v.statements, &new_scope)?;
-
-			Ok(InterpreterValue::Nil)
+			evaluate_statements(&v.statements, &new_scope)
 		}
 		Stmt::If(v) => {
 			if eval_expression(&v.condition, env)? == InterpreterValue::True {
@@ -207,22 +255,55 @@ fn evaluate(
 			} else if let Some(otherwise) = &v.otherwise {
 				evaluate(otherwise, env)
 			} else {
-				Ok(InterpreterValue::Nil)
+				Ok(InterpreterStmtValue::Noop)
 			}
 		}
 		Stmt::While(v) => {
+			// these branches look so sketchy, but it's an optimization for
+			// condition-less loops
 			if let Some(condition) = &v.condition {
 				while eval_expression(condition, env)? == InterpreterValue::True
 				{
-					evaluate(&v.execute, env)?;
+					let e = evaluate(&v.execute, env)?;
+
+					match e {
+						InterpreterStmtValue::Break(_) => break,
+						InterpreterStmtValue::Continue(_) => continue,
+						InterpreterStmtValue::Noop => (),
+						InterpreterStmtValue::Return { .. } => {
+							return Ok(e);
+						}
+					}
 				}
 			} else {
 				loop {
-					evaluate(&v.execute, env)?;
+					let e = evaluate(&v.execute, env)?;
+
+					match e {
+						InterpreterStmtValue::Break(_) => break,
+						InterpreterStmtValue::Continue(_) => continue,
+						InterpreterStmtValue::Noop => (),
+						InterpreterStmtValue::Return { .. } => {
+							return Ok(e);
+						}
+					}
 				}
 			}
 
-			Ok(InterpreterValue::Nil)
+			Ok(InterpreterStmtValue::Noop)
+		}
+		Stmt::Return(v) => Ok(InterpreterStmtValue::Return {
+			value: v
+				.expression
+				.as_ref()
+				.map_or(Ok(InterpreterValue::Nil), |e| {
+					eval_expression(e, env)
+				})?,
+			keyword: v.keyword.clone(),
+		}),
+		Stmt::Break(v) => Ok(InterpreterStmtValue::Break(v.keyword.clone())),
+		Stmt::Continue(v) => {
+			Ok(InterpreterStmtValue::Continue(v.keyword.clone()))
 		}
 	}
 }
@@ -319,17 +400,18 @@ fn eval_expression(
 					}
 
 					if let Some(statements) = &fv.body {
-						evaluate_statements(&*statements, fun_env)?;
+						let e = evaluate_statements(&*statements, fun_env)?;
+						Ok(guard_function(e)?)
+					} else {
+						Ok(InterpreterValue::Nil)
 					}
 				}
 				InterpreterFunction::Native { arity, fun } => {
 					confirm_arity(*arity, arguments.len(), &v.closing_paren)?;
 
-					fun(&enclosing_env.fork(), &arguments)?;
+					Ok(fun(&enclosing_env.fork(), &arguments)?)
 				}
 			}
-
-			Ok(InterpreterValue::Nil)
 		}
 		Expr::Function(v) => {
 			let fun = InterpreterValue::Function {

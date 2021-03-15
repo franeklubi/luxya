@@ -1,6 +1,19 @@
 use crate::ast::expr::Expr;
 use crate::token::Token;
 
+pub struct ContinueValue {
+	pub keyword: Token,
+}
+
+pub struct BreakValue {
+	pub keyword: Token,
+}
+
+pub struct ReturnValue {
+	pub keyword: Token,
+	pub expression: Option<Expr>,
+}
+
 pub struct WhileValue {
 	pub condition: Option<Box<Expr>>,
 	pub execute: Box<Stmt>,
@@ -31,6 +44,9 @@ pub struct DeclarationValue {
 }
 
 pub enum Stmt {
+	Continue(ContinueValue),
+	Break(BreakValue),
+	Return(ReturnValue),
 	While(WhileValue),
 	If(IfValue),
 	Block(BlockValue),
