@@ -7,4 +7,5 @@ print typeof(true);
 print "";
 print number(4) + 123;
 print number("123") + 123;
-print number("chuj") + 123;
+print "";
+print "eluwa length: " + str(len("eluwa"));

@@ -199,6 +199,34 @@ fn declare_native_functions(env: &WrappedInterpreterEnvironment) {
 			},
 		},
 	);
+	env.declare(
+		"len".to_string(),
+		DeclaredValue {
+			mutable: true,
+			value: InterpreterValue::Function {
+				fun: Rc::new(InterpreterFunction::Native {
+					arity: 1,
+					fun: |keyword, _env, args| {
+						let input = &args[0];
+
+						match input {
+							InterpreterValue::String(s) => {
+								Ok(InterpreterValue::Number(s.len() as f64))
+							}
+							_ => Err(RuntimeError {
+								message: format!(
+									"Can't get length of {}",
+									input.to_human_readable()
+								),
+								token: keyword.clone(),
+							}),
+						}
+					},
+				}),
+				enclosing_env: env.clone(),
+			},
+		},
+	);
 }
 
 // A shorthand way to extract identifier's name
