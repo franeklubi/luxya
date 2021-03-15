@@ -40,7 +40,7 @@ impl InterpreterValue {
 			InterpreterValue::Number(_) => "number",
 			InterpreterValue::True => "boolean",
 			InterpreterValue::False => "boolean",
-			InterpreterValue::Nil => "nil value",
+			InterpreterValue::Nil => "nil",
 		}
 	}
 }
@@ -135,9 +135,26 @@ fn declare_native_functions(env: &WrappedInterpreterEnvironment) {
 							Ok(input.clone())
 						} else {
 							Ok(InterpreterValue::String(Rc::from(
-								args[0].to_string(),
+								input.to_string(),
 							)))
 						}
+					},
+				}),
+				enclosing_env: env.clone(),
+			},
+		},
+	);
+	env.declare(
+		"typeof".to_string(),
+		DeclaredValue {
+			mutable: true,
+			value: InterpreterValue::Function {
+				fun: Rc::new(InterpreterFunction::Native {
+					arity: 1,
+					fun: |_env, args| {
+						Ok(InterpreterValue::String(Rc::from(
+							args[0].to_human_readable(),
+						)))
 					},
 				}),
 				enclosing_env: env.clone(),
