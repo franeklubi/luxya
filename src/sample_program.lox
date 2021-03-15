@@ -4,3 +4,7 @@ print typeof(1);
 print typeof(nil);
 print typeof(fun(){});
 print typeof(true);
+print "";
+print number(4) + 123;
+print number("123") + 123;
+print number("chuj") + 123;

@@ -59,6 +59,7 @@ pub enum InterpreterFunction {
 	Native {
 		arity: usize,
 		fun: fn(
+			&Token,
 			&WrappedInterpreterEnvironment,
 			&[InterpreterValue],
 		) -> Result<InterpreterValue, RuntimeError>,
@@ -128,7 +129,7 @@ fn declare_native_functions(env: &WrappedInterpreterEnvironment) {
 			value: InterpreterValue::Function {
 				fun: Rc::new(InterpreterFunction::Native {
 					arity: 1,
-					fun: |_env, args| {
+					fun: |_keyword, _env, args| {
 						let input = &args[0];
 
 						if let InterpreterValue::String(_) = input {
@@ -151,10 +152,47 @@ fn declare_native_functions(env: &WrappedInterpreterEnvironment) {
 			value: InterpreterValue::Function {
 				fun: Rc::new(InterpreterFunction::Native {
 					arity: 1,
-					fun: |_env, args| {
+					fun: |_keyword, _env, args| {
 						Ok(InterpreterValue::String(Rc::from(
 							args[0].to_human_readable(),
 						)))
+					},
+				}),
+				enclosing_env: env.clone(),
+			},
+		},
+	);
+	env.declare(
+		"number".to_string(),
+		DeclaredValue {
+			mutable: true,
+			value: InterpreterValue::Function {
+				fun: Rc::new(InterpreterFunction::Native {
+					arity: 1,
+					fun: |keyword, _env, args| {
+						let input = &args[0];
+
+						match input {
+							InterpreterValue::Number(_) => Ok(input.clone()),
+							InterpreterValue::String(s) => {
+								Ok(InterpreterValue::Number(
+									s.parse().map_err(|_| RuntimeError {
+										message: format!(
+											"Couldn't parse `{}` to number",
+											s
+										),
+										token: keyword.clone(),
+									})?,
+								))
+							}
+							_ => Err(RuntimeError {
+								message: format!(
+									"Can't parse {} to number",
+									input.to_human_readable()
+								),
+								token: keyword.clone(),
+							}),
+						}
 					},
 				}),
 				enclosing_env: env.clone(),
@@ -426,7 +464,11 @@ fn eval_expression(
 				InterpreterFunction::Native { arity, fun } => {
 					confirm_arity(*arity, arguments.len(), &v.closing_paren)?;
 
-					Ok(fun(&enclosing_env.fork(), &arguments)?)
+					Ok(fun(
+						&v.closing_paren,
+						&enclosing_env.fork(),
+						&arguments,
+					)?)
 				}
 			}
 		}
