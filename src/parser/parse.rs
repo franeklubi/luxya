@@ -1,93 +1,11 @@
-use crate::ast::{expr::*, stmt::*};
-use crate::token::*;
+use super::{helpers::*, statements::*, types::*};
+use crate::{
+	ast::{expr::*, stmt::*},
+	token::*,
+};
 
-use std::{iter, rc::Rc, vec};
+use std::rc::Rc;
 
-
-type ParserIter<'a> = &'a mut iter::Peekable<vec::IntoIter<Token>>;
-
-pub struct ParseError {
-	pub token: Option<Token>,
-	pub message: String,
-}
-
-impl Expr {
-	fn to_human_readable(&self) -> &str {
-		match self {
-			Expr::Assignment(_) => "an assignment",
-			Expr::Binary(_) => "a binary expression",
-			Expr::Grouping(_) => "a grouping",
-			Expr::Literal(_) => "a literal",
-			Expr::Unary(_) => "a unary expression",
-			Expr::Identifier(_) => "an identifier",
-			Expr::Call(_) => "a function/method call",
-			Expr::Function(_) => "a function/method declaration",
-		}
-	}
-}
-
-fn match_token_type(t: &TokenType, expected: &[TokenType]) -> bool {
-	expected.iter().any(|a| a == t)
-}
-
-fn peek_matches(tokens: ParserIter, expected: &[TokenType]) -> bool {
-	tokens
-		.peek()
-		.map_or(false, |v| match_token_type(&v.token_type, expected))
-}
-
-/// Tries peek of ParserIter against provided token types
-///
-/// Returns `Some(Token)` if successful and consumes the token, `None` otherwise
-fn match_then_consume(
-	tokens: ParserIter,
-	expected: &[TokenType],
-) -> Option<Token> {
-	tokens
-		.peek()
-		.map(|t| match_token_type(&t.token_type, expected))
-		.and_then(|b| b.then(|| tokens.next().unwrap()))
-}
-
-fn expect(
-	tokens: ParserIter,
-	expected: &[TokenType],
-	override_message: Option<&str>,
-) -> Result<Token, ParseError> {
-	match_then_consume(tokens, expected).ok_or_else(|| {
-		let message = if let Some(m) = override_message {
-			m.to_string()
-		} else {
-			gen_expected_msg(expected)
-		};
-
-		ParseError {
-			message,
-			token: tokens.peek().cloned(),
-		}
-	})
-}
-
-fn gen_expected_msg(expected: &[TokenType]) -> String {
-	let msg = if expected.len() > 1 {
-		"Expected one of: "
-	} else {
-		"Expected: "
-	}
-	.to_string();
-
-	let enumerated: String = expected
-		.iter()
-		.map(|e| format!("`{}`", e))
-		.collect::<Vec<String>>()
-		.join(", ");
-
-	msg + &enumerated
-}
-
-fn expect_semicolon(tokens: ParserIter) -> Result<Token, ParseError> {
-	expect(tokens, &[TokenType::Semicolon], None)
-}
 
 fn build_binary_expr(
 	tokens: ParserIter,
@@ -107,32 +25,6 @@ fn build_binary_expr(
 	}
 
 	Ok(expr)
-}
-
-// call only if the token that the parser choked on is not ';'
-// TODO: rethink/rewrite this
-fn synchronize(tokens: ParserIter) {
-	while let Some(token) = tokens.peek() {
-		match token.token_type {
-			TokenType::Class
-			| TokenType::Fun
-			| TokenType::Let
-			| TokenType::Const
-			| TokenType::For
-			| TokenType::If
-			| TokenType::While
-			| TokenType::Print
-			| TokenType::Return => {
-				break;
-			}
-
-			_ => {
-				if TokenType::Semicolon == tokens.next().unwrap().token_type {
-					break;
-				}
-			}
-		}
-	}
 }
 
 pub fn parse(tokens: Vec<Token>) -> (Vec<Stmt>, Vec<ParseError>) {
@@ -163,7 +55,7 @@ pub fn parse(tokens: Vec<Token>) -> (Vec<Stmt>, Vec<ParseError>) {
 
 // grammar functions down there 👇
 
-fn declaration(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
+pub fn declaration(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 	fn value_declaration(
 		tokens: ParserIter,
 		matched: TokenType,
@@ -220,212 +112,7 @@ fn block_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 
 /// Statement can not fail and produce None for a statement, because it wouldn't
 /// be significant (e.g. lone `;`)
-fn statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
-	fn unwrap_statement(
-		tokens: ParserIter,
-		stmt: Option<Stmt>,
-		expected: &[TokenType],
-		override_message: Option<&str>,
-	) -> Result<Stmt, ParseError> {
-		stmt.ok_or_else(|| ParseError {
-			message: if let Some(msg) = override_message {
-				msg.into()
-			} else if expected.is_empty() {
-				"Expected statement".into()
-			} else {
-				gen_expected_msg(expected)
-			},
-			token: tokens.peek().cloned(),
-		})
-	}
-
-	fn expect_statement(
-		tokens: ParserIter,
-		starts_with: &[TokenType],
-	) -> Result<Stmt, ParseError> {
-		if !peek_matches(tokens, starts_with) {
-			unwrap_statement(tokens, None, starts_with, None)
-		} else {
-			let stmt = statement(tokens)?;
-
-			unwrap_statement(tokens, stmt, starts_with, None)
-		}
-	}
-
-	fn print_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
-		let stmt = Stmt::Print(PrintValue {
-			expression: Box::new(expression(tokens)?),
-		});
-
-		expect_semicolon(tokens)?;
-
-		Ok(Some(stmt))
-	}
-
-	fn expression_statement(
-		tokens: ParserIter,
-	) -> Result<Option<Stmt>, ParseError> {
-		let expr = expression(tokens)?;
-
-		// expect semicolon only if the expression is not a function
-		let semicolon_expected = !matches!(expr, Expr::Function(_));
-
-		let stmt = Stmt::Expression(ExpressionValue {
-			expression: Box::new(expr),
-		});
-
-		if semicolon_expected {
-			expect_semicolon(tokens)?;
-		}
-
-		Ok(Some(stmt))
-	}
-
-	fn if_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
-		let condition = Box::new(expression(tokens)?);
-
-		let then = Box::new(expect_statement(
-			tokens,
-			&[TokenType::LeftBrace, TokenType::If],
-		)?);
-		let otherwise =
-			if match_then_consume(tokens, &[TokenType::Else]).is_some() {
-				Some(Box::new(expect_statement(
-					tokens,
-					&[TokenType::LeftBrace, TokenType::If],
-				)?))
-			} else {
-				None
-			};
-
-		Ok(Some(Stmt::If(IfValue {
-			condition,
-			then,
-			otherwise,
-		})))
-	}
-
-	fn while_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
-		let condition = if peek_matches(tokens, &[TokenType::LeftBrace]) {
-			None
-		} else {
-			Some(Box::new(expression(tokens)?))
-		};
-
-		let execute =
-			Box::new(expect_statement(tokens, &[TokenType::LeftBrace])?);
-
-		Ok(Some(Stmt::While(WhileValue { condition, execute })))
-	}
-
-	fn for_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
-		let expected =
-			&[TokenType::Semicolon, TokenType::Let, TokenType::Const];
-
-		if !peek_matches(tokens, expected) {
-			return Err(ParseError {
-				message: gen_expected_msg(expected),
-				token: tokens.peek().cloned(),
-			});
-		}
-
-		// parse initializer
-		let initializer = match tokens.peek().unwrap().token_type {
-			TokenType::Let | TokenType::Const => declaration(tokens)?,
-			_ => {
-				tokens.next();
-				None
-			}
-		};
-
-		// parse condition
-		let condition =
-			if match_then_consume(tokens, &[TokenType::Semicolon]).is_some() {
-				None
-			} else {
-				let expr = expression(tokens)?;
-
-				expect(tokens, &[TokenType::Semicolon], None)?;
-
-				Some(Box::new(expr))
-			};
-
-		// parse increment
-		let increment = if peek_matches(tokens, &[TokenType::LeftBrace]) {
-			None
-		} else {
-			Some(expression(tokens)?)
-		};
-
-		// parse while body
-		let mut while_body = expect_statement(tokens, &[TokenType::LeftBrace])?;
-
-		// if increment is present, push it into the while body
-		if let Some(increment) = increment {
-			let bv = if let Stmt::Block(bv) = &mut while_body {
-				bv
-			} else {
-				unreachable!()
-			};
-
-			bv.statements.push(Stmt::Expression(ExpressionValue {
-				expression: Box::new(increment),
-			}));
-		}
-
-		let while_stmt = Stmt::While(WhileValue {
-			condition,
-			execute: Box::new(while_body),
-		});
-
-		// determine if for body requires to be in a separate block
-		let for_body = if let Some(initializer) = initializer {
-			Stmt::Block(BlockValue {
-				statements: vec![initializer, while_stmt],
-			})
-		} else {
-			while_stmt
-		};
-
-		Ok(Some(for_body))
-	}
-
-	fn return_statement(
-		tokens: ParserIter,
-		keyword: Token,
-	) -> Result<Option<Stmt>, ParseError> {
-		let expression = if !peek_matches(tokens, &[TokenType::Semicolon]) {
-			Some(expression(tokens)?)
-		} else {
-			None
-		};
-
-		expect_semicolon(tokens)?;
-
-		Ok(Some(Stmt::Return(ReturnValue {
-			expression,
-			keyword,
-		})))
-	}
-
-	fn break_statement(
-		tokens: ParserIter,
-		keyword: Token,
-	) -> Result<Option<Stmt>, ParseError> {
-		expect_semicolon(tokens)?;
-
-		Ok(Some(Stmt::Break(BreakValue { keyword })))
-	}
-
-	fn continue_statement(
-		tokens: ParserIter,
-		keyword: Token,
-	) -> Result<Option<Stmt>, ParseError> {
-		expect_semicolon(tokens)?;
-
-		Ok(Some(Stmt::Continue(ContinueValue { keyword })))
-	}
-
+pub fn statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 	let consumed_token = match_then_consume(
 		tokens,
 		&[
@@ -466,7 +153,7 @@ fn statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 	}
 }
 
-fn expression(tokens: ParserIter) -> Result<Expr, ParseError> {
+pub fn expression(tokens: ParserIter) -> Result<Expr, ParseError> {
 	assignment(tokens)
 }
 

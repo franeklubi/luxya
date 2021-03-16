@@ -1,11 +1,12 @@
 
-print typeof("chuj");
-print typeof(1);
-print typeof(nil);
-print typeof(fun(){});
-print typeof(true);
-print "";
-print number(4) + 123;
-print number("123") + 123;
-print "";
-print "eluwa length: " + str(len("eluwa"));
+fun fib(n) {
+	if (n <= 1) {
+		return n;
+	}
+
+	return fib(n - 2) + fib(n - 1);
+}
+
+for let i = 0; i < 10; i = i + 1 {
+	print str(i) + ": " + str(fib(i));
+}

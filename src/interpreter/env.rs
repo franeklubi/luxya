@@ -1,7 +1,8 @@
-use crate::ast::interpreter::*;
+use super::{helpers::*, types::*};
 use crate::token::*;
 
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
+
 
 pub struct InterpreterEnvironment {
 	enclosing: Option<WrappedInterpreterEnvironment>,
@@ -25,7 +26,6 @@ impl InterpreterEnvironment {
 pub struct WrappedInterpreterEnvironment(Rc<RefCell<InterpreterEnvironment>>);
 
 impl PartialEq for WrappedInterpreterEnvironment {
-	// TODO: eq envs better
 	fn eq(&self, other: &Self) -> bool {
 		Rc::ptr_eq(&self.0, &other.0)
 	}

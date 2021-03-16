@@ -5,6 +5,8 @@ use std::{
 };
 
 mod ast;
+mod interpreter;
+mod parser;
 mod scanner;
 mod token;
 
@@ -70,11 +72,11 @@ fn run(source: String) -> bool {
 	let (tokens, scan_errors) = scanner::scan_tokens(&source);
 
 	// parsing
-	let (statements, parse_errors) = ast::parse(tokens);
+	let (statements, parse_errors) = parser::parse(tokens);
 
 	// interpreting 😇
 	if scan_errors.is_empty() && parse_errors.is_empty() {
-		if let Err(e) = ast::interpret(&statements) {
+		if let Err(e) = interpreter::interpret(&statements) {
 			println!(
 				"Runtime error {}\n\t{}",
 				get_line(&source, e.token.byte_offset),

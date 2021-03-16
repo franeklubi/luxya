@@ -1,0 +1,121 @@
+use super::env::*;
+use crate::{ast::expr::*, token::*};
+
+use std::{fmt, rc::Rc};
+
+
+pub struct RuntimeError {
+	pub message: String,
+	pub token: Token,
+}
+
+#[derive(Clone)]
+pub struct DeclaredValue {
+	pub mutable: bool,
+	pub value: InterpreterValue,
+}
+
+#[derive(Clone, PartialEq)]
+pub enum InterpreterValue {
+	Function {
+		fun: Rc<InterpreterFunction>,
+		enclosing_env: WrappedInterpreterEnvironment,
+	},
+	String(Rc<str>),
+	Number(f64),
+	True,
+	False,
+	Nil,
+}
+
+impl InterpreterValue {
+	pub fn to_human_readable(&self) -> &str {
+		match self {
+			InterpreterValue::Function { .. } => "function",
+			InterpreterValue::String(_) => "string",
+			InterpreterValue::Number(_) => "number",
+			InterpreterValue::True => "boolean",
+			InterpreterValue::False => "boolean",
+			InterpreterValue::Nil => "nil",
+		}
+	}
+}
+
+pub enum InterpreterStmtValue {
+	Return {
+		keyword: Token,
+		value: InterpreterValue,
+	},
+	Break(Token),
+	Continue(Token),
+	Noop,
+}
+
+pub type NativeFunctionSignature = fn(
+	&Token,
+	&WrappedInterpreterEnvironment,
+	&[InterpreterValue],
+)
+	-> Result<InterpreterValue, RuntimeError>;
+
+pub enum InterpreterFunction {
+	Native {
+		arity: usize,
+		fun: NativeFunctionSignature,
+	},
+	LoxDefined(FunctionValue),
+}
+
+impl PartialEq for InterpreterFunction {
+	fn eq(&self, other: &Self) -> bool {
+		match (&self, &other) {
+			(
+				InterpreterFunction::LoxDefined(FunctionValue {
+					body: Some(body1),
+					..
+				}),
+				InterpreterFunction::LoxDefined(FunctionValue {
+					body: Some(body2),
+					..
+				}),
+			) => Rc::ptr_eq(body1, body2),
+			_ => false,
+		}
+	}
+}
+
+
+impl From<bool> for InterpreterValue {
+	fn from(v: bool) -> Self {
+		if v {
+			InterpreterValue::True
+		} else {
+			InterpreterValue::False
+		}
+	}
+}
+
+impl From<LiteralValue> for InterpreterValue {
+	fn from(v: LiteralValue) -> Self {
+		match v {
+			LiteralValue::String(s) => InterpreterValue::String(Rc::clone(&s)),
+			LiteralValue::Number(n) => InterpreterValue::Number(n),
+			LiteralValue::True => InterpreterValue::True,
+			LiteralValue::False => InterpreterValue::False,
+			LiteralValue::Nil => InterpreterValue::Nil,
+		}
+	}
+}
+
+impl fmt::Display for InterpreterValue {
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		match self {
+			InterpreterValue::Function { .. } => write!(f, "function"),
+			InterpreterValue::String(s) => write!(f, "{}", s),
+			InterpreterValue::Number(n) => write!(f, "{}", n),
+			InterpreterValue::False => write!(f, "false"),
+			InterpreterValue::True => write!(f, "true"),
+			InterpreterValue::Nil => write!(f, "nil"),
+		}
+	}
+}
