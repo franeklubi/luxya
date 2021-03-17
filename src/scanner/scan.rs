@@ -1,11 +1,6 @@
+use super::{helpers::*, types::*};
 use crate::token::{self, TokenType};
-use std::{iter, str};
 
-
-pub struct ScanError {
-	pub offset: usize,
-	pub message: String,
-}
 
 fn resolve_identifier(identifier: &str) -> TokenType {
 	match identifier {
@@ -32,47 +27,9 @@ fn resolve_identifier(identifier: &str) -> TokenType {
 	}
 }
 
-// match_to_peek returns true (and consumes next char)
-// only if it maches the expected char
-fn match_to_peek(
-	chars: &mut iter::Peekable<str::CharIndices>,
-	expected: char,
-) -> bool {
-	match chars.peek() {
-		Some((_, c)) => *c == expected,
-		None => false,
-	}
-}
-
-// will consume chars while peek matches the predicate
-//
-// returns a result with the index (in bytes) of where the next char would be
-// (regardless of it being there or the stream ending)
-//
-// returns an error with last_offset when the scanning has reached the eof
-fn consume_while_peek(
-	chars: &mut iter::Peekable<str::CharIndices>,
-	predicate: impl Fn(&char) -> bool,
-) -> Result<usize, usize> {
-	let mut last_offset = 0;
-
-	loop {
-		break match chars.peek() {
-			Some((i, c)) if predicate(c) => {
-				last_offset = i + c.len_utf8();
-				chars.next();
-
-				continue;
-			}
-			Some((i, c)) => Ok(i + c.len_utf8()),
-			None => Err(last_offset),
-		};
-	}
-}
-
 // consumes the next token's chars
 fn scan_token(
-	chars: &mut iter::Peekable<str::CharIndices>,
+	chars: ScannerIter,
 	source: &str,
 ) -> Option<Result<token::Token, ScanError>> {
 	while let Some((i, c)) = chars.next() {
@@ -231,7 +188,7 @@ fn scan_token(
 	None
 }
 
-pub fn scan_tokens(source: &str) -> (Vec<token::Token>, Vec<ScanError>) {
+pub fn scan(source: &str) -> (Vec<token::Token>, Vec<ScanError>) {
 	let mut tokens = vec![];
 	let mut errors = vec![];
 
