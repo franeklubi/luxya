@@ -14,9 +14,10 @@ pub struct ReturnValue {
 	pub expression: Option<Expr>,
 }
 
-pub struct WhileValue {
+pub struct ForValue {
 	pub condition: Option<Box<Expr>>,
-	pub execute: Box<Stmt>,
+	pub body: Box<Stmt>,
+	pub closer: Option<Box<Stmt>>,
 }
 
 pub struct IfValue {
@@ -47,7 +48,7 @@ pub enum Stmt {
 	Continue(ContinueValue),
 	Break(BreakValue),
 	Return(ReturnValue),
-	While(WhileValue),
+	For(ForValue),
 	If(IfValue),
 	Block(BlockValue),
 	Expression(ExpressionValue),

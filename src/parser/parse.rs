@@ -81,7 +81,6 @@ pub fn statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 			TokenType::If,
 			TokenType::For,
 			TokenType::Print,
-			TokenType::While,
 			TokenType::Break,
 			TokenType::Return,
 			TokenType::Continue,
@@ -96,7 +95,6 @@ pub fn statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 		Some(TokenType::If) => if_statement(tokens),
 		Some(TokenType::For) => for_statement(tokens),
 		Some(TokenType::Print) => print_statement(tokens),
-		Some(TokenType::While) => while_statement(tokens),
 		Some(TokenType::LeftBrace) => block_statement(tokens),
 		Some(TokenType::Break) => {
 			break_statement(tokens, consumed_token.unwrap())

@@ -60,17 +60,17 @@ pub fn if_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 	})))
 }
 
-pub fn while_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
-	let condition = if peek_matches(tokens, &[TokenType::LeftBrace]) {
-		None
-	} else {
-		Some(Box::new(expression(tokens)?))
-	};
-
-	let execute = Box::new(expect_statement(tokens, &[TokenType::LeftBrace])?);
-
-	Ok(Some(Stmt::While(WhileValue { condition, execute })))
-}
+// pub fn while_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
+// 	let condition = if peek_matches(tokens, &[TokenType::LeftBrace]) {
+// 		None
+// 	} else {
+// 		Some(Box::new(expression(tokens)?))
+// 	};
+//
+// 	let execute = Box::new(expect_statement(tokens, &[TokenType::LeftBrace])?);
+//
+// 	Ok(Some(Stmt::For(ForValue { condition, execute })))
+// }
 
 pub fn block_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 	let mut statements = Vec::new();
@@ -101,13 +101,14 @@ pub fn for_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 	}
 
 	// parse initializer
-	let initializer = match tokens.peek().unwrap().token_type {
-		TokenType::Let | TokenType::Const => declaration(tokens)?,
-		_ => {
+	let initializer =
+		if peek_matches(tokens, &[TokenType::Let, TokenType::Const]) {
+			declaration(tokens)?
+		} else {
 			tokens.next();
+
 			None
-		}
-	};
+		};
 
 	// parse condition
 	let condition =
@@ -118,44 +119,37 @@ pub fn for_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 
 			expect(tokens, &[TokenType::Semicolon], None)?;
 
-			Some(Box::new(expr))
+			Some(expr)
 		};
 
-	// parse increment
-	let increment = if peek_matches(tokens, &[TokenType::LeftBrace]) {
+	// parse closer (the increment or whatever)
+	let closer = if peek_matches(tokens, &[TokenType::LeftBrace]) {
 		None
 	} else {
 		Some(expression(tokens)?)
 	};
 
 	// parse while body
-	let mut while_body = expect_statement(tokens, &[TokenType::LeftBrace])?;
+	let body = expect_statement(tokens, &[TokenType::LeftBrace])?;
 
-	// if increment is present, push it into the while body
-	if let Some(increment) = increment {
-		let bv = if let Stmt::Block(bv) = &mut while_body {
-			bv
-		} else {
-			unreachable!()
-		};
-
-		bv.statements.push(Stmt::Expression(ExpressionValue {
-			expression: Box::new(increment),
-		}));
-	}
-
-	let while_stmt = Stmt::While(WhileValue {
-		condition,
-		execute: Box::new(while_body),
+	let for_stmt = Stmt::For(ForValue {
+		condition: condition.map(Box::new),
+		body: Box::new(body),
+		closer: closer.map(|c| {
+			Box::new(Stmt::Expression(ExpressionValue {
+				expression: Box::new(c),
+			}))
+		}),
 	});
 
 	// determine if for body requires to be in a separate block
+	// because of the initializer
 	let for_body = if let Some(initializer) = initializer {
 		Stmt::Block(BlockValue {
-			statements: vec![initializer, while_stmt],
+			statements: vec![initializer, for_stmt],
 		})
 	} else {
-		while_stmt
+		for_stmt
 	};
 
 	Ok(Some(for_body))

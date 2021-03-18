@@ -79,7 +79,6 @@ pub fn synchronize(tokens: ParserIter) {
 			| TokenType::Const
 			| TokenType::For
 			| TokenType::If
-			| TokenType::While
 			| TokenType::Print
 			| TokenType::Return => {
 				break;

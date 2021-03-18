@@ -60,7 +60,7 @@ pub fn eval_statement(
 		Stmt::Declaration(v) => declaration_statement(env, v),
 		Stmt::Block(v) => block_statement(env, v),
 		Stmt::If(v) => if_statement(env, v),
-		Stmt::While(v) => while_statement(env, v),
+		Stmt::For(v) => for_statement(env, v),
 		Stmt::Return(v) => return_statement(env, v),
 		Stmt::Break(v) => break_statement(env, v),
 		Stmt::Continue(v) => continue_statement(env, v),

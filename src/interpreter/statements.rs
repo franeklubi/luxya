@@ -72,36 +72,56 @@ pub fn if_statement(
 }
 
 #[inline(always)]
-pub fn while_statement(
+pub fn for_statement(
 	env: &WrappedInterpreterEnvironment,
-	v: &WhileValue,
+	v: &ForValue,
 ) -> Result<InterpreterStmtValue, RuntimeError> {
-	// these branches look so sketchy, but it's an optimization for
+	// these branches look sooo sketchy, but it's an optimization for
 	// condition-less loops
 	if let Some(condition) = &v.condition {
 		while eval_expression(condition, env)? == InterpreterValue::True {
-			let e = eval_statement(&v.execute, env)?;
+			let e = eval_statement(&v.body, env)?;
 
 			match e {
 				InterpreterStmtValue::Break(_) => break,
-				InterpreterStmtValue::Continue(_) => continue,
+				InterpreterStmtValue::Continue(_) => {
+					if let Some(c) = &v.closer {
+						eval_statement(c, env)?;
+					}
+
+					continue;
+				}
 				InterpreterStmtValue::Noop => (),
 				InterpreterStmtValue::Return { .. } => {
 					return Ok(e);
 				}
 			}
+
+			if let Some(c) = &v.closer {
+				eval_statement(c, env)?;
+			}
 		}
 	} else {
 		loop {
-			let e = eval_statement(&v.execute, env)?;
+			let e = eval_statement(&v.body, env)?;
 
 			match e {
 				InterpreterStmtValue::Break(_) => break,
-				InterpreterStmtValue::Continue(_) => continue,
+				InterpreterStmtValue::Continue(_) => {
+					if let Some(c) = &v.closer {
+						eval_statement(c, env)?;
+					}
+
+					continue;
+				}
 				InterpreterStmtValue::Noop => (),
 				InterpreterStmtValue::Return { .. } => {
 					return Ok(e);
 				}
+			}
+
+			if let Some(c) = &v.closer {
+				eval_statement(c, env)?;
 			}
 		}
 	}

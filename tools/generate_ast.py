@@ -133,7 +133,7 @@ def gen_stmt() -> str:
 		'Continue -> keyword: Token',
 		'Break -> keyword: Token',
 		'Return -> keyword: Token, expression: Option<Expr>',
-		'While -> condition: Option<Box<Expr>>, execute: Box<Stmt>',
+		'For -> condition: Option<Box<Expr>>, body: Box<Stmt>, closer: Option<Box<Stmt>>',
 		'If -> condition: Box<Expr>, then: Box<Stmt>, otherwise: Option<Box<Stmt>>',
 		'Block -> statements: Vec<Stmt>',
 		'Expression -> expression: Box<Expr>',

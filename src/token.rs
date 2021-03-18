@@ -47,7 +47,6 @@ pub enum TokenType {
 	True,
 	Let,
 	Const,
-	While,
 	Break,
 	Continue,
 
@@ -114,7 +113,6 @@ impl fmt::Display for TokenType {
 			TokenType::True => write!(f, "true"),
 			TokenType::Let => write!(f, "let"),
 			TokenType::Const => write!(f, "const"),
-			TokenType::While => write!(f, "while"),
 			TokenType::Eof => write!(f, "EOF"),
 			TokenType::Break => write!(f, "break"),
 			TokenType::Continue => write!(f, "continue"),
