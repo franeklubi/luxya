@@ -7,26 +7,6 @@ use crate::{
 use std::rc::Rc;
 
 
-fn build_binary_expr(
-	tokens: ParserIter,
-	lower_precedence: impl Fn(ParserIter) -> Result<Expr, ParseError>,
-	types_to_match: &[TokenType],
-) -> Result<Expr, ParseError> {
-	let mut expr = lower_precedence(tokens)?;
-
-	while let Some(operator) = match_then_consume(tokens, types_to_match) {
-		let right = lower_precedence(tokens)?;
-
-		expr = Expr::Binary(BinaryValue {
-			left: Box::new(expr),
-			operator,
-			right: Box::new(right),
-		});
-	}
-
-	Ok(expr)
-}
-
 pub fn parse(tokens: Vec<Token>) -> (Vec<Stmt>, Vec<ParseError>) {
 	let tokens: ParserIter = &mut tokens.into_iter().peekable();
 
@@ -89,24 +69,6 @@ pub fn declaration(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 		value_declaration(tokens, token.token_type)
 	} else {
 		statement(tokens)
-	}
-}
-
-fn block_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
-	let mut statements = Vec::new();
-
-	while !peek_matches(tokens, &[TokenType::RightBrace]) {
-		if let Some(d) = declaration(tokens)? {
-			statements.push(d);
-		}
-	}
-
-	expect(tokens, &[TokenType::RightBrace], None)?;
-
-	if statements.is_empty() {
-		Ok(None)
-	} else {
-		Ok(Some(Stmt::Block(BlockValue { statements })))
 	}
 }
 

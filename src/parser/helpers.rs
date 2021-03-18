@@ -1,5 +1,8 @@
-use super::types::*;
-use crate::token::*;
+use super::{parse::*, types::*};
+use crate::{
+	ast::{expr::*, stmt::*},
+	token::*,
+};
 
 
 pub fn match_token_type(t: &TokenType, expected: &[TokenType]) -> bool {
@@ -89,4 +92,55 @@ pub fn synchronize(tokens: ParserIter) {
 			}
 		}
 	}
+}
+
+pub fn unwrap_statement(
+	tokens: ParserIter,
+	stmt: Option<Stmt>,
+	expected: &[TokenType],
+	override_message: Option<&str>,
+) -> Result<Stmt, ParseError> {
+	stmt.ok_or_else(|| ParseError {
+		message: if let Some(msg) = override_message {
+			msg.into()
+		} else if expected.is_empty() {
+			"Expected statement".into()
+		} else {
+			gen_expected_msg(expected)
+		},
+		token: tokens.peek().cloned(),
+	})
+}
+
+pub fn expect_statement(
+	tokens: ParserIter,
+	starts_with: &[TokenType],
+) -> Result<Stmt, ParseError> {
+	if !peek_matches(tokens, starts_with) {
+		unwrap_statement(tokens, None, starts_with, None)
+	} else {
+		let stmt = statement(tokens)?;
+
+		unwrap_statement(tokens, stmt, starts_with, None)
+	}
+}
+
+pub fn build_binary_expr(
+	tokens: ParserIter,
+	lower_precedence: impl Fn(ParserIter) -> Result<Expr, ParseError>,
+	types_to_match: &[TokenType],
+) -> Result<Expr, ParseError> {
+	let mut expr = lower_precedence(tokens)?;
+
+	while let Some(operator) = match_then_consume(tokens, types_to_match) {
+		let right = lower_precedence(tokens)?;
+
+		expr = Expr::Binary(BinaryValue {
+			left: Box::new(expr),
+			operator,
+			right: Box::new(right),
+		});
+	}
+
+	Ok(expr)
 }

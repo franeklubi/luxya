@@ -7,37 +7,6 @@ use crate::{
 use std::vec;
 
 
-pub fn unwrap_statement(
-	tokens: ParserIter,
-	stmt: Option<Stmt>,
-	expected: &[TokenType],
-	override_message: Option<&str>,
-) -> Result<Stmt, ParseError> {
-	stmt.ok_or_else(|| ParseError {
-		message: if let Some(msg) = override_message {
-			msg.into()
-		} else if expected.is_empty() {
-			"Expected statement".into()
-		} else {
-			gen_expected_msg(expected)
-		},
-		token: tokens.peek().cloned(),
-	})
-}
-
-pub fn expect_statement(
-	tokens: ParserIter,
-	starts_with: &[TokenType],
-) -> Result<Stmt, ParseError> {
-	if !peek_matches(tokens, starts_with) {
-		unwrap_statement(tokens, None, starts_with, None)
-	} else {
-		let stmt = statement(tokens)?;
-
-		unwrap_statement(tokens, stmt, starts_with, None)
-	}
-}
-
 pub fn print_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 	let stmt = Stmt::Print(PrintValue {
 		expression: Box::new(expression(tokens)?),
@@ -101,6 +70,24 @@ pub fn while_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 	let execute = Box::new(expect_statement(tokens, &[TokenType::LeftBrace])?);
 
 	Ok(Some(Stmt::While(WhileValue { condition, execute })))
+}
+
+pub fn block_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
+	let mut statements = Vec::new();
+
+	while !peek_matches(tokens, &[TokenType::RightBrace]) {
+		if let Some(d) = declaration(tokens)? {
+			statements.push(d);
+		}
+	}
+
+	expect(tokens, &[TokenType::RightBrace], None)?;
+
+	if statements.is_empty() {
+		Ok(None)
+	} else {
+		Ok(Some(Stmt::Block(BlockValue { statements })))
+	}
 }
 
 pub fn for_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
