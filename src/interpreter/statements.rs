@@ -4,7 +4,7 @@ use crate::ast::stmt::*;
 
 #[inline(always)]
 pub fn expression_statement(
-	env: &WrappedInterpreterEnvironment,
+	env: &InterpreterEnvironment,
 	v: &ExpressionValue,
 ) -> Result<InterpreterStmtValue, RuntimeError> {
 	eval_expression(&v.expression, env)?;
@@ -14,7 +14,7 @@ pub fn expression_statement(
 
 #[inline(always)]
 pub fn print_statement(
-	env: &WrappedInterpreterEnvironment,
+	env: &InterpreterEnvironment,
 	v: &PrintValue,
 ) -> Result<InterpreterStmtValue, RuntimeError> {
 	let evaluated = eval_expression(&v.expression, env)?;
@@ -26,7 +26,7 @@ pub fn print_statement(
 
 #[inline(always)]
 pub fn declaration_statement(
-	env: &WrappedInterpreterEnvironment,
+	env: &InterpreterEnvironment,
 	v: &DeclarationValue,
 ) -> Result<InterpreterStmtValue, RuntimeError> {
 	let value = v
@@ -49,17 +49,17 @@ pub fn declaration_statement(
 
 #[inline(always)]
 pub fn block_statement(
-	env: &WrappedInterpreterEnvironment,
+	env: &InterpreterEnvironment,
 	v: &BlockValue,
 ) -> Result<InterpreterStmtValue, RuntimeError> {
 	let new_scope = env.fork();
 
-	evaluate_statements(&v.statements, &new_scope)
+	eval_statements(&v.statements, &new_scope)
 }
 
 #[inline(always)]
 pub fn if_statement(
-	env: &WrappedInterpreterEnvironment,
+	env: &InterpreterEnvironment,
 	v: &IfValue,
 ) -> Result<InterpreterStmtValue, RuntimeError> {
 	if eval_expression(&v.condition, env)? == InterpreterValue::True {
@@ -73,7 +73,7 @@ pub fn if_statement(
 
 #[inline(always)]
 pub fn for_statement(
-	env: &WrappedInterpreterEnvironment,
+	env: &InterpreterEnvironment,
 	v: &ForValue,
 ) -> Result<InterpreterStmtValue, RuntimeError> {
 	// these branches look sooo sketchy, but it's an optimization for
@@ -131,7 +131,7 @@ pub fn for_statement(
 
 #[inline(always)]
 pub fn return_statement(
-	env: &WrappedInterpreterEnvironment,
+	env: &InterpreterEnvironment,
 	v: &ReturnValue,
 ) -> Result<InterpreterStmtValue, RuntimeError> {
 	Ok(InterpreterStmtValue::Return {
@@ -145,7 +145,7 @@ pub fn return_statement(
 
 #[inline(always)]
 pub fn break_statement(
-	_env: &WrappedInterpreterEnvironment,
+	_env: &InterpreterEnvironment,
 	v: &BreakValue,
 ) -> Result<InterpreterStmtValue, RuntimeError> {
 	Ok(InterpreterStmtValue::Break(v.keyword.clone()))
@@ -153,7 +153,7 @@ pub fn break_statement(
 
 #[inline(always)]
 pub fn continue_statement(
-	_env: &WrappedInterpreterEnvironment,
+	_env: &InterpreterEnvironment,
 	v: &ContinueValue,
 ) -> Result<InterpreterStmtValue, RuntimeError> {
 	Ok(InterpreterStmtValue::Continue(v.keyword.clone()))

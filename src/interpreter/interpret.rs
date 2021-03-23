@@ -14,11 +14,11 @@ use std::rc::Rc;
 
 
 pub fn interpret(statements: &[Stmt]) -> Result<(), RuntimeError> {
-	let env = InterpreterEnvironment::new(None).wrap();
+	let env = Environment::new(None).wrap();
 
 	declare_native_functions(&env);
 
-	match evaluate_statements(statements, &env)? {
+	match eval_statements(statements, &env)? {
 		InterpreterStmtValue::Noop => Ok(()),
 		InterpreterStmtValue::Break(token) => Err(RuntimeError {
 			message: "Cannot use `break` outside of a loop".into(),
@@ -35,11 +35,11 @@ pub fn interpret(statements: &[Stmt]) -> Result<(), RuntimeError> {
 	}
 }
 
-pub fn evaluate_statements(
+pub fn eval_statements(
 	statements: &[Stmt],
-	env: &WrappedInterpreterEnvironment,
+	env: &InterpreterEnvironment,
 ) -> Result<InterpreterStmtValue, RuntimeError> {
-	for stmt in statements.iter() {
+	for stmt in statements {
 		let e = eval_statement(&stmt, env)?;
 
 		if !matches!(e, InterpreterStmtValue::Noop) {
@@ -52,7 +52,7 @@ pub fn evaluate_statements(
 
 pub fn eval_statement(
 	stmt: &Stmt,
-	env: &WrappedInterpreterEnvironment,
+	env: &InterpreterEnvironment,
 ) -> Result<InterpreterStmtValue, RuntimeError> {
 	match stmt {
 		Stmt::Expression(v) => expression_statement(env, v),
@@ -69,7 +69,7 @@ pub fn eval_statement(
 
 pub fn eval_expression(
 	expr: &Expr,
-	env: &WrappedInterpreterEnvironment,
+	env: &InterpreterEnvironment,
 ) -> Result<InterpreterValue, RuntimeError> {
 	match expr {
 		Expr::Literal(v) => literal_expression(env, v),
@@ -85,7 +85,7 @@ pub fn eval_expression(
 
 fn eval_unary(
 	v: &UnaryValue,
-	env: &WrappedInterpreterEnvironment,
+	env: &InterpreterEnvironment,
 ) -> Result<InterpreterValue, RuntimeError> {
 	let right_value = eval_expression(&v.right, env)?;
 
@@ -112,7 +112,7 @@ fn eval_unary(
 
 fn eval_binary(
 	v: &BinaryValue,
-	env: &WrappedInterpreterEnvironment,
+	env: &InterpreterEnvironment,
 ) -> Result<InterpreterValue, RuntimeError> {
 	// first, match the logical operators, so that we can have short-circuiting
 	match v.operator.token_type {

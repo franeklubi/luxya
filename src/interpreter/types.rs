@@ -19,7 +19,7 @@ pub struct DeclaredValue {
 pub enum InterpreterValue {
 	Function {
 		fun: Rc<InterpreterFunction>,
-		enclosing_env: WrappedInterpreterEnvironment,
+		enclosing_env: InterpreterEnvironment,
 	},
 	String(Rc<str>),
 	Number(f64),
@@ -53,7 +53,7 @@ pub enum InterpreterStmtValue {
 
 pub type NativeFunctionSignature = fn(
 	&Token,
-	&WrappedInterpreterEnvironment,
+	&InterpreterEnvironment,
 	&[InterpreterValue],
 )
 	-> Result<InterpreterValue, RuntimeError>;

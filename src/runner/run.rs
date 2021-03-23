@@ -1,5 +1,5 @@
 use super::{helpers::*, types::*};
-use crate::{interpreter, parser, scanner};
+use crate::{interpreter, parser, resolver, scanner};
 
 use std::{
 	fs,
@@ -60,8 +60,17 @@ fn run(source: String) -> bool {
 	// parsing
 	let (statements, parse_errors) = parser::parse(tokens);
 
+
 	// interpreting 😇
 	if scan_errors.is_empty() && parse_errors.is_empty() {
+		if let Err(e) = resolver::resolve(&statements) {
+			println!(
+				"Runtime error {}\n\t{}",
+				get_line(&source, e.token.byte_offset),
+				e.message
+			);
+		}
+
 		if let Err(e) = interpreter::interpret(&statements) {
 			println!(
 				"Runtime error {}\n\t{}",

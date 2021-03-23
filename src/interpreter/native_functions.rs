@@ -1,4 +1,4 @@
-use super::{env::WrappedInterpreterEnvironment, types::*};
+use super::{env::InterpreterEnvironment, types::*};
 use crate::token::*;
 
 use std::rc::Rc;
@@ -11,7 +11,7 @@ struct FunctionDefinition<'a> {
 
 fn native_str(
 	_keyword: &Token,
-	_env: &WrappedInterpreterEnvironment,
+	_env: &InterpreterEnvironment,
 	args: &[InterpreterValue],
 ) -> InterpreterValue {
 	let input = &args[0];
@@ -25,7 +25,7 @@ fn native_str(
 
 fn native_typeof(
 	_keyword: &Token,
-	_env: &WrappedInterpreterEnvironment,
+	_env: &InterpreterEnvironment,
 	args: &[InterpreterValue],
 ) -> InterpreterValue {
 	InterpreterValue::String(Rc::from(args[0].to_human_readable()))
@@ -33,7 +33,7 @@ fn native_typeof(
 
 fn native_number(
 	keyword: &Token,
-	_env: &WrappedInterpreterEnvironment,
+	_env: &InterpreterEnvironment,
 	args: &[InterpreterValue],
 ) -> Result<InterpreterValue, RuntimeError> {
 	let input = &args[0];
@@ -60,7 +60,7 @@ fn native_number(
 
 fn native_len(
 	keyword: &Token,
-	_env: &WrappedInterpreterEnvironment,
+	_env: &InterpreterEnvironment,
 	args: &[InterpreterValue],
 ) -> Result<InterpreterValue, RuntimeError> {
 	match &args[0] {
@@ -77,10 +77,7 @@ fn native_len(
 	}
 }
 
-fn declarator(
-	env: &WrappedInterpreterEnvironment,
-	funs: &[FunctionDefinition],
-) {
+fn declarator(env: &InterpreterEnvironment, funs: &[FunctionDefinition]) {
 	funs.iter().for_each(|fd| {
 		env.declare(
 			fd.name.to_owned(),
@@ -98,7 +95,7 @@ fn declarator(
 	})
 }
 
-pub fn declare_native_functions(env: &WrappedInterpreterEnvironment) {
+pub fn declare_native_functions(env: &InterpreterEnvironment) {
 	declarator(
 		env,
 		&[

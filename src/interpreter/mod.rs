@@ -1,10 +1,11 @@
-mod env;
 mod expressions;
 mod helpers;
 mod interpret;
 mod native_functions;
 mod pn;
 mod statements;
-mod types;
+
+pub mod env;
+pub mod types;
 
 pub use interpret::interpret;

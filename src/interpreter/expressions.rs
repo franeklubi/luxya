@@ -6,7 +6,7 @@ use std::rc::Rc;
 
 #[inline(always)]
 pub fn literal_expression(
-	_env: &WrappedInterpreterEnvironment,
+	_env: &InterpreterEnvironment,
 	v: &LiteralValue,
 ) -> Result<InterpreterValue, RuntimeError> {
 	Ok(v.clone().into())
@@ -14,7 +14,7 @@ pub fn literal_expression(
 
 #[inline(always)]
 pub fn identifier_expression(
-	env: &WrappedInterpreterEnvironment,
+	env: &InterpreterEnvironment,
 	v: &IdentifierValue,
 ) -> Result<InterpreterValue, RuntimeError> {
 	Ok(env.read(&v.name)?.value)
@@ -22,7 +22,7 @@ pub fn identifier_expression(
 
 #[inline(always)]
 pub fn assignment_expression(
-	env: &WrappedInterpreterEnvironment,
+	env: &InterpreterEnvironment,
 	v: &AssignmentValue,
 ) -> Result<InterpreterValue, RuntimeError> {
 	env.assign(&v.name, eval_expression(&v.value, env)?)
@@ -30,7 +30,7 @@ pub fn assignment_expression(
 
 #[inline(always)]
 pub fn call_expression(
-	env: &WrappedInterpreterEnvironment,
+	env: &InterpreterEnvironment,
 	v: &CallValue,
 ) -> Result<InterpreterValue, RuntimeError> {
 	fn confirm_arity(
@@ -58,7 +58,7 @@ pub fn call_expression(
 	fn map_arguments(
 		parameters: &[Token],
 		arguments: &[InterpreterValue],
-		fun_env: &WrappedInterpreterEnvironment,
+		fun_env: &InterpreterEnvironment,
 	) {
 		parameters.iter().zip(arguments).for_each(|(param, arg)| {
 			let name = assume_identifier(param);
@@ -106,7 +106,7 @@ pub fn call_expression(
 			}
 
 			if let Some(statements) = &fv.body {
-				let e = evaluate_statements(&*statements, fun_env)?;
+				let e = eval_statements(&*statements, fun_env)?;
 				Ok(guard_function(e)?)
 			} else {
 				Ok(InterpreterValue::Nil)
@@ -122,7 +122,7 @@ pub fn call_expression(
 
 #[inline(always)]
 pub fn function_expression(
-	env: &WrappedInterpreterEnvironment,
+	env: &InterpreterEnvironment,
 	v: &FunctionValue,
 ) -> Result<InterpreterValue, RuntimeError> {
 	let fun = InterpreterValue::Function {
