@@ -8,17 +8,19 @@ pub struct ResolverEnvironment {
 
 impl ResolverEnvironment {
 	pub fn new() -> Self {
-		ResolverEnvironment {
-			env: Environment::new(None).wrap(),
-			level: 0,
-		}
+		unimplemented!()
+		// ResolverEnvironment {
+		// 	env: Environment::new(None).wrap(),
+		// 	level: 0,
+		// }
 	}
 
 	pub fn fork(&self) -> Self {
-		ResolverEnvironment {
-			env: Environment::new(Some(self.env.clone())).wrap(),
-			level: self.level + 1,
-		}
+		unimplemented!()
+		// ResolverEnvironment {
+		// 	env: Environment::new(Some(self.env.clone())).wrap(),
+		// 	level: self.level + 1,
+		// }
 	}
 
 	// pub fn read_probe(

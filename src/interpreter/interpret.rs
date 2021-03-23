@@ -14,7 +14,7 @@ use std::rc::Rc;
 
 
 pub fn interpret(statements: &[Stmt]) -> Result<(), RuntimeError> {
-	let env = Environment::new(None).wrap();
+	let env = InterpreterEnvironment::new();
 
 	declare_native_functions(&env);
 
