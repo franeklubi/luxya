@@ -1,4 +1,4 @@
-use super::{env::*, helpers::*, interpret::*, types::*};
+use super::{helpers::*, interpret::*, interpreter_env::*, types::*};
 use crate::{ast::expr::*, token::*};
 
 use std::rc::Rc;

@@ -1,6 +1,6 @@
 use super::{
-	env::*,
 	expressions::*,
+	interpreter_env::*,
 	native_functions::declare_native_functions,
 	statements::*,
 	types::*,

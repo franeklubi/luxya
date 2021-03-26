@@ -5,7 +5,7 @@ mod native_functions;
 mod pn;
 mod statements;
 
-pub mod env;
+pub mod interpreter_env;
 pub mod types;
 
 pub use interpret::interpret;

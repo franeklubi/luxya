@@ -1,26 +1,12 @@
 use super::{helpers::*, types::*};
-use crate::token::*;
+use crate::{env::*, token::*};
 
-use std::{cell::RefCell, collections::HashMap, rc::Rc};
+use std::{cell::RefCell, rc::Rc};
 
-
-pub struct Environment<W, V> {
-	enclosing: Option<W>,
-	scope: HashMap<String, V>,
-}
-
-impl<W, V> Environment<W, V> {
-	pub fn new(enclosing: Option<W>) -> Self {
-		Self {
-			enclosing,
-			scope: HashMap::new(),
-		}
-	}
-}
 
 #[derive(Clone)]
 pub struct InterpreterEnvironment(
-	Rc<RefCell<Environment<InterpreterEnvironment, DeclaredValue>>>,
+	Rc<RefCell<EnvironmentBase<InterpreterEnvironment, DeclaredValue>>>,
 );
 
 impl PartialEq for InterpreterEnvironment {
@@ -49,13 +35,15 @@ macro_rules! unwrap_enclosing {
 
 impl InterpreterEnvironment {
 	pub fn new() -> Self {
-		InterpreterEnvironment(Rc::new(RefCell::new(Environment::new(None))))
+		InterpreterEnvironment(Rc::new(RefCell::new(EnvironmentBase::new(
+			None,
+		))))
 	}
 
 	pub fn fork(&self) -> Self {
-		InterpreterEnvironment(Rc::new(RefCell::new(Environment::new(Some(
-			self.clone(),
-		)))))
+		InterpreterEnvironment(Rc::new(RefCell::new(EnvironmentBase::new(
+			Some(self.clone()),
+		))))
 	}
 
 	pub fn read(

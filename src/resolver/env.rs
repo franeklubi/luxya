@@ -1,4 +1,4 @@
-use crate::interpreter::env::InterpreterEnvironment;
+use crate::interpreter::interpreter_env::InterpreterEnvironment;
 
 #[derive(Clone)]
 pub struct ResolverEnvironment {
