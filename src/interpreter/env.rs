@@ -16,9 +16,6 @@ impl<W, V> Environment<W, V> {
 			scope: HashMap::new(),
 		}
 	}
-	// pub fn wrap(self) -> InterpreterEnvironment {
-	// 	InterpreterEnvironment(Rc::new(RefCell::new(self)))
-	// }
 }
 
 #[derive(Clone)]

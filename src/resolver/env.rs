@@ -1,4 +1,4 @@
-use crate::interpreter::env::{Environment, InterpreterEnvironment};
+use crate::interpreter::env::InterpreterEnvironment;
 
 #[derive(Clone)]
 pub struct ResolverEnvironment {
@@ -8,19 +8,17 @@ pub struct ResolverEnvironment {
 
 impl ResolverEnvironment {
 	pub fn new() -> Self {
-		unimplemented!()
-		// ResolverEnvironment {
-		// 	env: Environment::new(None).wrap(),
-		// 	level: 0,
-		// }
+		ResolverEnvironment {
+			env: InterpreterEnvironment::new(),
+			level: 0,
+		}
 	}
 
 	pub fn fork(&self) -> Self {
-		unimplemented!()
-		// ResolverEnvironment {
-		// 	env: Environment::new(Some(self.env.clone())).wrap(),
-		// 	level: self.level + 1,
-		// }
+		ResolverEnvironment {
+			env: self.env.fork(),
+			level: self.level + 1,
+		}
 	}
 
 	// pub fn read_probe(
