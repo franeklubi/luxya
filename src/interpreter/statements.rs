@@ -1,23 +1,35 @@
-use super::{helpers::*, interpret::*, interpreter_env::*, types::*};
-use crate::{ast::stmt::*, env::*};
+use super::{helpers::*, types::*};
+use crate::{
+	ast::{expr::*, stmt::*},
+	env::*,
+};
 
 
 #[inline(always)]
-pub fn expression_statement(
-	env: &InterpreterEnvironment,
+pub fn expression_statement<E, T>(
+	expr_evaluator: fn(&Expr, &E) -> Result<T, RuntimeError>,
 	v: &ExpressionValue,
-) -> Result<InterpreterStmtValue, RuntimeError> {
-	eval_expression(&v.expression, env)?;
+	env: &E,
+) -> Result<InterpreterStmtValue, RuntimeError>
+where
+	E: EnvironmentWrapper<T>,
+{
+	expr_evaluator(&v.expression, env)?;
 
 	Ok(InterpreterStmtValue::Noop)
 }
 
 #[inline(always)]
-pub fn print_statement(
-	env: &InterpreterEnvironment,
+pub fn print_statement<E, T>(
+	expr_evaluator: fn(&Expr, &E) -> Result<T, RuntimeError>,
 	v: &PrintValue,
-) -> Result<InterpreterStmtValue, RuntimeError> {
-	let evaluated = eval_expression(&v.expression, env)?;
+	env: &E,
+) -> Result<InterpreterStmtValue, RuntimeError>
+where
+	T: std::fmt::Display,
+	E: EnvironmentWrapper<T>,
+{
+	let evaluated = expr_evaluator(&v.expression, env)?;
 
 	println!("{}", evaluated);
 
@@ -25,15 +37,19 @@ pub fn print_statement(
 }
 
 #[inline(always)]
-pub fn declaration_statement(
-	env: &InterpreterEnvironment,
+pub fn declaration_statement<E>(
+	expr_evaluator: fn(&Expr, &E) -> Result<InterpreterValue, RuntimeError>,
 	v: &DeclarationValue,
-) -> Result<InterpreterStmtValue, RuntimeError> {
+	env: &E,
+) -> Result<InterpreterStmtValue, RuntimeError>
+where
+	E: EnvironmentWrapper<InterpreterValue>,
+{
 	let value = v
 		.initializer
 		.as_ref()
 		.map_or(Ok(InterpreterValue::Nil), |initializer| {
-			eval_expression(&initializer, env)
+			expr_evaluator(&initializer, env)
 		})?;
 
 	env.declare(
@@ -48,45 +64,62 @@ pub fn declaration_statement(
 }
 
 #[inline(always)]
-pub fn block_statement(
-	env: &InterpreterEnvironment,
+pub fn block_statement<E, T>(
+	stmts_evaluator: fn(
+		&[Stmt],
+		&E,
+	) -> Result<InterpreterStmtValue, RuntimeError>,
 	v: &BlockValue,
-) -> Result<InterpreterStmtValue, RuntimeError> {
+	env: &E,
+) -> Result<InterpreterStmtValue, RuntimeError>
+where
+	E: EnvironmentWrapper<T>,
+{
 	let new_scope = env.fork();
 
-	eval_statements(&v.statements, &new_scope)
+	stmts_evaluator(&v.statements, &new_scope)
 }
 
 #[inline(always)]
-pub fn if_statement(
-	env: &InterpreterEnvironment,
+pub fn if_statement<E>(
+	expr_evaluator: fn(&Expr, &E) -> Result<InterpreterValue, RuntimeError>,
+	stmt_evaluator: fn(&Stmt, &E) -> Result<InterpreterStmtValue, RuntimeError>,
 	v: &IfValue,
-) -> Result<InterpreterStmtValue, RuntimeError> {
-	if eval_expression(&v.condition, env)? == InterpreterValue::True {
-		eval_statement(&v.then, env)
+	env: &E,
+) -> Result<InterpreterStmtValue, RuntimeError>
+where
+	E: EnvironmentWrapper<InterpreterValue>,
+{
+	if expr_evaluator(&v.condition, env)? == InterpreterValue::True {
+		stmt_evaluator(&v.then, env)
 	} else if let Some(otherwise) = &v.otherwise {
-		eval_statement(otherwise, env)
+		stmt_evaluator(otherwise, env)
 	} else {
 		Ok(InterpreterStmtValue::Noop)
 	}
 }
 
 #[inline(always)]
-pub fn for_statement(
-	env: &InterpreterEnvironment,
+pub fn for_statement<E, T>(
+	expr_evaluator: fn(&Expr, &E) -> Result<InterpreterValue, RuntimeError>,
+	stmt_evaluator: fn(&Stmt, &E) -> Result<InterpreterStmtValue, RuntimeError>,
 	v: &ForValue,
-) -> Result<InterpreterStmtValue, RuntimeError> {
+	env: &E,
+) -> Result<InterpreterStmtValue, RuntimeError>
+where
+	E: EnvironmentWrapper<T>,
+{
 	// these branches look sooo sketchy, but it's an optimization for
 	// condition-less loops
 	if let Some(condition) = &v.condition {
-		while eval_expression(condition, env)? == InterpreterValue::True {
-			let e = eval_statement(&v.body, env)?;
+		while expr_evaluator(condition, env)? == InterpreterValue::True {
+			let e = stmt_evaluator(&v.body, env)?;
 
 			match e {
 				InterpreterStmtValue::Break(_) => break,
 				InterpreterStmtValue::Continue(_) => {
 					if let Some(c) = &v.closer {
-						eval_statement(c, env)?;
+						stmt_evaluator(c, env)?;
 					}
 
 					continue;
@@ -98,18 +131,18 @@ pub fn for_statement(
 			}
 
 			if let Some(c) = &v.closer {
-				eval_statement(c, env)?;
+				stmt_evaluator(c, env)?;
 			}
 		}
 	} else {
 		loop {
-			let e = eval_statement(&v.body, env)?;
+			let e = stmt_evaluator(&v.body, env)?;
 
 			match e {
 				InterpreterStmtValue::Break(_) => break,
 				InterpreterStmtValue::Continue(_) => {
 					if let Some(c) = &v.closer {
-						eval_statement(c, env)?;
+						stmt_evaluator(c, env)?;
 					}
 
 					continue;
@@ -121,7 +154,7 @@ pub fn for_statement(
 			}
 
 			if let Some(c) = &v.closer {
-				eval_statement(c, env)?;
+				stmt_evaluator(c, env)?;
 			}
 		}
 	}
@@ -130,22 +163,25 @@ pub fn for_statement(
 }
 
 #[inline(always)]
-pub fn return_statement(
-	env: &InterpreterEnvironment,
+pub fn return_statement<E>(
+	expr_evaluator: fn(&Expr, &E) -> Result<InterpreterValue, RuntimeError>,
 	v: &ReturnValue,
-) -> Result<InterpreterStmtValue, RuntimeError> {
+	env: &E,
+) -> Result<InterpreterStmtValue, RuntimeError>
+where
+	E: EnvironmentWrapper<InterpreterValue>,
+{
 	Ok(InterpreterStmtValue::Return {
 		value: v
 			.expression
 			.as_ref()
-			.map_or(Ok(InterpreterValue::Nil), |e| eval_expression(e, env))?,
+			.map_or(Ok(InterpreterValue::Nil), |e| expr_evaluator(e, env))?,
 		keyword: v.keyword.clone(),
 	})
 }
 
 #[inline(always)]
 pub fn break_statement(
-	_env: &InterpreterEnvironment,
 	v: &BreakValue,
 ) -> Result<InterpreterStmtValue, RuntimeError> {
 	Ok(InterpreterStmtValue::Break(v.keyword.clone()))
@@ -153,7 +189,6 @@ pub fn break_statement(
 
 #[inline(always)]
 pub fn continue_statement(
-	_env: &InterpreterEnvironment,
 	v: &ContinueValue,
 ) -> Result<InterpreterStmtValue, RuntimeError> {
 	Ok(InterpreterStmtValue::Continue(v.keyword.clone()))

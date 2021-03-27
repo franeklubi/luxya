@@ -6,7 +6,6 @@ use std::rc::Rc;
 
 #[inline(always)]
 pub fn literal_expression(
-	_env: &InterpreterEnvironment,
 	v: &LiteralValue,
 ) -> Result<InterpreterValue, RuntimeError> {
 	Ok(v.clone().into())
@@ -14,24 +13,24 @@ pub fn literal_expression(
 
 #[inline(always)]
 pub fn identifier_expression(
-	env: &InterpreterEnvironment,
 	v: &IdentifierValue,
+	env: &InterpreterEnvironment,
 ) -> Result<InterpreterValue, RuntimeError> {
 	Ok(env.read(&v.name)?.value)
 }
 
 #[inline(always)]
 pub fn assignment_expression(
-	env: &InterpreterEnvironment,
 	v: &AssignmentValue,
+	env: &InterpreterEnvironment,
 ) -> Result<InterpreterValue, RuntimeError> {
 	env.assign(&v.name, eval_expression(&v.value, env)?)
 }
 
 #[inline(always)]
 pub fn call_expression(
-	env: &InterpreterEnvironment,
 	v: &CallValue,
+	env: &InterpreterEnvironment,
 ) -> Result<InterpreterValue, RuntimeError> {
 	fn confirm_arity(
 		target: usize,
@@ -122,8 +121,8 @@ pub fn call_expression(
 
 #[inline(always)]
 pub fn function_expression(
-	env: &InterpreterEnvironment,
 	v: &FunctionValue,
+	env: &InterpreterEnvironment,
 ) -> Result<InterpreterValue, RuntimeError> {
 	let fun = InterpreterValue::Function {
 		enclosing_env: env.clone(),

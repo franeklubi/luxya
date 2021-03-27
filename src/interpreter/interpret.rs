@@ -56,15 +56,15 @@ pub fn eval_statement(
 	env: &InterpreterEnvironment,
 ) -> Result<InterpreterStmtValue, RuntimeError> {
 	match stmt {
-		Stmt::Expression(v) => expression_statement(env, v),
-		Stmt::Print(v) => print_statement(env, v),
-		Stmt::Declaration(v) => declaration_statement(env, v),
-		Stmt::Block(v) => block_statement(env, v),
-		Stmt::If(v) => if_statement(env, v),
-		Stmt::For(v) => for_statement(env, v),
-		Stmt::Return(v) => return_statement(env, v),
-		Stmt::Break(v) => break_statement(env, v),
-		Stmt::Continue(v) => continue_statement(env, v),
+		Stmt::Expression(v) => expression_statement(eval_expression, v, env),
+		Stmt::Print(v) => print_statement(eval_expression, v, env),
+		Stmt::Declaration(v) => declaration_statement(eval_expression, v, env),
+		Stmt::Block(v) => block_statement(eval_statements, v, env),
+		Stmt::If(v) => if_statement(eval_expression, eval_statement, v, env),
+		Stmt::For(v) => for_statement(eval_expression, eval_statement, v, env),
+		Stmt::Return(v) => return_statement(eval_expression, v, env),
+		Stmt::Break(v) => break_statement(v),
+		Stmt::Continue(v) => continue_statement(v),
 	}
 }
 
@@ -73,14 +73,14 @@ pub fn eval_expression(
 	env: &InterpreterEnvironment,
 ) -> Result<InterpreterValue, RuntimeError> {
 	match expr {
-		Expr::Literal(v) => literal_expression(env, v),
+		Expr::Literal(v) => literal_expression(v),
 		Expr::Grouping(v) => eval_expression(&v.expression, env),
 		Expr::Unary(v) => eval_unary(v, env),
 		Expr::Binary(v) => eval_binary(v, env),
-		Expr::Identifier(v) => identifier_expression(env, v),
-		Expr::Assignment(v) => assignment_expression(env, v),
-		Expr::Call(v) => call_expression(env, v),
-		Expr::Function(v) => function_expression(env, v),
+		Expr::Identifier(v) => identifier_expression(v, env),
+		Expr::Assignment(v) => assignment_expression(v, env),
+		Expr::Call(v) => call_expression(v, env),
+		Expr::Function(v) => function_expression(v, env),
 	}
 }
 

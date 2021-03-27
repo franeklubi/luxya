@@ -3,9 +3,9 @@ use crate::{interpreter::types::RuntimeError, token::Token};
 use std::collections::HashMap;
 
 #[derive(Clone)]
-pub struct DeclaredValue<T> {
+pub struct DeclaredValue<V> {
 	pub mutable: bool,
-	pub value: T,
+	pub value: V,
 }
 
 pub struct EnvironmentBase<W, V> {
@@ -22,7 +22,7 @@ impl<W, V> EnvironmentBase<W, V> {
 	}
 }
 
-pub trait EnvironmentWrapper<T> {
+pub trait EnvironmentWrapper<V> {
 	fn new() -> Self;
 
 	fn fork(&self) -> Self;
@@ -30,13 +30,13 @@ pub trait EnvironmentWrapper<T> {
 	fn read(
 		&self,
 		identifier: &Token,
-	) -> Result<DeclaredValue<T>, RuntimeError>;
+	) -> Result<DeclaredValue<V>, RuntimeError>;
 
 	fn declare(
 		&self,
 		name: String,
-		value: DeclaredValue<T>,
-	) -> Option<DeclaredValue<T>>;
+		value: DeclaredValue<V>,
+	) -> Option<DeclaredValue<V>>;
 
-	fn assign(&self, identifier: &Token, value: T) -> Result<T, RuntimeError>;
+	fn assign(&self, identifier: &Token, value: V) -> Result<V, RuntimeError>;
 }
