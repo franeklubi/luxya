@@ -1,11 +1,9 @@
-use std::{iter, str};
+use super::types::ScannerIter;
+
 
 // match_to_peek returns true (and consumes next char)
 // only if it maches the expected char
-pub fn match_to_peek(
-	chars: &mut iter::Peekable<str::CharIndices>,
-	expected: char,
-) -> bool {
+pub fn match_to_peek(chars: ScannerIter, expected: char) -> bool {
 	match chars.peek() {
 		Some((_, c)) => *c == expected,
 		None => false,
@@ -19,7 +17,7 @@ pub fn match_to_peek(
 //
 // returns an error with last_offset when the scanning has reached the eof
 pub fn consume_while_peek(
-	chars: &mut iter::Peekable<str::CharIndices>,
+	chars: ScannerIter,
 	predicate: impl Fn(&char) -> bool,
 ) -> Result<usize, usize> {
 	let mut last_offset = 0;
