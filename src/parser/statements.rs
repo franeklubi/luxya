@@ -60,18 +60,6 @@ pub fn if_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 	})))
 }
 
-// pub fn while_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
-// 	let condition = if peek_matches(tokens, &[TokenType::LeftBrace]) {
-// 		None
-// 	} else {
-// 		Some(Box::new(expression(tokens)?))
-// 	};
-//
-// 	let execute = Box::new(expect_statement(tokens, &[TokenType::LeftBrace])?);
-//
-// 	Ok(Some(Stmt::For(ForValue { condition, execute })))
-// }
-
 pub fn block_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 	let mut statements = Vec::new();
 
