@@ -6,7 +6,14 @@ use std::{cell::RefCell, rc::Rc};
 
 #[derive(Clone)]
 pub struct InterpreterEnvironment(
-	Rc<RefCell<EnvironmentBase<InterpreterEnvironment, DeclaredValue>>>,
+	Rc<
+		RefCell<
+			EnvironmentBase<
+				InterpreterEnvironment,
+				DeclaredValue<InterpreterValue>,
+			>,
+		>,
+	>,
 );
 
 impl PartialEq for InterpreterEnvironment {
@@ -33,23 +40,23 @@ macro_rules! unwrap_enclosing {
 	}};
 }
 
-impl InterpreterEnvironment {
-	pub fn new() -> Self {
+impl EnvironmentWrapper<InterpreterValue> for InterpreterEnvironment {
+	fn new() -> Self {
 		InterpreterEnvironment(Rc::new(RefCell::new(EnvironmentBase::new(
 			None,
 		))))
 	}
 
-	pub fn fork(&self) -> Self {
+	fn fork(&self) -> Self {
 		InterpreterEnvironment(Rc::new(RefCell::new(EnvironmentBase::new(
 			Some(self.clone()),
 		))))
 	}
 
-	pub fn read(
+	fn read(
 		&self,
 		identifier: &Token,
-	) -> Result<DeclaredValue, RuntimeError> {
+	) -> Result<DeclaredValue<InterpreterValue>, RuntimeError> {
 		let name = assume_identifier(&identifier);
 
 		if let Some(dv) = unwrap_scope!(self).get(name) {
@@ -61,15 +68,15 @@ impl InterpreterEnvironment {
 		}
 	}
 
-	pub fn declare(
+	fn declare(
 		&self,
 		name: String,
-		value: DeclaredValue,
-	) -> Option<DeclaredValue> {
+		value: DeclaredValue<InterpreterValue>,
+	) -> Option<DeclaredValue<InterpreterValue>> {
 		unwrap_scope_mut!(self).insert(name, value)
 	}
 
-	pub fn assign(
+	fn assign(
 		&self,
 		identifier: &Token,
 		value: InterpreterValue,

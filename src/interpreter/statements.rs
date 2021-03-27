@@ -1,5 +1,5 @@
 use super::{helpers::*, interpret::*, interpreter_env::*, types::*};
-use crate::ast::stmt::*;
+use crate::{ast::stmt::*, env::*};
 
 
 #[inline(always)]

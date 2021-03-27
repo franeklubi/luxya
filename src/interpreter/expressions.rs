@@ -1,5 +1,5 @@
 use super::{helpers::*, interpret::*, interpreter_env::*, types::*};
-use crate::{ast::expr::*, token::*};
+use crate::{ast::expr::*, env::*, token::*};
 
 use std::rc::Rc;
 

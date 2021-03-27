@@ -1,6 +1,6 @@
-use crate::{ast::stmt::*, interpreter::types::RuntimeError};
+use crate::{ast::stmt::*, env::*, interpreter::types::RuntimeError};
 
-use super::{env::*, resolve::*};
+use super::{resolve::*, resolver_env::*};
 
 
 #[inline(always)]

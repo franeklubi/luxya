@@ -1,5 +1,5 @@
 use super::{interpreter_env::InterpreterEnvironment, types::*};
-use crate::token::*;
+use crate::{env::*, token::*};
 
 use std::rc::Rc;
 

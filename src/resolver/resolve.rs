@@ -1,6 +1,6 @@
-use crate::{ast::stmt::*, interpreter::types::RuntimeError};
+use crate::{ast::stmt::*, env::*, interpreter::types::RuntimeError};
 
-use super::{env::*, statements::*};
+use super::{resolver_env::*, statements::*};
 
 
 pub fn resolve(statements: &[Stmt]) -> Result<(), RuntimeError> {

@@ -7,6 +7,7 @@ use super::{
 };
 use crate::{
 	ast::{expr::*, stmt::*},
+	env::*,
 	token::*,
 };
 

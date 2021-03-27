@@ -9,12 +9,6 @@ pub struct RuntimeError {
 	pub token: Token,
 }
 
-#[derive(Clone)]
-pub struct DeclaredValue {
-	pub mutable: bool,
-	pub value: InterpreterValue,
-}
-
 #[derive(Clone, PartialEq)]
 pub enum InterpreterValue {
 	Function {
