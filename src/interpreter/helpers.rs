@@ -12,7 +12,7 @@ pub fn assume_identifier(t: &Token) -> &str {
 }
 
 pub fn guard_function(
-	ibv: InterpreterStmtValue,
+	ibv: InterpreterStmtValue<InterpreterValue>,
 ) -> Result<InterpreterValue, RuntimeError> {
 	match ibv {
 		InterpreterStmtValue::Break(token) => Err(RuntimeError {

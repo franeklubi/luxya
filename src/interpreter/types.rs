@@ -35,11 +35,8 @@ impl InterpreterValue {
 	}
 }
 
-pub enum InterpreterStmtValue {
-	Return {
-		keyword: Token,
-		value: InterpreterValue,
-	},
+pub enum InterpreterStmtValue<T> {
+	Return { keyword: Token, value: T },
 	Break(Token),
 	Continue(Token),
 	Noop,

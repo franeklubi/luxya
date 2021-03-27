@@ -10,7 +10,7 @@ pub fn expression_statement<E, T>(
 	expr_evaluator: fn(&Expr, &E) -> Result<T, RuntimeError>,
 	v: &ExpressionValue,
 	env: &E,
-) -> Result<InterpreterStmtValue, RuntimeError>
+) -> Result<InterpreterStmtValue<T>, RuntimeError>
 where
 	E: EnvironmentWrapper<T>,
 {
@@ -24,7 +24,7 @@ pub fn print_statement<E, T>(
 	expr_evaluator: fn(&Expr, &E) -> Result<T, RuntimeError>,
 	v: &PrintValue,
 	env: &E,
-) -> Result<InterpreterStmtValue, RuntimeError>
+) -> Result<InterpreterStmtValue<T>, RuntimeError>
 where
 	T: std::fmt::Display,
 	E: EnvironmentWrapper<T>,
@@ -41,7 +41,7 @@ pub fn declaration_statement<E>(
 	expr_evaluator: fn(&Expr, &E) -> Result<InterpreterValue, RuntimeError>,
 	v: &DeclarationValue,
 	env: &E,
-) -> Result<InterpreterStmtValue, RuntimeError>
+) -> Result<InterpreterStmtValue<InterpreterValue>, RuntimeError>
 where
 	E: EnvironmentWrapper<InterpreterValue>,
 {
@@ -68,10 +68,10 @@ pub fn block_statement<E, T>(
 	stmts_evaluator: fn(
 		&[Stmt],
 		&E,
-	) -> Result<InterpreterStmtValue, RuntimeError>,
+	) -> Result<InterpreterStmtValue<T>, RuntimeError>,
 	v: &BlockValue,
 	env: &E,
-) -> Result<InterpreterStmtValue, RuntimeError>
+) -> Result<InterpreterStmtValue<T>, RuntimeError>
 where
 	E: EnvironmentWrapper<T>,
 {
@@ -83,10 +83,16 @@ where
 #[inline(always)]
 pub fn if_statement<E>(
 	expr_evaluator: fn(&Expr, &E) -> Result<InterpreterValue, RuntimeError>,
-	stmt_evaluator: fn(&Stmt, &E) -> Result<InterpreterStmtValue, RuntimeError>,
+	stmt_evaluator: fn(
+		&Stmt,
+		&E,
+	) -> Result<
+		InterpreterStmtValue<InterpreterValue>,
+		RuntimeError,
+	>,
 	v: &IfValue,
 	env: &E,
-) -> Result<InterpreterStmtValue, RuntimeError>
+) -> Result<InterpreterStmtValue<InterpreterValue>, RuntimeError>
 where
 	E: EnvironmentWrapper<InterpreterValue>,
 {
@@ -102,10 +108,13 @@ where
 #[inline(always)]
 pub fn for_statement<E, T>(
 	expr_evaluator: fn(&Expr, &E) -> Result<InterpreterValue, RuntimeError>,
-	stmt_evaluator: fn(&Stmt, &E) -> Result<InterpreterStmtValue, RuntimeError>,
+	stmt_evaluator: fn(
+		&Stmt,
+		&E,
+	) -> Result<InterpreterStmtValue<T>, RuntimeError>,
 	v: &ForValue,
 	env: &E,
-) -> Result<InterpreterStmtValue, RuntimeError>
+) -> Result<InterpreterStmtValue<T>, RuntimeError>
 where
 	E: EnvironmentWrapper<T>,
 {
@@ -167,7 +176,7 @@ pub fn return_statement<E>(
 	expr_evaluator: fn(&Expr, &E) -> Result<InterpreterValue, RuntimeError>,
 	v: &ReturnValue,
 	env: &E,
-) -> Result<InterpreterStmtValue, RuntimeError>
+) -> Result<InterpreterStmtValue<InterpreterValue>, RuntimeError>
 where
 	E: EnvironmentWrapper<InterpreterValue>,
 {
@@ -181,15 +190,15 @@ where
 }
 
 #[inline(always)]
-pub fn break_statement(
+pub fn break_statement<T>(
 	v: &BreakValue,
-) -> Result<InterpreterStmtValue, RuntimeError> {
+) -> Result<InterpreterStmtValue<T>, RuntimeError> {
 	Ok(InterpreterStmtValue::Break(v.keyword.clone()))
 }
 
 #[inline(always)]
-pub fn continue_statement(
+pub fn continue_statement<T>(
 	v: &ContinueValue,
-) -> Result<InterpreterStmtValue, RuntimeError> {
+) -> Result<InterpreterStmtValue<T>, RuntimeError> {
 	Ok(InterpreterStmtValue::Continue(v.keyword.clone()))
 }

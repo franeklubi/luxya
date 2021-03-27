@@ -39,7 +39,7 @@ pub fn interpret(statements: &[Stmt]) -> Result<(), RuntimeError> {
 pub fn eval_statements(
 	statements: &[Stmt],
 	env: &InterpreterEnvironment,
-) -> Result<InterpreterStmtValue, RuntimeError> {
+) -> Result<InterpreterStmtValue<InterpreterValue>, RuntimeError> {
 	for stmt in statements {
 		let e = eval_statement(&stmt, env)?;
 
@@ -54,7 +54,7 @@ pub fn eval_statements(
 pub fn eval_statement(
 	stmt: &Stmt,
 	env: &InterpreterEnvironment,
-) -> Result<InterpreterStmtValue, RuntimeError> {
+) -> Result<InterpreterStmtValue<InterpreterValue>, RuntimeError> {
 	match stmt {
 		Stmt::Expression(v) => expression_statement(eval_expression, v, env),
 		Stmt::Print(v) => print_statement(eval_expression, v, env),
