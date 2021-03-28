@@ -1,5 +1,6 @@
 use std::fmt;
 
+
 // TODO: delete that allow
 #[allow(dead_code)]
 fn error<T: fmt::Display>(line: u32, message: T) {

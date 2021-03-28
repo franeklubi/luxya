@@ -1,9 +1,9 @@
 mod expressions;
-mod helpers;
 mod interpret;
 mod native_functions;
 mod pn;
 
+pub mod helpers;
 pub mod interpreter_env;
 pub mod statements;
 pub mod types;

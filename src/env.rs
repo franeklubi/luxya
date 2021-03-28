@@ -2,6 +2,7 @@ use crate::{interpreter::types::RuntimeError, token::Token};
 
 use std::collections::HashMap;
 
+
 #[derive(Clone)]
 pub struct DeclaredValue<V> {
 	pub mutable: bool,

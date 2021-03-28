@@ -2,7 +2,6 @@ use crate::{ast::expr::*, token::*};
 
 use std::{iter, vec};
 
-
 pub type ParserIter<'a> = &'a mut iter::Peekable<vec::IntoIter<Token>>;
 
 pub struct ParseError {

@@ -75,7 +75,6 @@ impl PartialEq for InterpreterFunction {
 	}
 }
 
-
 impl From<bool> for InterpreterValue {
 	fn from(v: bool) -> Self {
 		if v {

@@ -35,7 +35,6 @@ where
 	env.assign(&v.name, expr_evaluator(&v.value, env)?)
 }
 
-#[inline(always)]
 pub fn call_expression(
 	v: &CallValue,
 	env: &InterpreterEnvironment,

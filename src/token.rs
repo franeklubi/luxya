@@ -1,5 +1,6 @@
 use std::{fmt, mem, rc::Rc};
 
+
 #[derive(Clone, Debug)]
 pub enum TokenType {
 	// Single-character tokens

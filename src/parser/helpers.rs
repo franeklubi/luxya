@@ -4,7 +4,6 @@ use crate::{
 	token::*,
 };
 
-
 pub fn match_token_type(t: &TokenType, expected: &[TokenType]) -> bool {
 	expected.iter().any(|a| a == t)
 }

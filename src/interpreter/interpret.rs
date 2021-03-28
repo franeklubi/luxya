@@ -48,7 +48,7 @@ pub fn eval_statements(
 	Ok(InterpreterStmtValue::Noop)
 }
 
-pub fn eval_statement(
+fn eval_statement(
 	stmt: &Stmt,
 	env: &InterpreterEnvironment,
 ) -> Result<InterpreterStmtValue<InterpreterValue>, RuntimeError> {

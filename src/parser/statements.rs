@@ -6,7 +6,6 @@ use crate::{
 
 use std::vec;
 
-
 pub fn print_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 	let stmt = Stmt::Print(PrintValue {
 		expression: Box::new(expression(tokens)?),
@@ -156,8 +155,8 @@ pub fn return_statement(
 	expect_semicolon(tokens)?;
 
 	Ok(Some(Stmt::Return(ReturnValue {
-		expression,
 		keyword,
+		expression,
 	})))
 }
 

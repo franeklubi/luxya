@@ -60,7 +60,6 @@ fn run(source: String) -> bool {
 	// parsing
 	let (statements, parse_errors) = parser::parse(tokens);
 
-
 	// interpreting 😇
 	if scan_errors.is_empty() && parse_errors.is_empty() {
 		if let Err(e) = resolver::resolve(&statements) {

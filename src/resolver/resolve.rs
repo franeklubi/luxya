@@ -1,13 +1,12 @@
+use super::{resolver_env::*, statements::*};
 use crate::{
-	ast::stmt::*,
+	ast::{expr::*, stmt::*},
 	env::*,
 	interpreter::{
 		self,
-		types::{InterpreterStmtValue, RuntimeError},
+		types::{InterpreterStmtValue, InterpreterValue, RuntimeError},
 	},
 };
-
-use super::resolver_env::*;
 
 
 pub fn resolve(statements: &[Stmt]) -> Result<(), RuntimeError> {
@@ -18,12 +17,12 @@ pub fn resolve(statements: &[Stmt]) -> Result<(), RuntimeError> {
 	Ok(())
 }
 
-
-pub fn resolve_statements(
+fn resolve_statements(
 	statements: &[Stmt],
 	env: &ResolverEnvironment,
-) -> Result<InterpreterStmtValue<bool>, RuntimeError> {
+) -> Result<InterpreterStmtValue<InterpreterValue>, RuntimeError> {
 	for stmt in statements {
+		// CHECK IF RETURN - THE SAME AS IN INTERPRETER
 		resolve_statement(&stmt, env)?;
 	}
 
@@ -33,17 +32,48 @@ pub fn resolve_statements(
 fn resolve_statement(
 	stmt: &Stmt,
 	env: &ResolverEnvironment,
-) -> Result<InterpreterStmtValue<bool>, RuntimeError> {
+) -> Result<InterpreterStmtValue<InterpreterValue>, RuntimeError> {
 	match stmt {
-		Stmt::Block(v) => interpreter::statements::block_statement(resolve_statements, v, env),
-		_ => Ok(InterpreterStmtValue::Noop)
-		// Stmt::Expression(v) => expression_statement(env, v),
-		// Stmt::Print(v) => print_statement(env, v),
-		// Stmt::Declaration(v) => declaration_statement(env, v),
-		// Stmt::If(v) => if_statement(env, v),
-		// Stmt::For(v) => for_statement(env, v),
-		// Stmt::Return(v) => return_statement(env, v),
-		// Stmt::Break(v) => break_statement(env, v),
-		// Stmt::Continue(v) => continue_statement(env, v),
+		Stmt::Block(v) => {
+			interpreter::statements::block_statement(resolve_statements, v, env)
+		}
+		Stmt::Expression(v) => interpreter::statements::expression_statement(
+			eval_expression,
+			v,
+			env,
+		),
+		Stmt::Break(v) => interpreter::statements::break_statement(v),
+		Stmt::Continue(v) => interpreter::statements::continue_statement(v),
+		Stmt::Return(v) => {
+			interpreter::statements::return_statement(eval_expression, v, env)
+		}
+
+		// custom resolver handlers
+		Stmt::Print(v) => {
+			eval_expression(&v.expression, env)?;
+
+			Ok(InterpreterStmtValue::Noop)
+		}
+		Stmt::Declaration(v) => declaration_statement(v, env),
+		// Stmt::If(v) => interpreter::statements::if_statement(env, v),
+		// Stmt::For(v) => interpreter::statements::for_statement(env, v),
+		_ => unimplemented!("statement"),
+	}
+}
+
+pub fn eval_expression(
+	expr: &Expr,
+	_env: &ResolverEnvironment,
+) -> Result<InterpreterValue, RuntimeError> {
+	match expr {
+		// Expr::Literal(v) => literal_expression(v),
+		// Expr::Grouping(v) => eval_expression(&v.expression, env),
+		// Expr::Unary(v) => unary_expression(v, env),
+		// Expr::Binary(v) => binary_experssion(v, env),
+		// Expr::Identifier(v) => identifier_expression(v, env),
+		// Expr::Assignment(v) => assignment_expression(eval_expression, v, env),
+		// Expr::Call(v) => call_expression(v, env),
+		// Expr::Function(v) => function_expression(v, env),
+		_ => unimplemented!("expression"),
 	}
 }

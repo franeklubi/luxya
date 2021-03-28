@@ -6,7 +6,6 @@ use crate::{
 
 use std::rc::Rc;
 
-
 pub fn parse(tokens: Vec<Token>) -> (Vec<Stmt>, Vec<ParseError>) {
 	let tokens: ParserIter = &mut tokens.into_iter().peekable();
 
