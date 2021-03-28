@@ -56,10 +56,12 @@ impl EnvironmentWrapper<InterpreterValue> for ResolverEnvironment {
 
 	fn declare(
 		&self,
-		_name: String,
-		_value: DeclaredValue<InterpreterValue>,
+		name: String,
+		value: DeclaredValue<InterpreterValue>,
 	) -> Option<DeclaredValue<InterpreterValue>> {
-		unimplemented!("declaration")
+		self.env.borrow_mut().scope.insert(name, value.mutable);
+
+		None
 	}
 
 	fn assign(
@@ -68,5 +70,15 @@ impl EnvironmentWrapper<InterpreterValue> for ResolverEnvironment {
 		_value: InterpreterValue,
 	) -> Result<InterpreterValue, RuntimeError> {
 		unimplemented!("assignment")
+	}
+}
+
+impl ResolverEnvironment {
+	pub fn resolve_nest_level(
+		&self,
+		_expr: &Expr,
+		_name: &Token,
+	) -> Result<(), RuntimeError> {
+		unimplemented!("nest level resolver")
 	}
 }

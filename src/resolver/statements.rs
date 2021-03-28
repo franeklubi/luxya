@@ -10,6 +10,16 @@ use crate::{
 
 
 #[inline(always)]
+pub fn print_statement(
+	v: &PrintValue,
+	env: &ResolverEnvironment,
+) -> Result<InterpreterStmtValue<InterpreterValue>, RuntimeError> {
+	resolve::eval_expression(&v.expression, env)?;
+
+	Ok(InterpreterStmtValue::Noop)
+}
+
+#[inline(always)]
 pub fn declaration_statement(
 	v: &DeclarationValue,
 	env: &ResolverEnvironment,

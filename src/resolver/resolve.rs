@@ -1,9 +1,10 @@
-use super::{resolver_env::*, statements::*};
+use super::{expressions::*, resolver_env::*, statements::*};
 use crate::{
 	ast::{expr::*, stmt::*},
 	env::*,
 	interpreter::{
-		self,
+		expressions as interpreter_exprs,
+		statements as interpreter_stmts,
 		types::{InterpreterStmtValue, InterpreterValue, RuntimeError},
 	},
 };
@@ -35,38 +36,33 @@ fn resolve_statement(
 ) -> Result<InterpreterStmtValue<InterpreterValue>, RuntimeError> {
 	match stmt {
 		Stmt::Block(v) => {
-			interpreter::statements::block_statement(resolve_statements, v, env)
+			interpreter_stmts::block_statement(resolve_statements, v, env)
 		}
-		Stmt::Expression(v) => interpreter::statements::expression_statement(
-			eval_expression,
-			v,
-			env,
-		),
-		Stmt::Break(v) => interpreter::statements::break_statement(v),
-		Stmt::Continue(v) => interpreter::statements::continue_statement(v),
+		Stmt::Expression(v) => {
+			interpreter_stmts::expression_statement(eval_expression, v, env)
+		}
+		Stmt::Break(v) => interpreter_stmts::break_statement(v),
+		Stmt::Continue(v) => interpreter_stmts::continue_statement(v),
 		Stmt::Return(v) => {
-			interpreter::statements::return_statement(eval_expression, v, env)
+			interpreter_stmts::return_statement(eval_expression, v, env)
 		}
 
 		// custom resolver handlers
-		Stmt::Print(v) => {
-			eval_expression(&v.expression, env)?;
-
-			Ok(InterpreterStmtValue::Noop)
-		}
+		Stmt::Print(v) => print_statement(v, env),
 		Stmt::Declaration(v) => declaration_statement(v, env),
-		// Stmt::If(v) => interpreter::statements::if_statement(env, v),
-		// Stmt::For(v) => interpreter::statements::for_statement(env, v),
+		// Stmt::If(v) => interpreter_stmts::if_statement(env, v),
+		// Stmt::For(v) => interpreter_stmts::for_statement(env, v),
 		_ => unimplemented!("statement"),
 	}
 }
 
 pub fn eval_expression(
 	expr: &Expr,
-	_env: &ResolverEnvironment,
+	env: &ResolverEnvironment,
 ) -> Result<InterpreterValue, RuntimeError> {
 	match expr {
-		// Expr::Literal(v) => literal_expression(v),
+		Expr::Literal(v) => interpreter_exprs::literal_expression(v),
+		Expr::Identifier(v) => identifier_expression(expr, v, env),
 		// Expr::Grouping(v) => eval_expression(&v.expression, env),
 		// Expr::Unary(v) => unary_expression(v, env),
 		// Expr::Binary(v) => binary_experssion(v, env),
@@ -74,6 +70,11 @@ pub fn eval_expression(
 		// Expr::Assignment(v) => assignment_expression(eval_expression, v, env),
 		// Expr::Call(v) => call_expression(v, env),
 		// Expr::Function(v) => function_expression(v, env),
-		_ => unimplemented!("expression"),
+		Expr::Grouping(_v) => unimplemented!("Grouping"),
+		Expr::Unary(_v) => unimplemented!("Unary"),
+		Expr::Binary(_v) => unimplemented!("Binary"),
+		Expr::Assignment(_v) => unimplemented!("Assignment"),
+		Expr::Call(_v) => unimplemented!("Call"),
+		Expr::Function(_v) => unimplemented!("Function"),
 	}
 }
