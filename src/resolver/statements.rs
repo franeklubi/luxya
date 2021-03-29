@@ -14,7 +14,7 @@ pub fn print_statement(
 	v: &PrintValue,
 	env: &ResolverEnvironment,
 ) -> Result<InterpreterStmtValue<InterpreterValue>, RuntimeError> {
-	resolve::eval_expression(&v.expression, env)?;
+	resolve::resolve_expression(&v.expression, env)?;
 
 	Ok(InterpreterStmtValue::Noop)
 }
@@ -25,7 +25,7 @@ pub fn declaration_statement(
 	env: &ResolverEnvironment,
 ) -> Result<InterpreterStmtValue<InterpreterValue>, RuntimeError> {
 	if let Some(i) = &v.initializer {
-		resolve::eval_expression(i, env)?;
+		resolve::resolve_expression(i, env)?;
 	}
 
 	env.declare(
