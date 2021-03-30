@@ -74,3 +74,26 @@ pub fn function_expression(
 		Ok(InterpreterValue::Nil)
 	}
 }
+
+pub fn binary_expression(
+	v: &BinaryValue,
+	env: &ResolverEnvironment,
+) -> Result<InterpreterValue, RuntimeError> {
+	resolve::resolve_expression(&v.left, env)?;
+	resolve::resolve_expression(&v.right, env)?;
+
+	Ok(InterpreterValue::Nil)
+}
+
+pub fn call_expression(
+	v: &CallValue,
+	env: &ResolverEnvironment,
+) -> Result<InterpreterValue, RuntimeError> {
+	resolve::resolve_expression(&v.calee, env)?;
+
+	for arg in &v.arguments {
+		resolve::resolve_expression(arg, env)?;
+	}
+
+	Ok(InterpreterValue::Nil)
+}

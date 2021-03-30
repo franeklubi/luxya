@@ -3,7 +3,6 @@ use crate::{
 	ast::{expr::*, stmt::*},
 	env::*,
 	interpreter::{
-		expressions as interpreter_exprs,
 		statements as interpreter_stmts,
 		types::{InterpreterStmtValue, InterpreterValue, RuntimeError},
 	},
@@ -31,7 +30,7 @@ pub fn resolve_statements(
 	Ok(InterpreterStmtValue::Noop)
 }
 
-fn resolve_statement(
+pub fn resolve_statement(
 	stmt: &Stmt,
 	env: &ResolverEnvironment,
 ) -> Result<InterpreterStmtValue<InterpreterValue>, RuntimeError> {
@@ -48,12 +47,11 @@ fn resolve_statement(
 			interpreter_stmts::return_statement(resolve_expression, v, env)
 		}
 
-		// custom resolver handlers
+		// custom resolver statement handlers
 		Stmt::Print(v) => print_statement(v, env),
 		Stmt::Declaration(v) => declaration_statement(v, env),
-		// Stmt::If(v) => interpreter_stmts::if_statement(env, v),
-		// Stmt::For(v) => interpreter_stmts::for_statement(env, v),
-		_ => unimplemented!("resolve statement"),
+		Stmt::If(v) => if_statement(v, env),
+		Stmt::For(v) => for_statement(v, env),
 	}
 }
 
@@ -62,18 +60,15 @@ pub fn resolve_expression(
 	env: &ResolverEnvironment,
 ) -> Result<InterpreterValue, RuntimeError> {
 	match expr {
-		Expr::Literal(v) => interpreter_exprs::literal_expression(v),
+		Expr::Grouping(v) => resolve_expression(&v.expression, env),
+		Expr::Literal(_v) => Ok(InterpreterValue::Nil),
+
+		// custom resolver expression handlers
 		Expr::Identifier(v) => identifier_expression(expr, v, env),
 		Expr::Assignment(v) => assignment_expression(v, env),
+		Expr::Unary(v) => resolve_expression(&v.right, env),
 		Expr::Function(v) => function_expression(v, env),
-		Expr::Grouping(_v) => unimplemented!("Grouping"),
-		Expr::Unary(_v) => unimplemented!("Unary"),
-		Expr::Binary(_v) => unimplemented!("Binary"),
-		Expr::Call(_v) => unimplemented!("Call"),
+		Expr::Binary(v) => binary_expression(v, env),
+		Expr::Call(v) => call_expression(v, env),
 	}
-	// Expr::Grouping(v) => resolve_expression(&v.expression, env),
-	// Expr::Unary(v) => unary_expression(v, env),
-	// Expr::Binary(v) => binary_experssion(v, env),
-	// Expr::Identifier(v) => identifier_expression(v, env),
-	// Expr::Call(v) => call_expression(v, env),
 }

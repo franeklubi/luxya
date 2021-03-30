@@ -38,3 +38,35 @@ pub fn declaration_statement(
 
 	Ok(InterpreterStmtValue::Noop)
 }
+
+#[inline(always)]
+pub fn if_statement(
+	v: &IfValue,
+	env: &ResolverEnvironment,
+) -> Result<InterpreterStmtValue<InterpreterValue>, RuntimeError> {
+	resolve::resolve_expression(&v.condition, env)?;
+	resolve::resolve_statement(&v.then, env)?;
+
+	if let Some(otherwise) = &v.otherwise {
+		resolve::resolve_statement(otherwise, env)?;
+	}
+
+	Ok(InterpreterStmtValue::Noop)
+}
+
+pub fn for_statement(
+	v: &ForValue,
+	env: &ResolverEnvironment,
+) -> Result<InterpreterStmtValue<InterpreterValue>, RuntimeError> {
+	resolve::resolve_statement(&v.body, env)?;
+
+	if let Some(condition) = &v.condition {
+		resolve::resolve_expression(condition, env)?;
+	}
+
+	if let Some(closer) = &v.closer {
+		resolve::resolve_statement(closer, env)?;
+	}
+
+	Ok(InterpreterStmtValue::Noop)
+}
