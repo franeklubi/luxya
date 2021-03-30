@@ -105,10 +105,28 @@ impl EnvironmentWrapper<InterpreterValue> for ResolverEnvironment {
 impl ResolverEnvironment {
 	pub fn resolve_nest_level(
 		&self,
-		_expr: &Expr,
-		_name: &Token,
+		expr: &Expr,
+		identifier: &Token,
 	) -> Result<(), RuntimeError> {
-		// unimplemented!("nest level resolver")
-		Ok(())
+		self.resolve_nest_level_worker(expr, identifier, 0)
+	}
+
+	fn resolve_nest_level_worker(
+		&self,
+		expr: &Expr,
+		identifier: &Token,
+		level: i32,
+	) -> Result<(), RuntimeError> {
+		let name = assume_identifier(&identifier);
+
+		if let Some(_dv) = resolver_unwrap_scope!(self).get(name) {
+			unimplemented!("resolve nest level worker")
+		} else if let Some(enclosing) = resolver_unwrap_enclosing!(self) {
+			enclosing.resolve_nest_level_worker(expr, identifier, level + 1)?;
+
+			Ok(())
+		} else {
+			Err(no_identifier(identifier, name))
+		}
 	}
 }
