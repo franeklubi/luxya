@@ -27,3 +27,31 @@ pub fn guard_function(
 		InterpreterStmtValue::Noop => Ok(InterpreterValue::Nil),
 	}
 }
+
+pub fn no_identifier(token: &Token, name: &str) -> RuntimeError {
+	RuntimeError {
+		token: token.clone(),
+		message: format!("Identifier {} not defined", name),
+	}
+}
+
+#[macro_export]
+macro_rules! unwrap_scope {
+	($wie:expr) => {{
+		&$wie.0.borrow().scope
+	}};
+}
+
+#[macro_export]
+macro_rules! unwrap_scope_mut {
+	($wie:expr) => {{
+		&mut $wie.0.borrow_mut().scope
+	}};
+}
+
+#[macro_export]
+macro_rules! unwrap_enclosing {
+	($wie:expr) => {{
+		&$wie.0.borrow().enclosing
+	}};
+}

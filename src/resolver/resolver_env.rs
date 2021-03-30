@@ -1,7 +1,13 @@
 use crate::{
 	ast::expr::Expr,
 	env::*,
-	interpreter::types::{InterpreterValue, RuntimeError},
+	interpreter::{
+		helpers::{assume_identifier, no_identifier},
+		types::{InterpreterValue, RuntimeError},
+	},
+	resolver_unwrap_enclosing,
+	resolver_unwrap_scope,
+	resolver_unwrap_scope_mut,
 	token::Token,
 };
 
@@ -49,9 +55,20 @@ impl EnvironmentWrapper<InterpreterValue> for ResolverEnvironment {
 
 	fn read(
 		&self,
-		_identifier: &Token,
+		identifier: &Token,
 	) -> Result<DeclaredValue<InterpreterValue>, RuntimeError> {
-		unimplemented!("read")
+		let name = assume_identifier(&identifier);
+
+		if let Some(dv) = resolver_unwrap_scope!(self).get(name) {
+			Ok(DeclaredValue {
+				mutable: *dv,
+				value: InterpreterValue::Nil,
+			})
+		} else if let Some(enclosing) = resolver_unwrap_enclosing!(self) {
+			enclosing.read(identifier)
+		} else {
+			Err(no_identifier(identifier, name))
+		}
 	}
 
 	fn declare(
@@ -59,17 +76,29 @@ impl EnvironmentWrapper<InterpreterValue> for ResolverEnvironment {
 		name: String,
 		value: DeclaredValue<InterpreterValue>,
 	) -> Option<DeclaredValue<InterpreterValue>> {
-		self.env.borrow_mut().scope.insert(name, value.mutable);
+		resolver_unwrap_scope_mut!(self).insert(name, value.mutable);
 
 		None
 	}
 
+	// checks if the target is mutable
 	fn assign(
 		&self,
-		_identifier: &Token,
+		identifier: &Token,
 		_value: InterpreterValue,
 	) -> Result<InterpreterValue, RuntimeError> {
-		unimplemented!("assignment")
+		let entry = self.read(identifier)?;
+
+		if !entry.mutable {
+			let name = assume_identifier(identifier);
+
+			Err(RuntimeError {
+				message: format!("Cannot assign to a const `{}`", name),
+				token: identifier.clone(),
+			})
+		} else {
+			Ok(InterpreterValue::Nil)
+		}
 	}
 }
 
@@ -79,6 +108,7 @@ impl ResolverEnvironment {
 		_expr: &Expr,
 		_name: &Token,
 	) -> Result<(), RuntimeError> {
-		unimplemented!("nest level resolver")
+		// unimplemented!("nest level resolver")
+		Ok(())
 	}
 }

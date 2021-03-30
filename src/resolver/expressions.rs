@@ -27,6 +27,8 @@ pub fn assignment_expression(
 ) -> Result<InterpreterValue, RuntimeError> {
 	resolve::resolve_expression(&v.value, env)?;
 
+	env.assign(&v.name, InterpreterValue::Nil)?;
+
 	env.resolve_nest_level(&v.value, &v.name)?;
 
 	Ok(InterpreterValue::Nil)

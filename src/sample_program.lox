@@ -10,3 +10,20 @@ fun fib(n) {
 for let i = 0; i < 10; i = i + 1 {
 	print str(i) + ": " + str(fib(i));
 }
+
+let elo = "elo";
+
+print elo;
+
+{
+	elo = "jol";
+	print elo;
+
+	{
+		elo = "aaaa";
+		print elo;
+	}
+}
+
+let elo = "jol";
+elo = "aaa";

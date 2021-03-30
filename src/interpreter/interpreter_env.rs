@@ -1,5 +1,11 @@
 use super::{helpers::*, types::*};
-use crate::{env::*, token::*};
+use crate::{
+	env::*,
+	token::*,
+	unwrap_enclosing,
+	unwrap_scope,
+	unwrap_scope_mut,
+};
 
 use std::{cell::RefCell, rc::Rc};
 
@@ -20,24 +26,6 @@ impl PartialEq for InterpreterEnvironment {
 	fn eq(&self, other: &Self) -> bool {
 		Rc::ptr_eq(&self.0, &other.0)
 	}
-}
-
-macro_rules! unwrap_scope {
-	($wie:expr) => {{
-		&$wie.0.borrow().scope
-	}};
-}
-
-macro_rules! unwrap_scope_mut {
-	($wie:expr) => {{
-		&mut $wie.0.borrow_mut().scope
-	}};
-}
-
-macro_rules! unwrap_enclosing {
-	($wie:expr) => {{
-		&$wie.0.borrow().enclosing
-	}};
 }
 
 impl EnvironmentWrapper<InterpreterValue> for InterpreterEnvironment {
@@ -103,19 +91,13 @@ impl EnvironmentWrapper<InterpreterValue> for InterpreterEnvironment {
 			};
 		}
 
-		// not doing an `else if` on purpose, because we want the borrow in the
-		// upper `if` statement to be dropped
+		// returning early and not doing an `else if` on purpose,
+		// because we want the borrow in the upper `if` statement to be dropped
+
 		if let Some(enclosing) = unwrap_enclosing!(self) {
 			enclosing.assign(identifier, value)
 		} else {
 			Err(no_identifier(identifier, name))
 		}
-	}
-}
-
-fn no_identifier(token: &Token, name: &str) -> RuntimeError {
-	RuntimeError {
-		token: token.clone(),
-		message: format!("Identifier {} not defined", name),
 	}
 }
