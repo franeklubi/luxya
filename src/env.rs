@@ -30,6 +30,12 @@ pub trait EnvironmentWrapper<V> {
 
 	fn read(
 		&self,
+		steps: u32,
+		identifier: &Token,
+	) -> Result<DeclaredValue<V>, RuntimeError>;
+
+	fn read_search(
+		&self,
 		identifier: &Token,
 	) -> Result<DeclaredValue<V>, RuntimeError>;
 

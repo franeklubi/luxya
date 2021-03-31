@@ -20,7 +20,7 @@ pub fn identifier_expression<E, T>(
 where
 	E: EnvironmentWrapper<T>,
 {
-	Ok(env.read(&v.name)?.value)
+	Ok(env.read(v.env_distance.get(), &v.name)?.value)
 }
 
 #[inline(always)]

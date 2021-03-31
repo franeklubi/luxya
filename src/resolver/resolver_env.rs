@@ -51,6 +51,14 @@ impl EnvironmentWrapper<InterpreterValue> for ResolverEnvironment {
 
 	fn read(
 		&self,
+		_steps: u32,
+		_identifier: &Token,
+	) -> Result<DeclaredValue<InterpreterValue>, RuntimeError> {
+		unimplemented!("Resolver env: use read_search")
+	}
+
+	fn read_search(
+		&self,
 		identifier: &Token,
 	) -> Result<DeclaredValue<InterpreterValue>, RuntimeError> {
 		let name = assume_identifier(&identifier);
@@ -61,7 +69,7 @@ impl EnvironmentWrapper<InterpreterValue> for ResolverEnvironment {
 				value: InterpreterValue::Nil,
 			})
 		} else if let Some(enclosing) = resolver_unwrap_enclosing!(self) {
-			enclosing.read(identifier)
+			enclosing.read_search(identifier)
 		} else {
 			Err(no_identifier(identifier, name))
 		}
@@ -83,7 +91,7 @@ impl EnvironmentWrapper<InterpreterValue> for ResolverEnvironment {
 		identifier: &Token,
 		_value: InterpreterValue,
 	) -> Result<InterpreterValue, RuntimeError> {
-		let entry = self.read(identifier)?;
+		let entry = self.read_search(identifier)?;
 
 		if !entry.mutable {
 			let name = assume_identifier(identifier);
@@ -104,16 +112,33 @@ impl ResolverEnvironment {
 		identifier_node: &Expr,
 		identifier_token: &Token,
 	) -> Result<(), RuntimeError> {
+		self.resolve_nest_level_worker(
+			self.level,
+			identifier_node,
+			identifier_token,
+		)
+	}
+
+	fn resolve_nest_level_worker(
+		&self,
+		initial_level: u32,
+		identifier_node: &Expr,
+		identifier_token: &Token,
+	) -> Result<(), RuntimeError> {
 		let name = assume_identifier(identifier_token);
 
 		if let Some(_dv) = resolver_unwrap_scope!(self).get(name) {
 			let iv = assume_identifier_expr(identifier_node);
 
-			iv.env_distance.set(self.level);
+			iv.env_distance.set(initial_level - self.level);
 
 			Ok(())
 		} else if let Some(enclosing) = resolver_unwrap_enclosing!(self) {
-			enclosing.resolve_nest_level(identifier_node, identifier_token)?;
+			enclosing.resolve_nest_level_worker(
+				initial_level,
+				identifier_node,
+				identifier_token,
+			)?;
 
 			Ok(())
 		} else {

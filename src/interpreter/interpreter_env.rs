@@ -43,6 +43,38 @@ impl EnvironmentWrapper<InterpreterValue> for InterpreterEnvironment {
 
 	fn read(
 		&self,
+		steps: u32,
+		identifier: &Token,
+	) -> Result<DeclaredValue<InterpreterValue>, RuntimeError> {
+		let mut scope: Rc<RefCell<EnvironmentBase<_, _>>> = self.0.clone();
+
+		for _ in 0..steps {
+			let new_scope = {
+				let borrowed = scope.borrow();
+				let enclosing = borrowed
+					.enclosing
+					.as_ref()
+					.expect("The enclosing environment to exist");
+
+				enclosing.0.clone()
+			};
+
+			scope = new_scope;
+		}
+
+		let name = assume_identifier(identifier);
+
+		let borrowed = scope.borrow();
+
+		Ok(borrowed
+			.scope
+			.get(name)
+			.expect("The identifier to be there")
+			.clone())
+	}
+
+	fn read_search(
+		&self,
 		identifier: &Token,
 	) -> Result<DeclaredValue<InterpreterValue>, RuntimeError> {
 		let name = assume_identifier(&identifier);
@@ -50,7 +82,7 @@ impl EnvironmentWrapper<InterpreterValue> for InterpreterEnvironment {
 		if let Some(dv) = unwrap_scope!(self).get(name) {
 			Ok(dv.clone())
 		} else if let Some(enclosing) = unwrap_enclosing!(self) {
-			enclosing.read(identifier)
+			enclosing.read_search(identifier)
 		} else {
 			Err(no_identifier(identifier, name))
 		}
