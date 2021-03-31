@@ -3,14 +3,24 @@ use crate::{
 	ast::{expr::*, stmt::*},
 	env::*,
 	interpreter::{
+		native_functions::NATIVE_FUNCTION_NAMES,
 		statements as interpreter_stmts,
 		types::{InterpreterStmtValue, InterpreterValue, RuntimeError},
 	},
+	resolver_unwrap_scope_mut,
 };
 
 
 pub fn resolve(statements: &[Stmt]) -> Result<(), RuntimeError> {
 	let scope = ResolverEnvironment::new();
+
+	{
+		let scope_map = resolver_unwrap_scope_mut!(scope);
+
+		NATIVE_FUNCTION_NAMES.iter().for_each(|k| {
+			scope_map.insert(k.to_string(), true);
+		});
+	}
 
 	// CHECK IF RETURN AND ETC - THE SAME AS IN INTERPRETER
 	resolve_statements(statements, &scope)?;

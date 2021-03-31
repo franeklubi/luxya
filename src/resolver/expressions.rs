@@ -29,8 +29,6 @@ pub fn assignment_expression(
 
 	env.assign(&v.name, InterpreterValue::Nil)?;
 
-	env.resolve_nest_level(&v.value, &v.name)?;
-
 	Ok(InterpreterValue::Nil)
 }
 

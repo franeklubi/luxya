@@ -1,10 +1,10 @@
 mod interpret;
-mod native_functions;
 mod pn;
 
 pub mod expressions;
 pub mod helpers;
 pub mod interpreter_env;
+pub mod native_functions;
 pub mod statements;
 pub mod types;
 

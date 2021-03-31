@@ -1,7 +1,7 @@
 use crate::ast::expr::{Expr, IdentifierValue};
 
 
-// A shorthand way to extract
+// A shorthand way to extract identifier expr
 pub fn assume_identifier_expr(expr: &Expr) -> &IdentifierValue {
 	if let Expr::Identifier(i) = expr {
 		i

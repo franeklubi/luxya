@@ -3,6 +3,7 @@ use crate::{env::*, token::*};
 
 use std::rc::Rc;
 
+pub const NATIVE_FUNCTION_NAMES: [&str; 4] = ["str", "typeof", "number", "len"];
 
 struct FunctionDefinition<'a> {
 	name: &'a str,
@@ -101,22 +102,22 @@ pub fn declare_native_functions(env: &InterpreterEnvironment) {
 		env,
 		&[
 			FunctionDefinition {
-				name: "str",
+				name: NATIVE_FUNCTION_NAMES[0],
 				arity: 1,
 				fun: |_k, _e, args| Ok(native_str(_k, _e, args)),
 			},
 			FunctionDefinition {
-				name: "typeof",
+				name: NATIVE_FUNCTION_NAMES[1],
 				arity: 1,
 				fun: |_k, _e, args| Ok(native_typeof(_k, _e, args)),
 			},
 			FunctionDefinition {
-				name: "number",
+				name: NATIVE_FUNCTION_NAMES[2],
 				arity: 1,
 				fun: native_number,
 			},
 			FunctionDefinition {
-				name: "len",
+				name: NATIVE_FUNCTION_NAMES[3],
 				arity: 1,
 				fun: native_len,
 			},

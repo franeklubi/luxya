@@ -19,7 +19,7 @@ use std::{cell::RefCell, rc::Rc};
 #[derive(Clone)]
 pub struct ResolverEnvironment {
 	// true if variable, false if const
-	env: Rc<RefCell<EnvironmentBase<ResolverEnvironment, bool>>>,
+	pub env: Rc<RefCell<EnvironmentBase<ResolverEnvironment, bool>>>,
 
 	// current nest level
 	level: u32,
