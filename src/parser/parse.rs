@@ -4,7 +4,8 @@ use crate::{
 	token::*,
 };
 
-use std::rc::Rc;
+use std::{cell::Cell, rc::Rc};
+
 
 pub fn parse(tokens: Vec<Token>) -> (Vec<Stmt>, Vec<ParseError>) {
 	let tokens: ParserIter = &mut tokens.into_iter().peekable();
@@ -328,6 +329,7 @@ fn primary(tokens: ParserIter) -> Result<Expr, ParseError> {
 			..
 		}) => Ok(Expr::Identifier(IdentifierValue {
 			name: token.unwrap(),
+			env_distance: Cell::new(0),
 		})),
 
 		_ => Err(ParseError {

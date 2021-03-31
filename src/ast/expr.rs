@@ -1,5 +1,5 @@
 use crate::{ast::stmt::*, token::Token};
-use std::rc::Rc;
+use std::{cell::Cell, rc::Rc};
 
 #[derive(Clone, PartialEq)]
 pub enum LiteralValue {
@@ -23,13 +23,23 @@ pub struct CallValue {
 	pub arguments: Vec<Expr>,
 }
 
+pub struct BinaryValue {
+	pub left: Box<Expr>,
+	pub operator: Token,
+	pub right: Box<Expr>,
+}
+
+pub struct IdentifierValue {
+	pub name: Token,
+	pub env_distance: Cell<u32>,
+}
+
 pub struct AssignmentValue {
 	pub name: Token,
 	pub value: Box<Expr>,
 }
 
-pub struct BinaryValue {
-	pub left: Box<Expr>,
+pub struct UnaryValue {
 	pub operator: Token,
 	pub right: Box<Expr>,
 }
@@ -38,22 +48,13 @@ pub struct GroupingValue {
 	pub expression: Box<Expr>,
 }
 
-pub struct UnaryValue {
-	pub operator: Token,
-	pub right: Box<Expr>,
-}
-
-pub struct IdentifierValue {
-	pub name: Token,
-}
-
 pub enum Expr {
 	Function(FunctionValue),
 	Call(CallValue),
-	Assignment(AssignmentValue),
 	Binary(BinaryValue),
+	Identifier(IdentifierValue),
+	Assignment(AssignmentValue),
+	Unary(UnaryValue),
 	Grouping(GroupingValue),
 	Literal(LiteralValue),
-	Unary(UnaryValue),
-	Identifier(IdentifierValue),
 }

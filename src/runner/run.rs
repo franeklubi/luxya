@@ -64,7 +64,7 @@ fn run(source: String) -> bool {
 	if scan_errors.is_empty() && parse_errors.is_empty() {
 		if let Err(e) = resolver::resolve(&statements) {
 			println!(
-				"Runtime error {}\n\t{}",
+				"Resolve error {}\n\t{}",
 				get_line(&source, e.token.byte_offset),
 				e.message
 			);

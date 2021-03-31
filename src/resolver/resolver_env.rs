@@ -1,3 +1,4 @@
+use super::helpers::assume_identifier_expr;
 use crate::{
 	ast::expr::Expr,
 	env::*,
@@ -11,20 +12,17 @@ use crate::{
 	token::Token,
 };
 
-use std::{cell::RefCell, collections::HashMap, rc::Rc};
+use std::{cell::RefCell, rc::Rc};
 
 
 // Everything we need to create resolved map will have to be inside this env
 #[derive(Clone)]
 pub struct ResolverEnvironment {
-	// we need it to be always accessible in resolver
-	nest_levels: Rc<HashMap<Expr, u32>>,
-
 	// true if variable, false if const
 	env: Rc<RefCell<EnvironmentBase<ResolverEnvironment, bool>>>,
 
 	// current nest level
-	level: i32,
+	level: u32,
 }
 
 // The InterpreterValue in this implementation tells us basically nothing, as
@@ -37,7 +35,6 @@ pub struct ResolverEnvironment {
 impl EnvironmentWrapper<InterpreterValue> for ResolverEnvironment {
 	fn new() -> Self {
 		ResolverEnvironment {
-			nest_levels: Rc::new(HashMap::new()),
 			env: Rc::new(RefCell::new(EnvironmentBase::new(None))),
 			level: 0,
 		}
@@ -45,7 +42,6 @@ impl EnvironmentWrapper<InterpreterValue> for ResolverEnvironment {
 
 	fn fork(&self) -> Self {
 		ResolverEnvironment {
-			nest_levels: Rc::clone(&self.nest_levels),
 			env: Rc::new(RefCell::new(EnvironmentBase::new(Some(
 				self.clone(),
 			)))),
@@ -105,19 +101,23 @@ impl EnvironmentWrapper<InterpreterValue> for ResolverEnvironment {
 impl ResolverEnvironment {
 	pub fn resolve_nest_level(
 		&self,
-		expr: &Expr,
-		identifier: &Token,
+		identifier_node: &Expr,
+		identifier_token: &Token,
 	) -> Result<(), RuntimeError> {
-		let name = assume_identifier(&identifier);
+		let name = assume_identifier(identifier_token);
 
 		if let Some(_dv) = resolver_unwrap_scope!(self).get(name) {
-			unimplemented!("resolve nest level worker at level: {}", self.level)
+			let iv = assume_identifier_expr(identifier_node);
+
+			iv.env_distance.set(self.level);
+
+			Ok(())
 		} else if let Some(enclosing) = resolver_unwrap_enclosing!(self) {
-			enclosing.resolve_nest_level(expr, identifier)?;
+			enclosing.resolve_nest_level(identifier_node, identifier_token)?;
 
 			Ok(())
 		} else {
-			Err(no_identifier(identifier, name))
+			Err(no_identifier(identifier_token, name))
 		}
 	}
 }
