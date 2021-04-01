@@ -75,7 +75,7 @@ pub fn resolve_expression(
 
 		// custom resolver expression handlers
 		Expr::Identifier(v) => identifier_expression(expr, v, env),
-		Expr::Assignment(v) => assignment_expression(v, env),
+		Expr::Assignment(v) => assignment_expression(expr, v, env),
 		Expr::Unary(v) => resolve_expression(&v.right, env),
 		Expr::Function(v) => function_expression(v, env),
 		Expr::Binary(v) => binary_expression(v, env),

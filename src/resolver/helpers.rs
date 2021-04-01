@@ -1,12 +1,16 @@
-use crate::ast::expr::{Expr, IdentifierValue};
+use crate::ast::expr::Expr;
+
+use std::cell::Cell;
 
 
 // A shorthand way to extract identifier expr
-pub fn assume_identifier_expr(expr: &Expr) -> &IdentifierValue {
-	if let Expr::Identifier(i) = expr {
-		i
-	} else {
-		unreachable!("Couldn't extract identifier expr. This shouldn't happen")
+pub fn assume_resolvable_expr(expr: &Expr) -> &Cell<u32> {
+	match expr {
+		Expr::Identifier(i) => &i.env_distance,
+		Expr::Assignment(a) => &a.env_distance,
+		_ => unreachable!(
+			"Couldn't extract identifier expr. This shouldn't happen"
+		),
 	}
 }
 

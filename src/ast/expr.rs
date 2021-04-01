@@ -23,6 +23,12 @@ pub struct CallValue {
 	pub arguments: Vec<Expr>,
 }
 
+pub struct AssignmentValue {
+	pub name: Token,
+	pub value: Box<Expr>,
+	pub env_distance: Cell<u32>,
+}
+
 pub struct BinaryValue {
 	pub left: Box<Expr>,
 	pub operator: Token,
@@ -32,11 +38,6 @@ pub struct BinaryValue {
 pub struct IdentifierValue {
 	pub name: Token,
 	pub env_distance: Cell<u32>,
-}
-
-pub struct AssignmentValue {
-	pub name: Token,
-	pub value: Box<Expr>,
 }
 
 pub struct UnaryValue {
@@ -51,9 +52,9 @@ pub struct GroupingValue {
 pub enum Expr {
 	Function(FunctionValue),
 	Call(CallValue),
+	Assignment(AssignmentValue),
 	Binary(BinaryValue),
 	Identifier(IdentifierValue),
-	Assignment(AssignmentValue),
 	Unary(UnaryValue),
 	Grouping(GroupingValue),
 	Literal(LiteralValue),

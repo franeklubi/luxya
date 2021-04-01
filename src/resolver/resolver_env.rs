@@ -1,4 +1,4 @@
-use super::helpers::assume_identifier_expr;
+use super::helpers::assume_resolvable_expr;
 use crate::{
 	ast::expr::Expr,
 	env::*,
@@ -109,12 +109,12 @@ impl EnvironmentWrapper<InterpreterValue> for ResolverEnvironment {
 impl ResolverEnvironment {
 	pub fn resolve_nest_level(
 		&self,
-		identifier_node: &Expr,
+		resolvable_node: &Expr,
 		identifier_token: &Token,
 	) -> Result<(), RuntimeError> {
 		self.resolve_nest_level_worker(
 			self.level,
-			identifier_node,
+			resolvable_node,
 			identifier_token,
 		)
 	}
@@ -122,21 +122,21 @@ impl ResolverEnvironment {
 	fn resolve_nest_level_worker(
 		&self,
 		initial_level: u32,
-		identifier_node: &Expr,
+		resolvable_node: &Expr,
 		identifier_token: &Token,
 	) -> Result<(), RuntimeError> {
 		let name = assume_identifier(identifier_token);
 
 		if let Some(_dv) = resolver_unwrap_scope!(self).get(name) {
-			let iv = assume_identifier_expr(identifier_node);
+			let env_distance = assume_resolvable_expr(resolvable_node);
 
-			iv.env_distance.set(initial_level - self.level);
+			env_distance.set(initial_level - self.level);
 
 			Ok(())
 		} else if let Some(enclosing) = resolver_unwrap_enclosing!(self) {
 			enclosing.resolve_nest_level_worker(
 				initial_level,
-				identifier_node,
+				resolvable_node,
 				identifier_token,
 			)?;
 

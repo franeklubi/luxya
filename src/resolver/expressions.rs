@@ -22,12 +22,14 @@ pub fn identifier_expression(
 
 #[inline(always)]
 pub fn assignment_expression(
+	expr: &Expr,
 	v: &AssignmentValue,
 	env: &ResolverEnvironment,
 ) -> Result<InterpreterValue, RuntimeError> {
+	// that takes care on the variables on the right
 	resolve::resolve_expression(&v.value, env)?;
 
-	env.assign(&v.name, InterpreterValue::Nil)?;
+	env.resolve_nest_level(expr, &v.name)?;
 
 	Ok(InterpreterValue::Nil)
 }

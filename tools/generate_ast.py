@@ -102,9 +102,9 @@ def gen_expr() -> str:
 				params: Option<Vec<Token>>, body: Option<Rc<Vec<Stmt>>>
 		""",
 		'Call -> calee: Box<Expr>, closing_paren: Token, arguments: Vec<Expr>',
+		'Assignment -> name: Token, value: Box<Expr>, env_distance: Cell<u32>',
 		'Binary -> left: Box<Expr>, operator: Token, right: Box<Expr>',
 		'Identifier -> name: Token, env_distance: Cell<u32>',
-		'Assignment -> name: Token, value: Box<Expr>',
 		'Unary -> operator: Token, right: Box<Expr>',
 		'Grouping -> expression: Box<Expr>',
 		'Literal(LiteralValue)',

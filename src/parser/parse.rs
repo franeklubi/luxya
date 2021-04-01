@@ -125,6 +125,7 @@ fn assignment(tokens: ParserIter) -> Result<Expr, ParseError> {
 			Ok(Expr::Assignment(AssignmentValue {
 				name: i.name,
 				value: Box::new(assignment(tokens)?),
+				env_distance: Cell::new(0),
 			}))
 		} else {
 			Err(ParseError {
