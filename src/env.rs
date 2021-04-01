@@ -34,16 +34,16 @@ pub trait EnvironmentWrapper<V> {
 		identifier: &Token,
 	) -> Result<DeclaredValue<V>, RuntimeError>;
 
-	fn read_search(
-		&self,
-		identifier: &Token,
-	) -> Result<DeclaredValue<V>, RuntimeError>;
-
 	fn declare(
 		&self,
 		name: String,
 		value: DeclaredValue<V>,
 	) -> Option<DeclaredValue<V>>;
 
-	fn assign(&self, identifier: &Token, value: V) -> Result<V, RuntimeError>;
+	fn assign(
+		&self,
+		steps: u32,
+		identifier: &Token,
+		value: V,
+	) -> Result<V, RuntimeError>;
 }

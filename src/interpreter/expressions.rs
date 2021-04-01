@@ -32,7 +32,11 @@ pub fn assignment_expression<E, T>(
 where
 	E: EnvironmentWrapper<T>,
 {
-	env.assign(&v.name, expr_evaluator(&v.value, env)?)
+	env.assign(
+		v.env_distance.get(),
+		&v.name,
+		expr_evaluator(&v.value, env)?,
+	)
 }
 
 pub fn call_expression(

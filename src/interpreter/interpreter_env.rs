@@ -2,8 +2,8 @@ use super::{helpers::*, types::*};
 use crate::{
 	env::*,
 	token::*,
-	unwrap_enclosing,
-	unwrap_scope,
+	// unwrap_enclosing,
+	// unwrap_scope,
 	unwrap_scope_mut,
 };
 
@@ -73,21 +73,6 @@ impl EnvironmentWrapper<InterpreterValue> for InterpreterEnvironment {
 			.clone())
 	}
 
-	fn read_search(
-		&self,
-		identifier: &Token,
-	) -> Result<DeclaredValue<InterpreterValue>, RuntimeError> {
-		let name = assume_identifier(&identifier);
-
-		if let Some(dv) = unwrap_scope!(self).get(name) {
-			Ok(dv.clone())
-		} else if let Some(enclosing) = unwrap_enclosing!(self) {
-			enclosing.read_search(identifier)
-		} else {
-			Err(no_identifier(identifier, name))
-		}
-	}
-
 	fn declare(
 		&self,
 		name: String,
@@ -98,38 +83,51 @@ impl EnvironmentWrapper<InterpreterValue> for InterpreterEnvironment {
 
 	fn assign(
 		&self,
+		steps: u32,
 		identifier: &Token,
 		value: InterpreterValue,
 	) -> Result<InterpreterValue, RuntimeError> {
-		let name = assume_identifier(&identifier);
+		let mut scope: Rc<RefCell<EnvironmentBase<_, _>>> = self.0.clone();
 
-		if let Some(entry) = unwrap_scope_mut!(self).get_mut(name) {
-			return if entry.mutable {
-				*entry = DeclaredValue {
-					mutable: entry.mutable,
-					value: value.clone(),
-				};
+		for _ in 0..steps {
+			let new_scope = {
+				let borrowed = scope.borrow_mut();
+				let enclosing = borrowed
+					.enclosing
+					.as_ref()
+					.expect("The enclosing environment to exist");
 
-				Ok(value)
-			} else {
-				Err(RuntimeError {
-					message: format!(
-						"Cannot assign to a const {} `{}`",
-						entry.value.to_human_readable(),
-						name
-					),
-					token: identifier.clone(),
-				})
+				enclosing.0.clone()
 			};
+
+			scope = new_scope;
 		}
 
-		// returning early and not doing an `else if` on purpose,
-		// because we want the borrow in the upper `if` statement to be dropped
+		let name = assume_identifier(identifier);
 
-		if let Some(enclosing) = unwrap_enclosing!(self) {
-			enclosing.assign(identifier, value)
+		let mut borrowed = scope.borrow_mut();
+
+		let entry = borrowed
+			.scope
+			.get_mut(name)
+			.expect("The identifier to be there");
+
+		if entry.mutable {
+			*entry = DeclaredValue {
+				mutable: entry.mutable,
+				value: value.clone(),
+			};
+
+			Ok(value)
 		} else {
-			Err(no_identifier(identifier, name))
+			Err(RuntimeError {
+				message: format!(
+					"Cannot assign to a const {} `{}`",
+					entry.value.to_human_readable(),
+					name
+				),
+				token: identifier.clone(),
+			})
 		}
 	}
 }

@@ -51,28 +51,36 @@ impl EnvironmentWrapper<InterpreterValue> for ResolverEnvironment {
 
 	fn read(
 		&self,
-		_steps: u32,
-		_identifier: &Token,
-	) -> Result<DeclaredValue<InterpreterValue>, RuntimeError> {
-		unimplemented!("Resolver env: use read_search")
-	}
-
-	fn read_search(
-		&self,
+		steps: u32,
 		identifier: &Token,
 	) -> Result<DeclaredValue<InterpreterValue>, RuntimeError> {
-		let name = assume_identifier(&identifier);
+		let mut scope: Rc<RefCell<EnvironmentBase<_, _>>> = self.env.clone();
 
-		if let Some(dv) = resolver_unwrap_scope!(self).get(name) {
-			Ok(DeclaredValue {
-				mutable: *dv,
-				value: InterpreterValue::Nil,
-			})
-		} else if let Some(enclosing) = resolver_unwrap_enclosing!(self) {
-			enclosing.read_search(identifier)
-		} else {
-			Err(no_identifier(identifier, name))
+		for _ in 0..steps {
+			let new_scope = {
+				let borrowed = scope.borrow();
+				let enclosing = borrowed
+					.enclosing
+					.as_ref()
+					.expect("The enclosing environment to exist");
+
+				enclosing.env.clone()
+			};
+
+			scope = new_scope;
 		}
+
+		let name = assume_identifier(identifier);
+
+		let borrowed = scope.borrow();
+
+		Ok(DeclaredValue {
+			mutable: *borrowed
+				.scope
+				.get(name)
+				.expect("The identifier to be there"),
+			value: InterpreterValue::Nil,
+		})
 	}
 
 	fn declare(
@@ -88,10 +96,11 @@ impl EnvironmentWrapper<InterpreterValue> for ResolverEnvironment {
 	// checks if the target is mutable
 	fn assign(
 		&self,
+		steps: u32,
 		identifier: &Token,
 		_value: InterpreterValue,
 	) -> Result<InterpreterValue, RuntimeError> {
-		let entry = self.read_search(identifier)?;
+		let entry = self.read(steps, identifier)?;
 
 		if !entry.mutable {
 			let name = assume_identifier(identifier);

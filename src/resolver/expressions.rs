@@ -29,7 +29,10 @@ pub fn assignment_expression(
 	// that takes care on the variables on the right
 	resolve::resolve_expression(&v.value, env)?;
 
+	// and this one manages the ones on the left 😎
 	env.resolve_nest_level(expr, &v.name)?;
+
+	env.assign(v.env_distance.get(), &v.name, InterpreterValue::Nil)?;
 
 	Ok(InterpreterValue::Nil)
 }

@@ -26,4 +26,5 @@ print elo;
 }
 
 let elo = "jol";
-elo = "aaa";
+elo = "bbbb";
+print elo;
