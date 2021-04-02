@@ -10,3 +10,10 @@ fun fib(n) {
 for let i = 0; i < 10; i = i + 1 {
 	print str(i) + ": " + str(fib(i));
 }
+
+class Chuj {
+	elo() {
+		print "chuj";
+	}
+}
+

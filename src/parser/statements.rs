@@ -6,6 +6,8 @@ use crate::{
 
 use std::vec;
 
+
+#[inline(always)]
 pub fn print_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 	let stmt = Stmt::Print(PrintValue {
 		expression: Box::new(expression(tokens)?),
@@ -16,6 +18,7 @@ pub fn print_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 	Ok(Some(stmt))
 }
 
+#[inline(always)]
 pub fn expression_statement(
 	tokens: ParserIter,
 ) -> Result<Option<Stmt>, ParseError> {
@@ -35,6 +38,7 @@ pub fn expression_statement(
 	Ok(Some(stmt))
 }
 
+#[inline(always)]
 pub fn if_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 	let condition = Box::new(expression(tokens)?);
 
@@ -59,6 +63,7 @@ pub fn if_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 	})))
 }
 
+#[inline(always)]
 pub fn block_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 	let mut statements = Vec::new();
 
@@ -142,6 +147,7 @@ pub fn for_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 	Ok(Some(for_body))
 }
 
+#[inline(always)]
 pub fn return_statement(
 	tokens: ParserIter,
 	keyword: Token,
@@ -160,6 +166,7 @@ pub fn return_statement(
 	})))
 }
 
+#[inline(always)]
 pub fn break_statement(
 	tokens: ParserIter,
 	keyword: Token,
@@ -169,6 +176,7 @@ pub fn break_statement(
 	Ok(Some(Stmt::Break(BreakValue { keyword })))
 }
 
+#[inline(always)]
 pub fn continue_statement(
 	tokens: ParserIter,
 	keyword: Token,
@@ -176,4 +184,26 @@ pub fn continue_statement(
 	expect_semicolon(tokens)?;
 
 	Ok(Some(Stmt::Continue(ContinueValue { keyword })))
+}
+
+#[inline(always)]
+pub fn class_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
+	// TODO: optimize expect
+	let name = expect(
+		tokens,
+		&[TokenType::Identifier("".into())],
+		Some("Expected identifier"),
+	)?;
+
+	expect(tokens, &[TokenType::LeftBrace], None)?;
+
+	let mut methods = Vec::new();
+
+	while !peek_matches(tokens, &[TokenType::RightBrace]) {
+		methods.push(function_declaration(tokens, true)?);
+	}
+
+	expect(tokens, &[TokenType::RightBrace], None)?;
+
+	Ok(Some(Stmt::Class(ClassValue { name, methods })))
 }

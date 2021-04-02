@@ -57,46 +57,57 @@ fn run(source: String) -> bool {
 	// scanning
 	let (tokens, scan_errors) = scanner::scan(&source);
 
+	if !scan_errors.is_empty() {
+		println!("\nSCAN ERRORS:");
+
+		scan_errors.iter().enumerate().for_each(|(index, error)| {
+			println!("{}: {}", index, error.message);
+		});
+
+		return true;
+	}
+
 	// parsing
 	let (statements, parse_errors) = parser::parse(tokens);
 
-	// interpreting 😇
-	if scan_errors.is_empty() && parse_errors.is_empty() {
-		if let Err(e) = resolver::resolve(&statements) {
-			println!(
-				"Resolve error {}\n\t{}",
-				get_line(&source, e.token.byte_offset),
-				e.message
-			);
-		} else if let Err(e) = interpreter::interpret(&statements) {
-			println!(
-				"Runtime error {}\n\t{}",
-				get_line(&source, e.token.byte_offset),
-				e.message
-			);
-		}
-	}
-
-	if !scan_errors.is_empty() {
-		println!("\nSCAN ERRORS:");
-	}
-	scan_errors.iter().enumerate().for_each(|(index, error)| {
-		println!("{}: {}", index, error.message);
-	});
-
 	if !parse_errors.is_empty() {
 		println!("\nPARSE ERRORS:");
+
+		parse_errors.iter().enumerate().for_each(|(index, error)| {
+			println!(
+				"{}: {} at {}",
+				index,
+				error.message,
+				get_line(
+					&source,
+					error.token.clone().map_or(0, |t| t.byte_offset)
+				)
+			);
+		});
+
+		println!();
+
+		return true;
 	}
-	parse_errors.iter().enumerate().for_each(|(index, error)| {
+
+	// interpreting 😇
+	if let Err(e) = resolver::resolve(&statements) {
 		println!(
-			"{}: {} at {}",
-			index,
-			error.message,
-			get_line(&source, error.token.clone().map_or(0, |t| t.byte_offset))
+			"Resolve error {}\n\t{}",
+			get_line(&source, e.token.byte_offset),
+			e.message
 		);
-	});
 
-	println!();
+		true
+	} else if let Err(e) = interpreter::interpret(&statements) {
+		println!(
+			"Runtime error {}\n\t{}",
+			get_line(&source, e.token.byte_offset),
+			e.message
+		);
 
-	!scan_errors.is_empty() || !parse_errors.is_empty()
+		true
+	} else {
+		false
+	}
 }

@@ -1,3 +1,5 @@
+#![feature(option_result_unwrap_unchecked)]
+
 mod ast;
 mod env;
 mod interpreter;

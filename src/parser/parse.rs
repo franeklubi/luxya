@@ -36,6 +36,7 @@ pub fn parse(tokens: Vec<Token>) -> (Vec<Stmt>, Vec<ParseError>) {
 // grammar functions down there 👇
 
 pub fn declaration(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
+	#[inline(always)]
 	fn value_declaration(
 		tokens: ParserIter,
 		matched: TokenType,
@@ -82,6 +83,7 @@ pub fn statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 			TokenType::For,
 			TokenType::Print,
 			TokenType::Break,
+			TokenType::Class,
 			TokenType::Return,
 			TokenType::Continue,
 			TokenType::LeftBrace,
@@ -95,18 +97,19 @@ pub fn statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 		Some(TokenType::If) => if_statement(tokens),
 		Some(TokenType::For) => for_statement(tokens),
 		Some(TokenType::Print) => print_statement(tokens),
+		Some(TokenType::Class) => class_statement(tokens),
 		Some(TokenType::LeftBrace) => block_statement(tokens),
-		Some(TokenType::Break) => {
-			break_statement(tokens, consumed_token.unwrap())
-		}
-		Some(TokenType::Return) => {
-			return_statement(tokens, consumed_token.unwrap())
-		}
-		Some(TokenType::Continue) => {
-			continue_statement(tokens, consumed_token.unwrap())
-		}
+		Some(TokenType::Break) => unsafe {
+			break_statement(tokens, consumed_token.unwrap_unchecked())
+		},
+		Some(TokenType::Return) => unsafe {
+			return_statement(tokens, consumed_token.unwrap_unchecked())
+		},
+		Some(TokenType::Continue) => unsafe {
+			continue_statement(tokens, consumed_token.unwrap_unchecked())
+		},
 
-		// that's an empty statement so we ignore it later
+		// We allow trails of semicolons and treat them as empty statements
 		Some(TokenType::Semicolon) => Ok(None),
 
 		_ => expression_statement(tokens),
@@ -185,7 +188,7 @@ fn unary(tokens: ParserIter) -> Result<Expr, ParseError> {
 			&operator.token_type,
 			&[TokenType::Bang, TokenType::Minus],
 		) {
-			return function_declaration(tokens);
+			return function_declaration(tokens, false);
 		}
 
 		let operator = tokens.next().unwrap();
@@ -198,16 +201,35 @@ fn unary(tokens: ParserIter) -> Result<Expr, ParseError> {
 		}));
 	}
 
-	function_declaration(tokens)
+	function_declaration(tokens, false)
 }
 
-fn function_declaration(tokens: ParserIter) -> Result<Expr, ParseError> {
-	if let Some(keyword) = match_then_consume(tokens, &[TokenType::Fun]) {
+pub fn function_declaration(
+	tokens: ParserIter,
+	method: bool,
+) -> Result<Expr, ParseError> {
+	// TODO: optimize function parsing
+	if method || peek_matches(tokens, &[TokenType::Fun]) {
 		// TODO: optimize expect
 		let fake_identifier = TokenType::Identifier("".into());
 
+		let keyword = if method {
+			// TODO: optimize expect
+			expect(
+				tokens,
+				&[fake_identifier.clone()],
+				Some("Expected method name"),
+			)?
+		} else {
+			expect(tokens, &[TokenType::Fun], None)?
+		};
+
 		// TODO: optimize expect
-		let name = match_then_consume(tokens, &[fake_identifier.clone()]);
+		let name = if method {
+			Some(keyword.clone())
+		} else {
+			match_then_consume(tokens, &[fake_identifier.clone()])
+		};
 
 		expect(tokens, &[TokenType::LeftParen], None)?;
 
