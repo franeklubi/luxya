@@ -134,15 +134,28 @@ def gen_expr() -> str:
 
 def gen_stmt() -> str:
 	to_generate = [
+		"""
+			For ->
+				condition: Option<Box<Expr>>, body: Box<Stmt>,
+				closer: Option<Box<Stmt>>
+		""",
+		"""
+			If ->
+				condition: Box<Expr>, then: Box<Stmt>,
+				otherwise: Option<Box<Stmt>>
+		""",
+		"""
+			Declaration ->
+				name: Token, initializer: Option<Box<Expr>>,
+				mutable: bool
+		""",
+		'Return -> keyword: Token, expression: Option<Expr>',
+		'Class -> name: Token, methods: Vec<Expr>',
+		'Expression -> expression: Box<Expr>',
+		'Block -> statements: Vec<Stmt>',
+		'Print -> expression: Box<Expr>',
 		'Continue -> keyword: Token',
 		'Break -> keyword: Token',
-		'Return -> keyword: Token, expression: Option<Expr>',
-		'For -> condition: Option<Box<Expr>>, body: Box<Stmt>, closer: Option<Box<Stmt>>',
-		'If -> condition: Box<Expr>, then: Box<Stmt>, otherwise: Option<Box<Stmt>>',
-		'Block -> statements: Vec<Stmt>',
-		'Expression -> expression: Box<Expr>',
-		'Print -> expression: Box<Expr>',
-		'Declaration -> name: Token, initializer: Option<Box<Expr>>, mutable: bool',
 	]
 
 	imports = [

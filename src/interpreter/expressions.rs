@@ -43,6 +43,7 @@ pub fn call_expression(
 	v: &CallValue,
 	env: &InterpreterEnvironment,
 ) -> Result<InterpreterValue, RuntimeError> {
+	#[inline(always)]
 	fn confirm_arity(
 		target: usize,
 		value: usize,
@@ -65,6 +66,7 @@ pub fn call_expression(
 		}
 	}
 
+	#[inline(always)]
 	fn map_arguments(
 		parameters: &[Token],
 		arguments: &[InterpreterValue],

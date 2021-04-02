@@ -62,6 +62,7 @@ fn eval_statement(
 		Stmt::Return(v) => return_statement(eval_expression, v, env),
 		Stmt::Break(v) => break_statement(v),
 		Stmt::Continue(v) => continue_statement(v),
+		Stmt::Class(_v) => unimplemented!("class statement"),
 	}
 }
 

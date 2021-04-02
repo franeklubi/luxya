@@ -62,6 +62,8 @@ pub fn resolve_statement(
 		Stmt::Declaration(v) => declaration_statement(v, env),
 		Stmt::If(v) => if_statement(v, env),
 		Stmt::For(v) => for_statement(v, env),
+
+		Stmt::Class(_v) => unimplemented!("resolver class statement"),
 	}
 }
 
