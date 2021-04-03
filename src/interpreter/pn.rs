@@ -26,6 +26,7 @@ pub fn pn_stringify_tree(expr: &Expr) -> String {
 		),
 		// TODO: implement that
 		Expr::Function(_v) => unimplemented!(),
+		Expr::Get(_v) => unimplemented!(),
 	}
 }
 

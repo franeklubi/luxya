@@ -20,3 +20,5 @@ class Chuj {
 let elo = Chuj();
 
 print elo;
+
+print elo.(chuj);

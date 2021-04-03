@@ -4,10 +4,12 @@ use crate::{
 	token::*,
 };
 
+#[inline(always)]
 pub fn match_token_type(t: &TokenType, expected: &[TokenType]) -> bool {
 	expected.iter().any(|a| a == t)
 }
 
+#[inline(always)]
 pub fn peek_matches(tokens: ParserIter, expected: &[TokenType]) -> bool {
 	tokens
 		.peek()
@@ -17,6 +19,7 @@ pub fn peek_matches(tokens: ParserIter, expected: &[TokenType]) -> bool {
 /// Tries peek of ParserIter against provided token types
 ///
 /// Returns `Some(Token)` if successful and consumes the token, `None` otherwise
+#[inline(always)]
 pub fn match_then_consume(
 	tokens: ParserIter,
 	expected: &[TokenType],

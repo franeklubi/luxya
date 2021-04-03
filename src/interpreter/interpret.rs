@@ -79,5 +79,6 @@ pub fn eval_expression(
 		Expr::Assignment(v) => assignment_expression(eval_expression, v, env),
 		Expr::Call(v) => call_expression(v, env),
 		Expr::Function(v) => function_expression(v, env),
+		Expr::Get(_v) => unimplemented!("get expression interpreter"),
 	}
 }

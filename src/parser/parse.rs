@@ -273,6 +273,7 @@ pub fn function_declaration(
 }
 
 fn call(tokens: ParserIter) -> Result<Expr, ParseError> {
+	#[inline(always)]
 	fn finish_call(
 		tokens: ParserIter,
 		calee: Expr,
@@ -296,10 +297,64 @@ fn call(tokens: ParserIter) -> Result<Expr, ParseError> {
 		}))
 	}
 
+	#[inline(always)]
+	fn finish_get(tokens: ParserIter, getee: Expr) -> Result<Expr, ParseError> {
+		// TODO: optimize expect maybe with discriminants 🤔
+		let consumed = expect(
+			tokens,
+			&[TokenType::Identifier("".into()), TokenType::LeftParen],
+			Some(
+				"Expected identifier or a parenthesized identifier to evaluate",
+			),
+		)?;
+
+		match consumed.token_type {
+			TokenType::Identifier(_) => Ok(Expr::Get(GetValue {
+				getee: Box::new(getee),
+				property: consumed,
+				evaluate: false,
+			})),
+			// TokenType::LeftParen
+			_ => {
+				// TODO: optimize expect maybe with discriminants 🤔
+				let found = expect(
+					tokens,
+					&[
+						TokenType::Identifier("".into()),
+						TokenType::String("".into()),
+						TokenType::Number(0.0),
+						TokenType::Nil,
+						TokenType::True,
+						TokenType::False,
+					],
+					Some("Expected evaluable token"),
+				)?;
+
+				expect(tokens, &[TokenType::RightParen], None)?;
+
+				Ok(Expr::Get(GetValue {
+					getee: Box::new(getee),
+					property: found,
+					evaluate: true,
+				}))
+			}
+		}
+	}
+
 	let mut expr = primary(tokens)?;
 
-	while match_then_consume(tokens, &[TokenType::LeftParen]).is_some() {
-		expr = finish_call(tokens, expr)?;
+	while let Some(consumed) =
+		match_then_consume(tokens, &[TokenType::LeftParen, TokenType::Dot])
+	{
+		match consumed.token_type {
+			TokenType::LeftParen => {
+				expr = finish_call(tokens, expr)?;
+			}
+			// TokenType::Dot
+			_ => {
+				expr = finish_get(tokens, expr)?;
+			}
+		}
 	}
 
 	Ok(expr)

@@ -35,6 +35,12 @@ pub struct BinaryValue {
 	pub right: Box<Expr>,
 }
 
+pub struct GetValue {
+	pub getee: Box<Expr>,
+	pub property: Token,
+	pub evaluate: bool,
+}
+
 pub struct IdentifierValue {
 	pub name: Token,
 	pub env_distance: Cell<u32>,
@@ -54,6 +60,7 @@ pub enum Expr {
 	Call(CallValue),
 	Assignment(AssignmentValue),
 	Binary(BinaryValue),
+	Get(GetValue),
 	Identifier(IdentifierValue),
 	Unary(UnaryValue),
 	Grouping(GroupingValue),
