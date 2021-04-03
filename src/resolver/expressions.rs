@@ -80,6 +80,7 @@ pub fn function_expression(
 	}
 }
 
+#[inline(always)]
 pub fn binary_expression(
 	v: &BinaryValue,
 	env: &ResolverEnvironment,
@@ -90,6 +91,7 @@ pub fn binary_expression(
 	Ok(InterpreterValue::Nil)
 }
 
+#[inline(always)]
 pub fn call_expression(
 	v: &CallValue,
 	env: &ResolverEnvironment,
@@ -98,6 +100,20 @@ pub fn call_expression(
 
 	for arg in &v.arguments {
 		resolve::resolve_expression(arg, env)?;
+	}
+
+	Ok(InterpreterValue::Nil)
+}
+
+#[inline(always)]
+pub fn get_expression(
+	v: &GetValue,
+	env: &ResolverEnvironment,
+) -> Result<InterpreterValue, RuntimeError> {
+	resolve::resolve_expression(&v.getee, env)?;
+
+	if let GetAccessor::Eval(key) = &v.key {
+		resolve::resolve_expression(key, env)?;
 	}
 
 	Ok(InterpreterValue::Nil)

@@ -299,45 +299,37 @@ fn call(tokens: ParserIter) -> Result<Expr, ParseError> {
 
 	#[inline(always)]
 	fn finish_get(tokens: ParserIter, getee: Expr) -> Result<Expr, ParseError> {
-		// TODO: optimize expect maybe with discriminants 🤔
-		let consumed = expect(
-			tokens,
-			&[TokenType::Identifier("".into()), TokenType::LeftParen],
-			Some(
-				"Expected identifier or a parenthesized identifier to evaluate",
-			),
-		)?;
-
-		match consumed.token_type {
-			TokenType::Identifier(_) => Ok(Expr::Get(GetValue {
-				getee: Box::new(getee),
-				property: consumed,
-				evaluate: false,
-			})),
-			// TokenType::LeftParen
-			_ => {
-				// TODO: optimize expect maybe with discriminants 🤔
-				let found = expect(
-					tokens,
-					&[
-						TokenType::Identifier("".into()),
-						TokenType::String("".into()),
-						TokenType::Number(0.0),
-						TokenType::Nil,
-						TokenType::True,
-						TokenType::False,
-					],
-					Some("Expected evaluable token"),
-				)?;
-
-				expect(tokens, &[TokenType::RightParen], None)?;
+		match tokens.peek() {
+			Some(Token {
+				token_type: TokenType::Identifier(_),
+				..
+			}) => {
+				// unwrap_unchecked because we just matched peek 😇
+				let consumed = unsafe { tokens.next().unwrap_unchecked() };
 
 				Ok(Expr::Get(GetValue {
 					getee: Box::new(getee),
-					property: found,
-					evaluate: true,
+					key: GetAccessor::Name(consumed),
 				}))
 			}
+			Some(Token {
+				token_type: TokenType::LeftParen,
+				..
+			}) => {
+				// parse grouping
+				let eval = primary(tokens)?;
+
+				Ok(Expr::Get(GetValue {
+					getee: Box::new(getee),
+					key: GetAccessor::Eval(Box::new(eval)),
+				}))
+			}
+			_ => Err(ParseError {
+				token: tokens.peek().cloned(),
+				message: "Expected identifier or a parenthesized expression \
+				          to evaluate"
+					.into(),
+			}),
 		}
 	}
 

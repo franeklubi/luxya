@@ -19,6 +19,8 @@ class Chuj {
 
 let elo = Chuj();
 
-print elo;
+let chuj = fun () {
+
+};
 
 print elo.(chuj);

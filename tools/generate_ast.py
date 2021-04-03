@@ -7,8 +7,9 @@ def generate_ast(
 	base_name: str,
 	types: List[str],
 	imports: List[str],
-	literal_types_name: Optional[str],
 	literal_types: List[str],
+	literal_types_name: Optional[str],
+	additional_code: Optional[str],
 ) -> str:
 	generated_file: str = ''
 
@@ -69,7 +70,10 @@ def generate_ast(
 
 		generated_file += ',\n'
 
-	generated_file += '}\n\n'
+	generated_file += '}\n'
+
+	if additional_code is not None:
+		generated_file += additional_code
 
 	return generated_file
 
@@ -104,9 +108,9 @@ def gen_expr() -> str:
 		'Call -> calee: Box<Expr>, closing_paren: Token, arguments: Vec<Expr>',
 		'Assignment -> name: Token, value: Box<Expr>, env_distance: Cell<u32>',
 		'Binary -> left: Box<Expr>, operator: Token, right: Box<Expr>',
-		'Get -> getee: Box<Expr>, property: Token, evaluate: bool',
 		'Identifier -> name: Token, env_distance: Cell<u32>',
 		'Unary -> operator: Token, right: Box<Expr>',
+		'Get -> getee: Box<Expr>, key: GetAccessor',
 		'Grouping -> expression: Box<Expr>',
 		'Literal(LiteralValue)',
 	]
@@ -124,12 +128,20 @@ def gen_expr() -> str:
 		'Nil',
 	]
 
+	additional_code = """
+		pub enum GetAccessor {
+			Name(Token),
+			Eval(Box<Expr>),
+		}
+	"""
+
 	return generate_ast(
 		'Expr',
 		to_generate,
 		imports,
-		'LiteralValue',
 		literal_types,
+		'LiteralValue',
+		additional_code,
 	)
 
 
@@ -170,8 +182,9 @@ def gen_stmt() -> str:
 		'Stmt',
 		to_generate,
 		imports,
-		None,
 		literal_types,
+		None,
+		None,
 	)
 
 def write_to_file(text: str, path: str) -> None:

@@ -81,6 +81,6 @@ pub fn resolve_expression(
 		Expr::Function(v) => function_expression(v, env),
 		Expr::Binary(v) => binary_expression(v, env),
 		Expr::Call(v) => call_expression(v, env),
-		Expr::Get(_v) => unimplemented!("get expression resolver"),
+		Expr::Get(v) => get_expression(v, env),
 	}
 }
