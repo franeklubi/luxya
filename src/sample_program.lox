@@ -16,3 +16,7 @@ class Chuj {
 		print "chuj";
 	}
 }
+
+let elo = Chuj();
+
+print elo;

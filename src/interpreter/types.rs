@@ -109,7 +109,7 @@ impl fmt::Display for InterpreterValue {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		match self {
 			InterpreterValue::Instance { class } => {
-				write!(f, "{} instance", class)
+				write!(f, "instance of {}", class)
 			}
 			InterpreterValue::Class { name } => write!(f, "class {}", name),
 			InterpreterValue::Function { .. } => write!(f, "function"),

@@ -45,48 +45,54 @@ pub fn call_expression(
 ) -> Result<InterpreterValue, RuntimeError> {
 	let callee = eval_expression(&v.calee, env)?;
 
-	let (enclosing_env, fun) =
-		if let InterpreterValue::Function { enclosing_env, fun } = callee {
-			Ok((enclosing_env, fun))
-		} else {
-			Err(RuntimeError {
-				message: format!("Cannot call {}", callee.to_human_readable()),
-				token: v.closing_paren.clone(),
-			})
-		}?;
+	match callee {
+		InterpreterValue::Function { fun, enclosing_env } => {
+			let arguments = v
+				.arguments
+				.iter()
+				.map(|arg| eval_expression(arg, env))
+				.collect::<Result<Vec<_>, RuntimeError>>()?;
 
-	let arguments = v
-		.arguments
-		.iter()
-		.map(|a| eval_expression(a, env))
-		.collect::<Result<Vec<_>, RuntimeError>>()?;
+			match &*fun {
+				InterpreterFunction::LoxDefined(fv) => {
+					confirm_arity(
+						fv.params.as_ref().map_or(0, |p| p.len()),
+						arguments.len(),
+						&v.closing_paren,
+					)?;
 
-	match &*fun {
-		InterpreterFunction::LoxDefined(fv) => {
-			confirm_arity(
-				fv.params.as_ref().map_or(0, |p| p.len()),
-				arguments.len(),
-				&v.closing_paren,
-			)?;
+					let fun_env = &enclosing_env.fork();
 
-			let fun_env = &enclosing_env.fork();
+					if let Some(params) = &fv.params {
+						map_arguments(params, &arguments, fun_env)
+					}
 
-			if let Some(params) = &fv.params {
-				map_arguments(params, &arguments, fun_env)
-			}
+					if let Some(statements) = &fv.body {
+						let e = eval_statements(&*statements, fun_env)?;
+						Ok(guard_function(e)?)
+					} else {
+						Ok(InterpreterValue::Nil)
+					}
+				}
+				InterpreterFunction::Native { arity, fun } => {
+					confirm_arity(*arity, arguments.len(), &v.closing_paren)?;
 
-			if let Some(statements) = &fv.body {
-				let e = eval_statements(&*statements, fun_env)?;
-				Ok(guard_function(e)?)
-			} else {
-				Ok(InterpreterValue::Nil)
+					Ok(fun(
+						&v.closing_paren,
+						&enclosing_env.fork(),
+						&arguments,
+					)?)
+				}
 			}
 		}
-		InterpreterFunction::Native { arity, fun } => {
-			confirm_arity(*arity, arguments.len(), &v.closing_paren)?;
-
-			Ok(fun(&v.closing_paren, &enclosing_env.fork(), &arguments)?)
-		}
+		// TODO: methods and etc
+		InterpreterValue::Class { .. } => Ok(InterpreterValue::Instance {
+			class: Rc::new(callee.clone()),
+		}),
+		_ => Err(RuntimeError {
+			message: format!("Cannot call {}", callee.to_human_readable()),
+			token: v.closing_paren.clone(),
+		}),
 	}
 }
 
