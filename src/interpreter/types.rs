@@ -15,6 +15,12 @@ pub enum InterpreterValue {
 		fun: Rc<InterpreterFunction>,
 		enclosing_env: InterpreterEnvironment,
 	},
+	Instance {
+		class: Rc<InterpreterValue>,
+	},
+	Class {
+		name: Rc<str>,
+	},
 	String(Rc<str>),
 	Number(f64),
 	True,
@@ -25,11 +31,13 @@ pub enum InterpreterValue {
 impl InterpreterValue {
 	pub fn to_human_readable(&self) -> &str {
 		match self {
+			InterpreterValue::Instance { .. } => "class instance",
 			InterpreterValue::Function { .. } => "function",
+			InterpreterValue::Class { .. } => "class",
 			InterpreterValue::String(_) => "string",
 			InterpreterValue::Number(_) => "number",
-			InterpreterValue::True => "boolean",
 			InterpreterValue::False => "boolean",
+			InterpreterValue::True => "boolean",
 			InterpreterValue::Nil => "nil",
 		}
 	}
@@ -100,6 +108,10 @@ impl From<LiteralValue> for InterpreterValue {
 impl fmt::Display for InterpreterValue {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		match self {
+			InterpreterValue::Instance { class } => {
+				write!(f, "{} instance", class)
+			}
+			InterpreterValue::Class { name } => write!(f, "class {}", name),
 			InterpreterValue::Function { .. } => write!(f, "function"),
 			InterpreterValue::String(s) => write!(f, "{}", s),
 			InterpreterValue::Number(n) => write!(f, "{}", n),

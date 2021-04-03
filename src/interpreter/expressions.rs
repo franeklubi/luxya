@@ -43,48 +43,6 @@ pub fn call_expression(
 	v: &CallValue,
 	env: &InterpreterEnvironment,
 ) -> Result<InterpreterValue, RuntimeError> {
-	#[inline(always)]
-	fn confirm_arity(
-		target: usize,
-		value: usize,
-		blame: &Token,
-	) -> Result<(), RuntimeError> {
-		if target != value {
-			Err(RuntimeError {
-				message: format!(
-					"{} arguments",
-					if value > target {
-						"Too many"
-					} else {
-						"Not enough"
-					}
-				),
-				token: blame.clone(),
-			})
-		} else {
-			Ok(())
-		}
-	}
-
-	#[inline(always)]
-	fn map_arguments(
-		parameters: &[Token],
-		arguments: &[InterpreterValue],
-		fun_env: &InterpreterEnvironment,
-	) {
-		parameters.iter().zip(arguments).for_each(|(param, arg)| {
-			let name = assume_identifier(param);
-
-			fun_env.declare(
-				name.to_string(),
-				DeclaredValue {
-					mutable: true,
-					value: arg.clone(),
-				},
-			);
-		})
-	}
-
 	let callee = eval_expression(&v.calee, env)?;
 
 	let (enclosing_env, fun) =

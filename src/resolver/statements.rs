@@ -54,6 +54,7 @@ pub fn if_statement(
 	Ok(InterpreterStmtValue::Noop)
 }
 
+#[inline(always)]
 pub fn for_statement(
 	v: &ForValue,
 	env: &ResolverEnvironment,
@@ -67,6 +68,26 @@ pub fn for_statement(
 	if let Some(closer) = &v.closer {
 		resolve::resolve_statement(closer, env)?;
 	}
+
+	Ok(InterpreterStmtValue::Noop)
+}
+
+#[inline(always)]
+pub fn class_statement(
+	v: &ClassValue,
+	env: &ResolverEnvironment,
+) -> Result<InterpreterStmtValue<InterpreterValue>, RuntimeError> {
+	let iden = assume_identifier(&v.name);
+
+	env.declare(
+		iden.to_owned(),
+		DeclaredValue {
+			mutable: false,
+			value: InterpreterValue::Nil,
+		},
+	);
+
+	// TODO: methods
 
 	Ok(InterpreterStmtValue::Noop)
 }

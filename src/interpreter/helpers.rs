@@ -1,5 +1,5 @@
-use super::types::*;
-use crate::token::*;
+use super::{interpreter_env::*, types::*};
+use crate::{env::*, token::*};
 
 
 // A shorthand way to extract identifier's name
@@ -54,4 +54,46 @@ macro_rules! unwrap_enclosing {
 	($wie:expr) => {{
 		&$wie.0.borrow().enclosing
 	}};
+}
+
+#[inline(always)]
+pub fn confirm_arity(
+	target: usize,
+	value: usize,
+	blame: &Token,
+) -> Result<(), RuntimeError> {
+	if target != value {
+		Err(RuntimeError {
+			message: format!(
+				"{} arguments",
+				if value > target {
+					"Too many"
+				} else {
+					"Not enough"
+				}
+			),
+			token: blame.clone(),
+		})
+	} else {
+		Ok(())
+	}
+}
+
+#[inline(always)]
+pub fn map_arguments(
+	parameters: &[Token],
+	arguments: &[InterpreterValue],
+	fun_env: &InterpreterEnvironment,
+) {
+	parameters.iter().zip(arguments).for_each(|(param, arg)| {
+		let name = assume_identifier(param);
+
+		fun_env.declare(
+			name.to_string(),
+			DeclaredValue {
+				mutable: true,
+				value: arg.clone(),
+			},
+		);
+	})
 }

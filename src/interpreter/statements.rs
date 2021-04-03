@@ -4,6 +4,8 @@ use crate::{
 	env::*,
 };
 
+use std::rc::Rc;
+
 
 #[inline(always)]
 pub fn expression_statement<E, T>(
@@ -201,4 +203,27 @@ pub fn continue_statement<T>(
 	v: &ContinueValue,
 ) -> Result<InterpreterStmtValue<T>, RuntimeError> {
 	Ok(InterpreterStmtValue::Continue(v.keyword.clone()))
+}
+
+#[inline(always)]
+pub fn class_statement<E>(
+	v: &ClassValue,
+	env: &E,
+) -> Result<InterpreterStmtValue<InterpreterValue>, RuntimeError>
+where
+	E: EnvironmentWrapper<InterpreterValue>,
+{
+	let name = assume_identifier(&v.name);
+
+	env.declare(
+		name.to_owned(),
+		DeclaredValue {
+			mutable: false,
+			value: InterpreterValue::Class {
+				name: Rc::from(name),
+			},
+		},
+	);
+
+	Ok(InterpreterStmtValue::Noop)
 }
