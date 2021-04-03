@@ -309,19 +309,24 @@ fn call(tokens: ParserIter) -> Result<Expr, ParseError> {
 
 				Ok(Expr::Get(GetValue {
 					getee: Box::new(getee),
-					key: GetAccessor::Name(consumed),
+					key: GetAccessor::Name(consumed.clone()),
+					blame: consumed,
 				}))
 			}
 			Some(Token {
 				token_type: TokenType::LeftParen,
 				..
 			}) => {
+				// same here, unwrapping what we already matched
+				let blame = unsafe { tokens.peek().unwrap_unchecked().clone() };
+
 				// parse grouping
 				let eval = primary(tokens)?;
 
 				Ok(Expr::Get(GetValue {
 					getee: Box::new(getee),
 					key: GetAccessor::Eval(Box::new(eval)),
+					blame,
 				}))
 			}
 			_ => Err(ParseError {

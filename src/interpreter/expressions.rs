@@ -233,3 +233,34 @@ pub fn binary_experssion(
 		},
 	}
 }
+
+#[inline(always)]
+pub fn get_expression(
+	v: &GetValue,
+	env: &InterpreterEnvironment,
+) -> Result<InterpreterValue, RuntimeError> {
+	let getee = eval_expression(&v.getee, env)?;
+
+	if !matches!(getee, InterpreterValue::Instance { .. }) {
+		return Err(RuntimeError {
+			message: format!(
+				"Can't access properties on {}",
+				getee.to_human_readable()
+			),
+			token: v.blame.clone(),
+		});
+	}
+
+	match &v.key {
+		GetAccessor::Name(iden) => {
+			let key = assume_identifier(iden);
+			println!("key: >{}<", key);
+			unimplemented!();
+		}
+		GetAccessor::Eval(expr) => {
+			let key = eval_expression(expr, env)?.to_string();
+			println!("key: >{}<", key);
+			unimplemented!();
+		}
+	}
+}

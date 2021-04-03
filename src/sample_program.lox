@@ -23,4 +23,4 @@ let chuj = fun () {
 
 };
 
-print elo.(chuj);
+print elo.siema_siema;

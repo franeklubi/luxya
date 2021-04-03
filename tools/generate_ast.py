@@ -108,9 +108,9 @@ def gen_expr() -> str:
 		'Call -> calee: Box<Expr>, closing_paren: Token, arguments: Vec<Expr>',
 		'Assignment -> name: Token, value: Box<Expr>, env_distance: Cell<u32>',
 		'Binary -> left: Box<Expr>, operator: Token, right: Box<Expr>',
+		'Get -> getee: Box<Expr>, key: GetAccessor, blame: Token',
 		'Identifier -> name: Token, env_distance: Cell<u32>',
 		'Unary -> operator: Token, right: Box<Expr>',
-		'Get -> getee: Box<Expr>, key: GetAccessor',
 		'Grouping -> expression: Box<Expr>',
 		'Literal(LiteralValue)',
 	]
