@@ -1,7 +1,7 @@
 use super::interpreter_env::*;
 use crate::{ast::expr::*, token::*};
 
-use std::{fmt, rc::Rc};
+use std::{collections::HashMap, fmt, rc::Rc};
 
 
 pub struct RuntimeError {
@@ -17,6 +17,7 @@ pub enum InterpreterValue {
 	},
 	Instance {
 		class: Rc<InterpreterValue>,
+		properties: HashMap<String, InterpreterValue>,
 	},
 	Class {
 		name: Rc<str>,
@@ -108,7 +109,7 @@ impl From<LiteralValue> for InterpreterValue {
 impl fmt::Display for InterpreterValue {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		match self {
-			InterpreterValue::Instance { class } => {
+			InterpreterValue::Instance { class, .. } => {
 				write!(f, "instance of {}", class)
 			}
 			InterpreterValue::Class { name } => write!(f, "class {}", name),

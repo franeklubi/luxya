@@ -1,7 +1,7 @@
 use super::{helpers::*, interpret::*, interpreter_env::*, types::*};
 use crate::{ast::expr::*, env::*, token::*};
 
-use std::rc::Rc;
+use std::{collections::HashMap, rc::Rc};
 
 
 #[inline(always)]
@@ -88,6 +88,7 @@ pub fn call_expression(
 		// TODO: methods and etc
 		InterpreterValue::Class { .. } => Ok(InterpreterValue::Instance {
 			class: Rc::new(callee.clone()),
+			properties: HashMap::new(),
 		}),
 		_ => Err(RuntimeError {
 			message: format!("Cannot call {}", callee.to_human_readable()),
@@ -239,28 +240,47 @@ pub fn get_expression(
 	v: &GetValue,
 	env: &InterpreterEnvironment,
 ) -> Result<InterpreterValue, RuntimeError> {
+	#[inline(always)]
+	fn get_property(
+		key: &str,
+		properties: HashMap<String, InterpreterValue>,
+		blame: Token,
+	) -> Result<InterpreterValue, RuntimeError> {
+		if let Some(v) = properties.get(key) {
+			Ok(v.clone())
+		} else {
+			Err(RuntimeError {
+				message: format!("Property {} not defined", key),
+				token: blame,
+			})
+		}
+	}
+
 	let getee = eval_expression(&v.getee, env)?;
 
-	if !matches!(getee, InterpreterValue::Instance { .. }) {
-		return Err(RuntimeError {
-			message: format!(
-				"Can't access properties on {}",
-				getee.to_human_readable()
-			),
-			token: v.blame.clone(),
-		});
-	}
+	let properties =
+		if let InterpreterValue::Instance { properties, .. } = getee {
+			properties
+		} else {
+			return Err(RuntimeError {
+				message: format!(
+					"Can't access properties on {}",
+					getee.to_human_readable()
+				),
+				token: v.blame.clone(),
+			});
+		};
 
 	match &v.key {
 		GetAccessor::Name(iden) => {
 			let key = assume_identifier(iden);
 			println!("key: >{}<", key);
-			unimplemented!();
+			get_property(key, properties, v.blame.clone())
 		}
 		GetAccessor::Eval(expr) => {
 			let key = eval_expression(expr, env)?.to_string();
 			println!("key: >{}<", key);
-			unimplemented!();
+			get_property(key.as_str(), properties, v.blame.clone())
 		}
 	}
 }
