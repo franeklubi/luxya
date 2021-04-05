@@ -21,6 +21,7 @@ impl Expr {
 			Expr::Call(_) => "a function/method call",
 			Expr::Function(_) => "a function/method declaration",
 			Expr::Get(_) => "property getter",
+			Expr::Set(_) => "property setter",
 		}
 	}
 }

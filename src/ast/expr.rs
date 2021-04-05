@@ -17,6 +17,13 @@ pub struct FunctionValue {
 	pub body: Option<Rc<Vec<Stmt>>>,
 }
 
+pub struct SetValue {
+	pub setee: Box<Expr>,
+	pub key: DotAccessor,
+	pub blame: Token,
+	pub value: Box<Expr>,
+}
+
 pub struct CallValue {
 	pub calee: Box<Expr>,
 	pub closing_paren: Token,
@@ -37,7 +44,7 @@ pub struct BinaryValue {
 
 pub struct GetValue {
 	pub getee: Box<Expr>,
-	pub key: GetAccessor,
+	pub key: DotAccessor,
 	pub blame: Token,
 }
 
@@ -57,6 +64,7 @@ pub struct GroupingValue {
 
 pub enum Expr {
 	Function(FunctionValue),
+	Set(SetValue),
 	Call(CallValue),
 	Assignment(AssignmentValue),
 	Binary(BinaryValue),
@@ -67,7 +75,7 @@ pub enum Expr {
 	Literal(LiteralValue),
 }
 
-pub enum GetAccessor {
+pub enum DotAccessor {
 	Name(Rc<str>),
 	Eval(Box<Expr>),
 }

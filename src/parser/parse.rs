@@ -124,24 +124,29 @@ fn assignment(tokens: ParserIter) -> Result<Expr, ParseError> {
 	let expr = logic_or(tokens)?;
 
 	if let Some(equals) = match_then_consume(tokens, &[TokenType::Equal]) {
-		return if let Expr::Identifier(i) = expr {
-			Ok(Expr::Assignment(AssignmentValue {
-				name: i.name,
+		match expr {
+			Expr::Identifier(v) => Ok(Expr::Assignment(AssignmentValue {
+				name: v.name,
 				value: Box::new(assignment(tokens)?),
 				env_distance: Cell::new(0),
-			}))
-		} else {
-			Err(ParseError {
+			})),
+			Expr::Get(v) => Ok(Expr::Set(SetValue {
+				setee: v.getee,
+				key: v.key,
+				blame: v.blame,
+				value: Box::new(assignment(tokens)?),
+			})),
+			_ => Err(ParseError {
 				token: Some(equals),
 				message: format!(
 					"Invalid l-value. Cannot assign to {}",
 					expr.to_human_readable()
 				),
-			})
-		};
+			}),
+		}
+	} else {
+		Ok(expr)
 	}
-
-	Ok(expr)
 }
 
 fn logic_or(tokens: ParserIter) -> Result<Expr, ParseError> {
@@ -318,7 +323,7 @@ fn call(tokens: ParserIter) -> Result<Expr, ParseError> {
 
 				Ok(Expr::Get(GetValue {
 					getee: Box::new(getee),
-					key: GetAccessor::Name(i),
+					key: DotAccessor::Name(i),
 					blame,
 				}))
 			}
@@ -332,7 +337,7 @@ fn call(tokens: ParserIter) -> Result<Expr, ParseError> {
 
 				Ok(Expr::Get(GetValue {
 					getee: Box::new(getee),
-					key: GetAccessor::Eval(Box::new(eval)),
+					key: DotAccessor::Eval(Box::new(eval)),
 					blame,
 				}))
 			}

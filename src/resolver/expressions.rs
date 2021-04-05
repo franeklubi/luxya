@@ -112,7 +112,7 @@ pub fn get_expression(
 ) -> Result<InterpreterValue, RuntimeError> {
 	resolve::resolve_expression(&v.getee, env)?;
 
-	if let GetAccessor::Eval(key) = &v.key {
+	if let DotAccessor::Eval(key) = &v.key {
 		resolve::resolve_expression(key, env)?;
 	}
 

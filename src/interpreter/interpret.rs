@@ -80,5 +80,6 @@ pub fn eval_expression(
 		Expr::Call(v) => call_expression(v, env),
 		Expr::Function(v) => function_expression(v, env),
 		Expr::Get(v) => get_expression(v, env),
+		Expr::Set(_v) => unimplemented!("interpreter set"),
 	}
 }

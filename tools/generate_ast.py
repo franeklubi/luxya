@@ -105,10 +105,15 @@ def gen_expr() -> str:
 				keyword: Token, name: Option<Token>,
 				params: Option<Vec<Token>>, body: Option<Rc<Vec<Stmt>>>
 		""",
+		"""
+			Set ->
+				setee: Box<Expr>, key: DotAccessor,
+				blame: Token, value: Box<Expr>
+		""",
 		'Call -> calee: Box<Expr>, closing_paren: Token, arguments: Vec<Expr>',
 		'Assignment -> name: Token, value: Box<Expr>, env_distance: Cell<u32>',
 		'Binary -> left: Box<Expr>, operator: Token, right: Box<Expr>',
-		'Get -> getee: Box<Expr>, key: GetAccessor, blame: Token',
+		'Get -> getee: Box<Expr>, key: DotAccessor, blame: Token',
 		'Identifier -> name: Token, env_distance: Cell<u32>',
 		'Unary -> operator: Token, right: Box<Expr>',
 		'Grouping -> expression: Box<Expr>',
@@ -129,7 +134,7 @@ def gen_expr() -> str:
 	]
 
 	additional_code = """
-		pub enum GetAccessor {
+		pub enum DotAccessor {
 			Name(Rc<str>),
 			Eval(Box<Expr>),
 		}
