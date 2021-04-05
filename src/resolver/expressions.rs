@@ -118,3 +118,18 @@ pub fn get_expression(
 
 	Ok(InterpreterValue::Nil)
 }
+
+#[inline(always)]
+pub fn set_expression(
+	v: &SetValue,
+	env: &ResolverEnvironment,
+) -> Result<InterpreterValue, RuntimeError> {
+	resolve::resolve_expression(&v.setee, env)?;
+	resolve::resolve_expression(&v.value, env)?;
+
+	if let DotAccessor::Eval(key) = &v.key {
+		resolve::resolve_expression(key, env)?;
+	}
+
+	Ok(InterpreterValue::Nil)
+}

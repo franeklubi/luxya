@@ -1,7 +1,7 @@
 use super::interpreter_env::*;
 use crate::{ast::expr::*, token::*};
 
-use std::{collections::HashMap, fmt, rc::Rc};
+use std::{cell::RefCell, collections::HashMap, fmt, rc::Rc};
 
 
 pub struct RuntimeError {
@@ -17,7 +17,7 @@ pub enum InterpreterValue {
 	},
 	Instance {
 		class: Rc<InterpreterValue>,
-		properties: HashMap<String, InterpreterValue>,
+		properties: Rc<RefCell<HashMap<String, InterpreterValue>>>,
 	},
 	Class {
 		name: Rc<str>,

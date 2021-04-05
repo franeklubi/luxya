@@ -29,4 +29,8 @@ fun key_generator(a, b) {
 
 let key = key_generator("test", "dwa");
 
-print elo.(key) = "chuj";
+print "key: " + key;
+
+elo.(key) = "chuj";
+
+print elo.(key);

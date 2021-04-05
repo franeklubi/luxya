@@ -1,7 +1,7 @@
 use super::{helpers::*, interpret::*, interpreter_env::*, types::*};
 use crate::{ast::expr::*, env::*, token::*};
 
-use std::{collections::HashMap, rc::Rc};
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 
 #[inline(always)]
@@ -88,7 +88,7 @@ pub fn call_expression(
 		// TODO: methods and etc
 		InterpreterValue::Class { .. } => Ok(InterpreterValue::Instance {
 			class: Rc::new(callee.clone()),
-			properties: HashMap::new(),
+			properties: Rc::new(RefCell::new(HashMap::new())),
 		}),
 		_ => Err(RuntimeError {
 			message: format!("Cannot call {}", callee.to_human_readable()),
@@ -243,7 +243,7 @@ pub fn get_expression(
 	#[inline(always)]
 	fn get_property(
 		key: &str,
-		properties: HashMap<String, InterpreterValue>,
+		properties: &HashMap<String, InterpreterValue>,
 		blame: Token,
 	) -> Result<InterpreterValue, RuntimeError> {
 		if let Some(v) = properties.get(key) {
@@ -271,15 +271,53 @@ pub fn get_expression(
 			});
 		};
 
+	let borrowed_props = properties.borrow();
+
 	match &v.key {
 		DotAccessor::Name(iden) => {
-			println!("key: >{}<", iden);
-			get_property(iden, properties, v.blame.clone())
+			get_property(iden, &borrowed_props, v.blame.clone())
 		}
 		DotAccessor::Eval(expr) => {
 			let key = eval_expression(expr, env)?.to_string();
-			println!("key: >{}<", key);
-			get_property(key.as_str(), properties, v.blame.clone())
+
+			get_property(key.as_str(), &borrowed_props, v.blame.clone())
 		}
 	}
+}
+
+#[inline(always)]
+pub fn set_expression(
+	v: &SetValue,
+	env: &InterpreterEnvironment,
+) -> Result<InterpreterValue, RuntimeError> {
+	let setee = eval_expression(&v.setee, env)?;
+
+	let properties =
+		if let InterpreterValue::Instance { properties, .. } = setee {
+			properties
+		} else {
+			return Err(RuntimeError {
+				message: format!(
+					"Can't set properties on {}",
+					setee.to_human_readable()
+				),
+				token: v.blame.clone(),
+			});
+		};
+
+	let mut borrowed_props = properties.borrow_mut();
+
+	let value = eval_expression(&v.value, env)?;
+
+	match &v.key {
+		DotAccessor::Name(key) => {
+			borrowed_props.insert(key.to_string(), value.clone());
+		}
+		DotAccessor::Eval(expr) => {
+			let key = eval_expression(expr, env)?.to_string();
+			borrowed_props.insert(key, value.clone());
+		}
+	};
+
+	Ok(value)
 }
