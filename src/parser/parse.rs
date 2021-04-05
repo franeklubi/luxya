@@ -299,29 +299,36 @@ fn call(tokens: ParserIter) -> Result<Expr, ParseError> {
 
 	#[inline(always)]
 	fn finish_get(tokens: ParserIter, getee: Expr) -> Result<Expr, ParseError> {
-		match tokens.peek() {
-			Some(Token {
-				token_type: TokenType::Identifier(_),
-				..
-			}) => {
+		let consumed = tokens.next();
+		let consumed_token_type =
+			consumed.as_ref().map(|c| c.token_type.clone());
+
+		match consumed_token_type {
+			Some(TokenType::Identifier(_)) => {
+				let i = if let Some(TokenType::Identifier(i)) =
+					consumed_token_type
+				{
+					i
+				} else {
+					unreachable!("Identifier name extraction failed")
+				};
+
 				// unwrap_unchecked because we just matched peek 😇
-				let consumed = unsafe { tokens.next().unwrap_unchecked() };
+				let blame = unsafe { consumed.unwrap_unchecked() };
 
 				Ok(Expr::Get(GetValue {
 					getee: Box::new(getee),
-					key: GetAccessor::Name(consumed.clone()),
-					blame: consumed,
+					key: GetAccessor::Name(i),
+					blame,
 				}))
 			}
-			Some(Token {
-				token_type: TokenType::LeftParen,
-				..
-			}) => {
+			Some(TokenType::LeftParen) => {
 				// same here, unwrapping what we already matched
 				let blame = unsafe { tokens.peek().unwrap_unchecked().clone() };
 
-				// parse grouping
-				let eval = primary(tokens)?;
+				let eval = expression(tokens)?;
+
+				expect(tokens, &[TokenType::RightParen], None)?;
 
 				Ok(Expr::Get(GetValue {
 					getee: Box::new(getee),

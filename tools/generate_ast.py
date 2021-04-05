@@ -130,7 +130,7 @@ def gen_expr() -> str:
 
 	additional_code = """
 		pub enum GetAccessor {
-			Name(Token),
+			Name(Rc<str>),
 			Eval(Box<Expr>),
 		}
 	"""

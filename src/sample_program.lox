@@ -23,4 +23,10 @@ let chuj = fun () {
 
 };
 
-print elo.siema_siema;
+fun key_generator(a, b) {
+	return str(a) + "_" + str(b);
+}
+
+let key = key_generator("test", "dwa");
+
+print elo.(key);

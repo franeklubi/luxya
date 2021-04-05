@@ -273,9 +273,8 @@ pub fn get_expression(
 
 	match &v.key {
 		GetAccessor::Name(iden) => {
-			let key = assume_identifier(iden);
-			println!("key: >{}<", key);
-			get_property(key, properties, v.blame.clone())
+			println!("key: >{}<", iden);
+			get_property(iden, properties, v.blame.clone())
 		}
 		GetAccessor::Eval(expr) => {
 			let key = eval_expression(expr, env)?.to_string();

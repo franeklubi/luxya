@@ -68,6 +68,6 @@ pub enum Expr {
 }
 
 pub enum GetAccessor {
-	Name(Token),
+	Name(Rc<str>),
 	Eval(Box<Expr>),
 }
