@@ -72,7 +72,6 @@ pub fn for_statement(
 	Ok(InterpreterStmtValue::Noop)
 }
 
-#[inline(always)]
 pub fn class_statement(
 	v: &ClassValue,
 	env: &ResolverEnvironment,
@@ -87,7 +86,12 @@ pub fn class_statement(
 		},
 	);
 
-	// TODO: methods
+	let dummy_class_env = env.fork();
+
+	for method in &v.methods {
+		// resolve_expression wires the method to function_expression
+		resolve::resolve_expression(method, &dummy_class_env)?;
+	}
 
 	Ok(InterpreterStmtValue::Noop)
 }

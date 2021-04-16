@@ -1,36 +1,22 @@
 
-fun fib(n) {
-	if (n <= 1) {
-		return n;
-	}
+// fun fib(n) {
+// 	if (n <= 1) {
+// 		return n;
+// 	}
+//
+// 	return fib(n - 2) + fib(n - 1);
+// }
+//
+// for let i = 0; i < 10; i = i + 1 {
+// 	print str(i) + ": " + str(fib(i));
+// }
 
-	return fib(n - 2) + fib(n - 1);
-}
-
-for let i = 0; i < 10; i = i + 1 {
-	print str(i) + ": " + str(fib(i));
-}
-
-class Chuj {
+class Chujer {
 	elo() {
 		print "chuj";
 	}
 }
 
-let elo = Chuj();
+let chuj = Chujer();
 
-let chuj = fun () {
-
-};
-
-fun key_generator(a, b) {
-	return str(a) + "_" + str(b);
-}
-
-let key = key_generator("test", "dwa");
-
-print "key: " + key;
-
-elo.(key) = "chuj";
-
-print elo.(key);
+chuj.elo();

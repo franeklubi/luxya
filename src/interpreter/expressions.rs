@@ -243,11 +243,14 @@ pub fn get_expression(
 	#[inline(always)]
 	fn get_property(
 		key: &str,
+		methods: &InterpreterEnvironment,
 		properties: &HashMap<String, InterpreterValue>,
 		blame: Token,
 	) -> Result<InterpreterValue, RuntimeError> {
 		if let Some(v) = properties.get(key) {
 			Ok(v.clone())
+		} else if let Ok(dv) = methods.read(0, &blame) {
+			Ok(dv.value)
 		} else {
 			Err(RuntimeError {
 				message: format!("Property {} not defined", key),
@@ -258,9 +261,9 @@ pub fn get_expression(
 
 	let getee = eval_expression(&v.getee, env)?;
 
-	let properties =
-		if let InterpreterValue::Instance { properties, .. } = getee {
-			properties
+	let (properties, class) =
+		if let InterpreterValue::Instance { properties, class } = getee {
+			(properties, class)
 		} else {
 			return Err(RuntimeError {
 				message: format!(
@@ -271,16 +274,27 @@ pub fn get_expression(
 			});
 		};
 
+	let methods = if let InterpreterValue::Class { methods, .. } = &*class {
+		methods
+	} else {
+		unreachable!("Class is not a class? 🤔");
+	};
+
 	let borrowed_props = properties.borrow();
 
 	match &v.key {
 		DotAccessor::Name(iden) => {
-			get_property(iden, &borrowed_props, v.blame.clone())
+			get_property(iden, &methods, &borrowed_props, v.blame.clone())
 		}
 		DotAccessor::Eval(expr) => {
 			let key = eval_expression(expr, env)?.to_string();
 
-			get_property(key.as_str(), &borrowed_props, v.blame.clone())
+			get_property(
+				key.as_str(),
+				&methods,
+				&borrowed_props,
+				v.blame.clone(),
+			)
 		}
 	}
 }
@@ -305,9 +319,9 @@ pub fn set_expression(
 			});
 		};
 
-	let mut borrowed_props = properties.borrow_mut();
-
 	let value = eval_expression(&v.value, env)?;
+
+	let mut borrowed_props = properties.borrow_mut();
 
 	match &v.key {
 		DotAccessor::Name(key) => {

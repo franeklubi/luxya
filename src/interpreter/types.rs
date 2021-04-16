@@ -21,6 +21,9 @@ pub enum InterpreterValue {
 	},
 	Class {
 		name: Rc<str>,
+		// methods in InterpreterEnvironment because that makes inheritance
+		// way easier
+		methods: InterpreterEnvironment,
 	},
 	String(Rc<str>),
 	Number(f64),
@@ -112,7 +115,7 @@ impl fmt::Display for InterpreterValue {
 			InterpreterValue::Instance { class, .. } => {
 				write!(f, "instance of {}", class)
 			}
-			InterpreterValue::Class { name } => write!(f, "class {}", name),
+			InterpreterValue::Class { name, .. } => write!(f, "class {}", name),
 			InterpreterValue::Function { .. } => write!(f, "function"),
 			InterpreterValue::String(s) => write!(f, "{}", s),
 			InterpreterValue::Number(n) => write!(f, "{}", n),

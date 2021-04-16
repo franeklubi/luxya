@@ -1,4 +1,9 @@
-use super::{helpers::*, types::*};
+use super::{
+	helpers::*,
+	interpret::eval_expression,
+	interpreter_env::InterpreterEnvironment,
+	types::*,
+};
 use crate::{
 	ast::{expr::*, stmt::*},
 	env::*,
@@ -107,7 +112,6 @@ where
 	}
 }
 
-#[inline(always)]
 pub fn for_statement<E, T>(
 	expr_evaluator: fn(&Expr, &E) -> Result<InterpreterValue, RuntimeError>,
 	stmt_evaluator: fn(
@@ -205,15 +209,17 @@ pub fn continue_statement<T>(
 	Ok(InterpreterStmtValue::Continue(v.keyword.clone()))
 }
 
-#[inline(always)]
-pub fn class_statement<E>(
+pub fn class_statement(
 	v: &ClassValue,
-	env: &E,
-) -> Result<InterpreterStmtValue<InterpreterValue>, RuntimeError>
-where
-	E: EnvironmentWrapper<InterpreterValue>,
-{
+	env: &InterpreterEnvironment,
+) -> Result<InterpreterStmtValue<InterpreterValue>, RuntimeError> {
 	let name = assume_identifier(&v.name);
+
+	let class_env = InterpreterEnvironment::new();
+
+	for method in &v.methods {
+		eval_expression(method, &class_env)?;
+	}
 
 	env.declare(
 		name.to_owned(),
@@ -221,6 +227,7 @@ where
 			mutable: false,
 			value: InterpreterValue::Class {
 				name: Rc::from(name),
+				methods: class_env,
 			},
 		},
 	);
