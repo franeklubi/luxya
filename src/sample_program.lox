@@ -18,6 +18,5 @@ class Chujer {
 }
 
 let chuj = Chujer();
-let chuj2 = Chujer();
 
 chuj.elo();

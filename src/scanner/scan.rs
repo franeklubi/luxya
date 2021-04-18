@@ -30,6 +30,7 @@ fn resolve_identifier(identifier: &str) -> TokenType {
 fn scan_token(
 	chars: ScannerIter,
 	source: &str,
+	// TODO: change that to only return result lol
 ) -> Option<Result<token::Token, ScanError>> {
 	while let Some((i, c)) = chars.next() {
 		// We should be at the beginning of the next lexeme
@@ -101,13 +102,13 @@ fn scan_token(
 				}
 			}
 			'"' => match consume_while_peek(chars, |c| *c != '"') {
-				Ok(found_i) => {
+				Ok(identifier_end) => {
 					// consume the found peek
 					chars.next();
 
-					token_len = found_i - i;
+					token_len = identifier_end - i;
 
-					TokenType::String(source[i + 1..found_i - 1].into())
+					TokenType::String(source[i + 1..identifier_end].into())
 				}
 				Err(_) => {
 					return Some(Err(ScanError {
@@ -126,10 +127,10 @@ fn scan_token(
 				};
 
 				match consume_while_peek(chars, consume_closure) {
-					Ok(found_i) => {
-						let to_parse = &source[i..found_i - 1];
+					Ok(identifier_end) => {
+						let to_parse = &source[i..identifier_end];
 
-						token_len = found_i - i - 1;
+						token_len = identifier_end - i;
 
 						match to_parse.parse() {
 							Ok(parsed) => TokenType::Number(parsed),
@@ -161,9 +162,9 @@ fn scan_token(
 					Ok(found_i) | Err(found_i) => found_i,
 				};
 
-				token_len = identifier_end - i - 1;
+				token_len = identifier_end - i;
 
-				resolve_identifier(&source[i..identifier_end - 1])
+				resolve_identifier(&source[i..identifier_end])
 			}
 			c if c.is_whitespace() => {
 				continue;
@@ -179,7 +180,6 @@ fn scan_token(
 		return Some(Ok(token::Token {
 			token_type,
 			byte_offset: i,
-			// TODO: char_len does not work for longer lexemes
 			byte_length: token_len,
 		}));
 	}

@@ -30,7 +30,7 @@ pub fn consume_while_peek(
 
 				continue;
 			}
-			Some((i, c)) => Ok(i + c.len_utf8()),
+			Some((i, _)) => Ok(*i),
 			None => Err(last_offset),
 		};
 	}
