@@ -83,5 +83,6 @@ pub fn resolve_expression(
 		Expr::Call(v) => call_expression(v, env),
 		Expr::Get(v) => get_expression(v, env),
 		Expr::Set(v) => set_expression(v, env),
+		Expr::This(_v) => unimplemented!("resolver this expression"),
 	}
 }

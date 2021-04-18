@@ -11,12 +11,16 @@
 // 	print str(i) + ": " + str(fib(i));
 // }
 
-class Chujer {
-	elo() {
-		print "chuj";
+class Thing {
+	getCallback() {
+		fun localFunction() {
+			print this;
+		}
+
+		return localFunction;
 	}
 }
 
-let chuj = Chujer();
+let callback = Thing().getCallback();
 
-chuj.elo();
+callback();

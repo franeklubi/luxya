@@ -24,10 +24,11 @@ pub fn pn_stringify_tree(expr: &Expr) -> String {
 			&format!("call {}", pn_stringify_tree(&v.calee)),
 			v.arguments.iter().collect::<Vec<&Expr>>().as_slice(),
 		),
-		// TODO: implement that
+		// TODO: implement these XD
 		Expr::Function(_v) => unimplemented!(),
 		Expr::Get(_v) => unimplemented!(),
 		Expr::Set(_v) => unimplemented!(),
+		Expr::This(_v) => unimplemented!(),
 	}
 }
 

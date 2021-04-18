@@ -20,8 +20,12 @@ pub struct FunctionValue {
 pub struct SetValue {
 	pub setee: Box<Expr>,
 	pub key: DotAccessor,
-	pub blame: Token,
 	pub value: Box<Expr>,
+	pub blame: Token,
+}
+
+pub struct ThisValue {
+	pub blame: Token,
 }
 
 pub struct CallValue {
@@ -65,6 +69,7 @@ pub struct GroupingValue {
 pub enum Expr {
 	Function(FunctionValue),
 	Set(SetValue),
+	This(ThisValue),
 	Call(CallValue),
 	Assignment(AssignmentValue),
 	Binary(BinaryValue),

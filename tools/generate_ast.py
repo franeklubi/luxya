@@ -108,7 +108,7 @@ def gen_expr() -> str:
 		"""
 			Set ->
 				setee: Box<Expr>, key: DotAccessor,
-				blame: Token, value: Box<Expr>
+				value: Box<Expr>, blame: Token
 		""",
 		'Call -> calee: Box<Expr>, closing_paren: Token, arguments: Vec<Expr>',
 		'Assignment -> name: Token, value: Box<Expr>, env_distance: Cell<u32>',
@@ -118,6 +118,7 @@ def gen_expr() -> str:
 		'Unary -> operator: Token, right: Box<Expr>',
 		'Grouping -> expression: Box<Expr>',
 		'Literal(LiteralValue)',
+		'This -> blame: Token',
 	]
 
 	imports = [

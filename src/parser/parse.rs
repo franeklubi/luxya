@@ -412,6 +412,13 @@ fn primary(tokens: ParserIter) -> Result<Expr, ParseError> {
 		}
 
 		Some(Token {
+			token_type: TokenType::This,
+			..
+		}) => Ok(Expr::This(ThisValue {
+			blame: token.unwrap(),
+		})),
+
+		Some(Token {
 			token_type: TokenType::Identifier(_),
 			..
 		}) => Ok(Expr::Identifier(IdentifierValue {
