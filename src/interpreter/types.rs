@@ -23,7 +23,7 @@ pub enum InterpreterValue {
 		name: Rc<str>,
 		// methods in InterpreterEnvironment because that makes inheritance
 		// way easier
-		methods: InterpreterEnvironment,
+		methods: Rc<HashMap<String, InterpreterValue>>,
 	},
 	String(Rc<str>),
 	Number(f64),

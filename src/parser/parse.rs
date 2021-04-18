@@ -269,7 +269,7 @@ pub fn function_declaration(
 			params: if params.is_empty() {
 				None
 			} else {
-				Some(params)
+				Some(Rc::new(params))
 			},
 		}))
 	} else {

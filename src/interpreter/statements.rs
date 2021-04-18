@@ -1,15 +1,10 @@
-use super::{
-	helpers::*,
-	interpret::eval_expression,
-	interpreter_env::InterpreterEnvironment,
-	types::*,
-};
+use super::{helpers::*, interpreter_env::InterpreterEnvironment, types::*};
 use crate::{
 	ast::{expr::*, stmt::*},
 	env::*,
 };
 
-use std::rc::Rc;
+use std::{collections::HashMap, rc::Rc};
 
 
 #[inline(always)]
@@ -215,10 +210,25 @@ pub fn class_statement(
 ) -> Result<InterpreterStmtValue<InterpreterValue>, RuntimeError> {
 	let name = assume_identifier(&v.name);
 
-	let class_env = InterpreterEnvironment::new();
+	let mut methods = HashMap::new();
 
 	for method in &v.methods {
-		eval_expression(method, &class_env)?;
+		// TODO: unwrap using unwrapping macro like assume_expr(Function)
+		let fv = if let Expr::Function(v) = method {
+			v
+		} else {
+			unreachable!("Method should be a function expression")
+		};
+
+		let fun = construct_lox_defined_function(fv, env);
+
+		let name = if let Some(iden) = &fv.name {
+			assume_identifier(iden)
+		} else {
+			unreachable!("Method name must exist")
+		};
+
+		methods.insert(name.to_owned(), fun);
 	}
 
 	env.declare(
@@ -227,7 +237,7 @@ pub fn class_statement(
 			mutable: false,
 			value: InterpreterValue::Class {
 				name: Rc::from(name),
-				methods: class_env,
+				methods: Rc::new(methods),
 			},
 		},
 	);

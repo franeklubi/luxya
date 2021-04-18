@@ -1,5 +1,7 @@
 use super::{interpreter_env::*, types::*};
-use crate::{env::*, token::*};
+use crate::{ast::expr::FunctionValue, env::*, token::*};
+
+use std::rc::Rc;
 
 
 // A shorthand way to extract identifier's name
@@ -96,4 +98,20 @@ pub fn map_arguments(
 			},
 		);
 	})
+}
+
+#[inline(always)]
+pub fn construct_lox_defined_function(
+	fv: &FunctionValue,
+	env: &InterpreterEnvironment,
+) -> InterpreterValue {
+	InterpreterValue::Function {
+		enclosing_env: env.clone(),
+		fun: Rc::new(InterpreterFunction::LoxDefined(FunctionValue {
+			body: fv.body.as_ref().map(|b| Rc::clone(b)),
+			keyword: fv.keyword.clone(),
+			name: fv.name.clone(),
+			params: fv.params.as_ref().map(|p| Rc::clone(p)),
+		})),
+	}
 }

@@ -102,15 +102,7 @@ pub fn function_expression(
 	v: &FunctionValue,
 	env: &InterpreterEnvironment,
 ) -> Result<InterpreterValue, RuntimeError> {
-	let fun = InterpreterValue::Function {
-		enclosing_env: env.clone(),
-		fun: Rc::new(InterpreterFunction::LoxDefined(FunctionValue {
-			body: v.body.as_ref().map(|b| Rc::clone(b)),
-			keyword: v.keyword.clone(),
-			name: v.name.clone(),
-			params: v.params.clone(),
-		})),
-	};
+	let fun = construct_lox_defined_function(v, env);
 
 	if let Some(t) = &v.name {
 		let iden = assume_identifier(t);
@@ -243,14 +235,14 @@ pub fn get_expression(
 	#[inline(always)]
 	fn get_property(
 		key: &str,
-		methods: &InterpreterEnvironment,
+		methods: &HashMap<String, InterpreterValue>,
 		properties: &HashMap<String, InterpreterValue>,
 		blame: Token,
 	) -> Result<InterpreterValue, RuntimeError> {
 		if let Some(v) = properties.get(key) {
 			Ok(v.clone())
-		} else if let Ok(dv) = methods.read(0, &blame) {
-			Ok(dv.value)
+		} else if let Some(v) = methods.get(key) {
+			Ok(v.clone())
 		} else {
 			Err(RuntimeError {
 				message: format!("Property {} not defined", key),

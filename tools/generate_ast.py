@@ -103,7 +103,7 @@ def gen_expr() -> str:
 		"""
 			Function ->
 				keyword: Token, name: Option<Token>,
-				params: Option<Vec<Token>>, body: Option<Rc<Vec<Stmt>>>
+				params: Option<Rc<Vec<Token>>>, body: Option<Rc<Vec<Stmt>>>
 		""",
 		"""
 			Set ->
