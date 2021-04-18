@@ -140,7 +140,11 @@ pub fn this_expression(
 	v: &ThisValue,
 	env: &ResolverEnvironment,
 ) -> Result<InterpreterValue, RuntimeError> {
-	env.resolve_nest_level(expr, &v.blame)?;
+	env.resolve_nest_level(expr, &v.blame)
+		.map_err(|err| RuntimeError {
+			token: err.token,
+			message: "Cannot call `this` outside of a method".into(),
+		})?;
 
 	Ok(InterpreterValue::Nil)
 }

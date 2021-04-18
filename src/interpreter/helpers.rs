@@ -30,6 +30,7 @@ pub fn guard_function(
 	}
 }
 
+#[inline(always)]
 pub fn no_identifier(token: &Token, name: &str) -> RuntimeError {
 	RuntimeError {
 		token: token.clone(),
