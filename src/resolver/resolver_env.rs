@@ -9,7 +9,7 @@ use crate::{
 	resolver_unwrap_enclosing,
 	resolver_unwrap_scope,
 	resolver_unwrap_scope_mut,
-	token::Token,
+	token::{Token, TokenType},
 };
 
 use std::{cell::RefCell, rc::Rc};
@@ -119,12 +119,12 @@ impl ResolverEnvironment {
 	pub fn resolve_nest_level(
 		&self,
 		resolvable_node: &Expr,
-		identifier_token: &Token,
+		resolvable_token: &Token,
 	) -> Result<(), RuntimeError> {
 		self.resolve_nest_level_worker(
 			self.level,
 			resolvable_node,
-			identifier_token,
+			resolvable_token,
 		)
 	}
 
@@ -132,9 +132,13 @@ impl ResolverEnvironment {
 		&self,
 		initial_level: u32,
 		resolvable_node: &Expr,
-		identifier_token: &Token,
+		resolvable_token: &Token,
 	) -> Result<(), RuntimeError> {
-		let name = assume_identifier(identifier_token);
+		let name = if let TokenType::This = resolvable_token.token_type {
+			"this"
+		} else {
+			assume_identifier(resolvable_token)
+		};
 
 		if let Some(_dv) = resolver_unwrap_scope!(self).get(name) {
 			let env_distance = assume_resolvable_expr(resolvable_node);
@@ -146,12 +150,12 @@ impl ResolverEnvironment {
 			enclosing.resolve_nest_level_worker(
 				initial_level,
 				resolvable_node,
-				identifier_token,
+				resolvable_token,
 			)?;
 
 			Ok(())
 		} else {
-			Err(no_identifier(identifier_token, name))
+			Err(no_identifier(resolvable_token, name))
 		}
 	}
 }

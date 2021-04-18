@@ -88,6 +88,14 @@ pub fn class_statement(
 
 	let dummy_class_env = env.fork();
 
+	dummy_class_env.declare(
+		"this".to_owned(),
+		DeclaredValue {
+			mutable: false,
+			value: InterpreterValue::Nil,
+		},
+	);
+
 	for method in &v.methods {
 		// resolve_expression wires the method to function_expression
 		resolve::resolve_expression(method, &dummy_class_env)?;

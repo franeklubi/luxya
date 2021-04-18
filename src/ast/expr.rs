@@ -24,10 +24,6 @@ pub struct SetValue {
 	pub blame: Token,
 }
 
-pub struct ThisValue {
-	pub blame: Token,
-}
-
 pub struct CallValue {
 	pub calee: Box<Expr>,
 	pub closing_paren: Token,
@@ -57,6 +53,11 @@ pub struct IdentifierValue {
 	pub env_distance: Cell<u32>,
 }
 
+pub struct ThisValue {
+	pub blame: Token,
+	pub env_distance: Cell<u32>,
+}
+
 pub struct UnaryValue {
 	pub operator: Token,
 	pub right: Box<Expr>,
@@ -69,12 +70,12 @@ pub struct GroupingValue {
 pub enum Expr {
 	Function(FunctionValue),
 	Set(SetValue),
-	This(ThisValue),
 	Call(CallValue),
 	Assignment(AssignmentValue),
 	Binary(BinaryValue),
 	Get(GetValue),
 	Identifier(IdentifierValue),
+	This(ThisValue),
 	Unary(UnaryValue),
 	Grouping(GroupingValue),
 	Literal(LiteralValue),

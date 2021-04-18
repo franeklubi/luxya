@@ -416,6 +416,7 @@ fn primary(tokens: ParserIter) -> Result<Expr, ParseError> {
 			..
 		}) => Ok(Expr::This(ThisValue {
 			blame: token.unwrap(),
+			env_distance: Cell::new(0),
 		})),
 
 		Some(Token {

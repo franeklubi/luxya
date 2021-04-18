@@ -115,10 +115,10 @@ def gen_expr() -> str:
 		'Binary -> left: Box<Expr>, operator: Token, right: Box<Expr>',
 		'Get -> getee: Box<Expr>, key: DotAccessor, blame: Token',
 		'Identifier -> name: Token, env_distance: Cell<u32>',
+		'This -> blame: Token, env_distance: Cell<u32>',
 		'Unary -> operator: Token, right: Box<Expr>',
 		'Grouping -> expression: Box<Expr>',
 		'Literal(LiteralValue)',
-		'This -> blame: Token',
 	]
 
 	imports = [

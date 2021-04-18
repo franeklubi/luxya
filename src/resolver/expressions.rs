@@ -133,3 +133,14 @@ pub fn set_expression(
 
 	Ok(InterpreterValue::Nil)
 }
+
+#[inline(always)]
+pub fn this_expression(
+	expr: &Expr,
+	v: &ThisValue,
+	env: &ResolverEnvironment,
+) -> Result<InterpreterValue, RuntimeError> {
+	env.resolve_nest_level(expr, &v.blame)?;
+
+	Ok(InterpreterValue::Nil)
+}

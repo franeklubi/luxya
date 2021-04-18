@@ -79,10 +79,10 @@ pub fn resolve_expression(
 		Expr::Assignment(v) => assignment_expression(expr, v, env),
 		Expr::Unary(v) => resolve_expression(&v.right, env),
 		Expr::Function(v) => function_expression(v, env),
+		Expr::This(v) => this_expression(expr, v, env),
 		Expr::Binary(v) => binary_expression(v, env),
 		Expr::Call(v) => call_expression(v, env),
 		Expr::Get(v) => get_expression(v, env),
 		Expr::Set(v) => set_expression(v, env),
-		Expr::This(_v) => unimplemented!("resolver this expression"),
 	}
 }
