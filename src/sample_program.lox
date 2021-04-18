@@ -12,15 +12,11 @@
 // }
 
 class Thing {
-	main() {
-		this.printer();
-	}
-
-	printer() {
-		print "hejaaa";
+	constructor() {
+		this.elo = "joł";
 	}
 }
 
 let thingie = Thing();
 
-thingie.main();
+print thingie.elo;

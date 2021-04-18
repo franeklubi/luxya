@@ -212,6 +212,8 @@ pub fn class_statement(
 
 	let mut methods = HashMap::new();
 
+	let mut constructor = None;
+
 	for method in &v.methods {
 		// TODO: unwrap using unwrapping macro like assume_expr(Function)
 		let fv = if let Expr::Function(v) = method {
@@ -222,13 +224,13 @@ pub fn class_statement(
 
 		let fun = construct_lox_defined_function(fv, env);
 
-		let name = if let Some(iden) = &fv.name {
-			assume_identifier(iden)
-		} else {
-			unreachable!("Method name must exist")
-		};
+		let name = assume_identifier(fv.name.as_ref().expect("Method name"));
 
-		methods.insert(name.to_owned(), fun);
+		if name == "constructor" {
+			constructor = Some(Rc::new(fun));
+		} else {
+			methods.insert(name.to_owned(), fun);
+		}
 	}
 
 	env.declare(
@@ -236,6 +238,7 @@ pub fn class_statement(
 		DeclaredValue {
 			mutable: false,
 			value: InterpreterValue::Class {
+				constructor,
 				name: Rc::from(name),
 				methods: Rc::new(methods),
 			},

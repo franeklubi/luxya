@@ -39,26 +39,35 @@ where
 	)
 }
 
+#[inline(always)]
 pub fn call_expression(
 	v: &CallValue,
 	env: &InterpreterEnvironment,
 ) -> Result<InterpreterValue, RuntimeError> {
 	let callee = eval_expression(&v.calee, env)?;
 
+	execute_call(&callee, &v.arguments, &v.closing_paren, env)
+}
+
+pub fn execute_call(
+	callee: &InterpreterValue,
+	arguments: &[Expr],
+	blame: &Token,
+	env: &InterpreterEnvironment,
+) -> Result<InterpreterValue, RuntimeError> {
 	match callee {
 		InterpreterValue::Function { fun, enclosing_env } => {
-			let arguments = v
-				.arguments
+			let arguments = arguments
 				.iter()
 				.map(|arg| eval_expression(arg, env))
 				.collect::<Result<Vec<_>, RuntimeError>>()?;
 
-			match &*fun {
+			match &**fun {
 				InterpreterFunction::LoxDefined(fv) => {
 					confirm_arity(
 						fv.params.as_ref().map_or(0, |p| p.len()),
 						arguments.len(),
-						&v.closing_paren,
+						blame,
 					)?;
 
 					let fun_env = &enclosing_env.fork();
@@ -75,24 +84,29 @@ pub fn call_expression(
 					}
 				}
 				InterpreterFunction::Native { arity, fun } => {
-					confirm_arity(*arity, arguments.len(), &v.closing_paren)?;
+					confirm_arity(*arity, arguments.len(), blame)?;
 
-					Ok(fun(
-						&v.closing_paren,
-						&enclosing_env.fork(),
-						&arguments,
-					)?)
+					Ok(fun(blame, &enclosing_env.fork(), &arguments)?)
 				}
 			}
 		}
-		// TODO: methods and etc
-		InterpreterValue::Class { .. } => Ok(InterpreterValue::Instance {
-			class: Rc::new(callee.clone()),
-			properties: Rc::new(RefCell::new(HashMap::new())),
-		}),
+		InterpreterValue::Class { constructor, .. } => {
+			let instance = InterpreterValue::Instance {
+				class: Rc::new(callee.clone()),
+				properties: Rc::new(RefCell::new(HashMap::new())),
+			};
+
+			if let Some(constructor) = &constructor {
+				let constructor = bind_function(constructor, instance.clone());
+
+				execute_call(&constructor, arguments, blame, env)?;
+			}
+
+			Ok(instance)
+		}
 		_ => Err(RuntimeError {
 			message: format!("Cannot call {}", callee.to_human_readable()),
-			token: v.closing_paren.clone(),
+			token: blame.clone(),
 		}),
 	}
 }

@@ -20,6 +20,7 @@ pub enum InterpreterValue {
 		properties: Rc<RefCell<HashMap<String, InterpreterValue>>>,
 	},
 	Class {
+		constructor: Option<Rc<InterpreterValue>>,
 		name: Rc<str>,
 		// methods in InterpreterEnvironment because that makes inheritance
 		// way easier
