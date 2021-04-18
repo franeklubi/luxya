@@ -237,12 +237,13 @@ pub fn get_expression(
 		key: &str,
 		methods: &HashMap<String, InterpreterValue>,
 		properties: &HashMap<String, InterpreterValue>,
+		getee: &InterpreterValue,
 		blame: Token,
 	) -> Result<InterpreterValue, RuntimeError> {
 		if let Some(v) = properties.get(key) {
 			Ok(v.clone())
 		} else if let Some(v) = methods.get(key) {
-			Ok(v.clone())
+			Ok(bind_function(v, getee.clone()))
 		} else {
 			Err(RuntimeError {
 				message: format!("Property {} not defined", key),
@@ -254,7 +255,7 @@ pub fn get_expression(
 	let getee = eval_expression(&v.getee, env)?;
 
 	let (properties, class) =
-		if let InterpreterValue::Instance { properties, class } = getee {
+		if let InterpreterValue::Instance { properties, class } = &getee {
 			(properties, class)
 		} else {
 			return Err(RuntimeError {
@@ -266,7 +267,7 @@ pub fn get_expression(
 			});
 		};
 
-	let methods = if let InterpreterValue::Class { methods, .. } = &*class {
+	let methods = if let InterpreterValue::Class { methods, .. } = &**class {
 		methods
 	} else {
 		unreachable!("Class is not a class? 🤔");
@@ -275,9 +276,13 @@ pub fn get_expression(
 	let borrowed_props = properties.borrow();
 
 	match &v.key {
-		DotAccessor::Name(iden) => {
-			get_property(iden, &methods, &borrowed_props, v.blame.clone())
-		}
+		DotAccessor::Name(iden) => get_property(
+			iden,
+			&methods,
+			&borrowed_props,
+			&getee,
+			v.blame.clone(),
+		),
 		DotAccessor::Eval(expr) => {
 			let key = eval_expression(expr, env)?.to_string();
 
@@ -285,6 +290,7 @@ pub fn get_expression(
 				key.as_str(),
 				&methods,
 				&borrowed_props,
+				&getee,
 				v.blame.clone(),
 			)
 		}
@@ -326,4 +332,12 @@ pub fn set_expression(
 	};
 
 	Ok(value)
+}
+
+#[inline(always)]
+pub fn this_expression<E, T>(v: &ThisValue, env: &E) -> Result<T, RuntimeError>
+where
+	E: EnvironmentWrapper<T>,
+{
+	Ok(env.read(v.env_distance.get(), &v.blame)?.value)
 }

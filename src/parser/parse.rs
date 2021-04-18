@@ -369,6 +369,7 @@ fn call(tokens: ParserIter) -> Result<Expr, ParseError> {
 	Ok(expr)
 }
 
+// TODO: unwrap unsafe or idk dude. amend this
 fn primary(tokens: ParserIter) -> Result<Expr, ParseError> {
 	let token = tokens.next();
 
@@ -415,7 +416,10 @@ fn primary(tokens: ParserIter) -> Result<Expr, ParseError> {
 			token_type: TokenType::This,
 			..
 		}) => Ok(Expr::This(ThisValue {
-			blame: token.unwrap(),
+			blame: Token {
+				token_type: TokenType::Identifier("this".into()),
+				..token.unwrap()
+			},
 			env_distance: Cell::new(0),
 		})),
 

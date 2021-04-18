@@ -12,15 +12,15 @@
 // }
 
 class Thing {
-	getCallback() {
-		fun localFunction() {
-			print this;
-		}
+	main() {
+		this.printer();
+	}
 
-		return localFunction;
+	printer() {
+		print "hejaaa";
 	}
 }
 
-let callback = Thing().getCallback();
+let thingie = Thing();
 
-callback();
+thingie.main();

@@ -115,3 +115,28 @@ pub fn construct_lox_defined_function(
 		})),
 	}
 }
+
+pub fn bind_function(
+	fun: &InterpreterValue,
+	instance: InterpreterValue,
+) -> InterpreterValue {
+	let (fun, new_env) =
+		if let InterpreterValue::Function { fun, enclosing_env } = fun {
+			(fun.clone(), enclosing_env.fork())
+		} else {
+			unreachable!("CHuju kurwa panie")
+		};
+
+	new_env.declare(
+		"this".into(),
+		DeclaredValue {
+			mutable: false,
+			value: instance,
+		},
+	);
+
+	InterpreterValue::Function {
+		fun,
+		enclosing_env: new_env,
+	}
+}
