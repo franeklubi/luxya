@@ -122,7 +122,7 @@ impl EnvironmentWrapper<InterpreterValue> for InterpreterEnvironment {
 		} else {
 			Err(RuntimeError {
 				message: format!(
-					"Cannot assign to a const {} `{}`",
+					"Cannot reassign a const {} `{}`",
 					entry.value.to_human_readable(),
 					name
 				),

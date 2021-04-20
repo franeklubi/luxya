@@ -50,6 +50,7 @@ pub enum TokenType {
 	Const,
 	Break,
 	Continue,
+	Extends,
 
 	Eof,
 }
@@ -117,6 +118,7 @@ impl fmt::Display for TokenType {
 			TokenType::Eof => write!(f, "EOF"),
 			TokenType::Break => write!(f, "break"),
 			TokenType::Continue => write!(f, "continue"),
+			TokenType::Extends => write!(f, "extends"),
 		}
 	}
 }

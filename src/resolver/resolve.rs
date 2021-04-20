@@ -22,7 +22,7 @@ pub fn resolve(statements: &[Stmt]) -> Result<(), RuntimeError> {
 		});
 	}
 
-	// CHECK IF RETURN AND ETC - THE SAME AS IN INTERPRETER
+	// TODO: CHECK IF RETURN AND ETC - THE SAME AS IN INTERPRETER
 	resolve_statements(statements, &scope)?;
 
 	Ok(())
@@ -33,7 +33,7 @@ pub fn resolve_statements(
 	env: &ResolverEnvironment,
 ) -> Result<InterpreterStmtValue<InterpreterValue>, RuntimeError> {
 	for stmt in statements {
-		// ONLY LET NOOP PASS THROUGH HERE
+		// TODO: ONLY LET NOOP PASS THROUGH HERE
 		resolve_statement(&stmt, env)?;
 	}
 

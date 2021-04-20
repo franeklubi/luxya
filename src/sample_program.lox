@@ -11,12 +11,55 @@
 // 	print str(i) + ": " + str(fib(i));
 // }
 
-class Thing {
-	constructor() {
-		this.elo = "joł";
+class Node extends Elo {
+	constructor(data) {
+		this.data = data;
+		this.left = nil;
+		this.right = nil;
+	}
+
+	insert(data) {
+		if this.data == nil {
+			this.data = data;
+			return;
+		}
+
+		if data == nil {
+			return;
+		}
+
+		if data < this.data {
+			if this.left == nil {
+				this.left = Node(data);
+			} else {
+				this.left.insert(data);
+			}
+		} else if data > this.data {
+			if this.right == nil {
+				this.right = Node(data);
+			} else {
+				this.right.insert(data);
+			}
+		}
+	}
+
+	print_tree() {
+		if this.left != nil {
+			this.left.print_tree();
+		}
+
+		print this.data;
+
+		if this.right != nil {
+			this.right.print_tree();
+		}
 	}
 }
 
-let thingie = Thing();
+const root = Node(2);
 
-print thingie.elo;
+root.insert(1);
+root.insert(3);
+root.insert(7);
+
+root.print_tree();

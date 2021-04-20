@@ -22,6 +22,7 @@ fn resolve_identifier(identifier: &str) -> TokenType {
 		"const" => TokenType::Const,
 		"break" => TokenType::Break,
 		"continue" => TokenType::Continue,
+		"extends" => TokenType::Extends,
 		_ => TokenType::Identifier(identifier.into()),
 	}
 }

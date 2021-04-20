@@ -106,7 +106,7 @@ impl EnvironmentWrapper<InterpreterValue> for ResolverEnvironment {
 			let name = assume_identifier(identifier);
 
 			Err(RuntimeError {
-				message: format!("Cannot assign to a const `{}`", name),
+				message: format!("Cannot reassign a const `{}`", name),
 				token: identifier.clone(),
 			})
 		} else {
