@@ -20,10 +20,9 @@ pub enum InterpreterValue {
 		properties: Rc<RefCell<HashMap<String, InterpreterValue>>>,
 	},
 	Class {
+		superclass: Option<Rc<InterpreterValue>>,
 		constructor: Option<Rc<InterpreterValue>>,
 		name: Rc<str>,
-		// methods in InterpreterEnvironment because that makes inheritance
-		// way easier
 		methods: Rc<HashMap<String, InterpreterValue>>,
 	},
 	String(Rc<str>),
@@ -110,6 +109,8 @@ impl From<LiteralValue> for InterpreterValue {
 	}
 }
 
+// TODO: convert to a method
+// (like to_human_readable we already have or something)
 impl fmt::Display for InterpreterValue {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		match self {

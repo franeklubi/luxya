@@ -1,4 +1,9 @@
-use super::{helpers::*, interpreter_env::InterpreterEnvironment, types::*};
+use super::{
+	helpers::*,
+	interpret::eval_expression,
+	interpreter_env::InterpreterEnvironment,
+	types::*,
+};
 use crate::{
 	ast::{expr::*, stmt::*},
 	env::*,
@@ -219,7 +224,9 @@ pub fn class_statement(
 		let fv = if let Expr::Function(v) = method {
 			v
 		} else {
-			unreachable!("Method should be a function expression")
+			unreachable!(
+				"Method should be a function expression. Parser fucked up"
+			)
 		};
 
 		let fun = construct_lox_defined_function(fv, env);
@@ -233,11 +240,30 @@ pub fn class_statement(
 		}
 	}
 
+	let superclass = if let Some(expr) = &v.superclass {
+		let evaluated = eval_expression(expr, env)?;
+
+		if !matches!(evaluated, InterpreterValue::Class { .. }) {
+			return Err(RuntimeError {
+				message: format!(
+					"Cannot inherit from {}",
+					evaluated.to_human_readable()
+				),
+				token: v.name.clone(),
+			});
+		}
+
+		Some(Rc::new(eval_expression(expr, env)?))
+	} else {
+		None
+	};
+
 	env.declare(
 		name.to_owned(),
 		DeclaredValue {
 			mutable: false,
 			value: InterpreterValue::Class {
+				superclass,
 				constructor,
 				name: Rc::from(name),
 				methods: Rc::new(methods),

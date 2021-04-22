@@ -11,7 +11,7 @@
 // 	print str(i) + ": " + str(fib(i));
 // }
 
-const Elo;
+class Elo {};
 
 class Node extends Elo {
 	constructor(data) {

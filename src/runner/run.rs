@@ -93,7 +93,7 @@ fn run(source: String) -> bool {
 	// interpreting 😇
 	if let Err(e) = resolver::resolve(&statements) {
 		println!(
-			"Resolve error {}\n\t{}",
+			"\nResolve error {}\n\t{}\n",
 			get_line(&source, e.token.byte_offset),
 			e.message
 		);
@@ -101,7 +101,7 @@ fn run(source: String) -> bool {
 		true
 	} else if let Err(e) = interpreter::interpret(&statements) {
 		println!(
-			"Runtime error {}\n\t{}",
+			"\nRuntime error {}\n\t{}\n",
 			get_line(&source, e.token.byte_offset),
 			e.message
 		);
