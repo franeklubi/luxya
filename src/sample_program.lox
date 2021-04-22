@@ -11,6 +11,8 @@
 // 	print str(i) + ": " + str(fib(i));
 // }
 
+const Elo;
+
 class Node extends Elo {
 	constructor(data) {
 		this.data = data;
@@ -54,6 +56,20 @@ class Node extends Elo {
 			this.right.print_tree();
 		}
 	}
+
+	reverse_tree() {
+		if this.left != nil {
+			this.left.reverse_tree();
+		}
+
+		if this.right != nil {
+			this.right.reverse_tree();
+		}
+
+		const temp = this.left;
+		this.left = this.right;
+		this.right = temp;
+	}
 }
 
 const root = Node(2);
@@ -62,4 +78,10 @@ root.insert(1);
 root.insert(3);
 root.insert(7);
 
+print "normal:";
+root.print_tree();
+
+print "";
+print "reversed:";
+root.reverse_tree();
 root.print_tree();

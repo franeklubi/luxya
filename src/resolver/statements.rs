@@ -1,6 +1,6 @@
 use super::{resolve, resolver_env::*};
 use crate::{
-	ast::stmt::*,
+	ast::{expr::*, stmt::*},
 	env::*,
 	interpreter::{
 		helpers::assume_identifier,
@@ -85,6 +85,25 @@ pub fn class_statement(
 			value: InterpreterValue::Nil,
 		},
 	);
+
+	if let Some(expr) = &v.superclass {
+		let superclass = if let Expr::Identifier(s) = expr {
+			s
+		} else {
+			unreachable!("Superclass should be an identifier expression")
+		};
+
+		let super_iden = assume_identifier(&superclass.name);
+
+		if super_iden == iden {
+			return Err(RuntimeError {
+				message: "Class cannot inherit from itself".into(),
+				token: superclass.name.clone(),
+			});
+		}
+
+		resolve::resolve_expression(expr, env)?;
+	}
 
 	let dummy_class_env = env.fork();
 
