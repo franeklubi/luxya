@@ -10,7 +10,7 @@ use std::vec;
 #[inline(always)]
 pub fn print_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 	let stmt = Stmt::Print(PrintValue {
-		expression: Box::new(expression(tokens)?),
+		expression: expression(tokens)?,
 	});
 
 	expect_semicolon(tokens)?;
@@ -27,9 +27,7 @@ pub fn expression_statement(
 	// expect semicolon only if the expression is not a function
 	let semicolon_expected = !matches!(expr, Expr::Function(_));
 
-	let stmt = Stmt::Expression(ExpressionValue {
-		expression: Box::new(expr),
-	});
+	let stmt = Stmt::Expression(ExpressionValue { expression: expr });
 
 	if semicolon_expected {
 		expect_semicolon(tokens)?;
@@ -40,7 +38,7 @@ pub fn expression_statement(
 
 #[inline(always)]
 pub fn if_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
-	let condition = Box::new(expression(tokens)?);
+	let condition = expression(tokens)?;
 
 	let then = Box::new(expect_statement(
 		tokens,
@@ -125,12 +123,10 @@ pub fn for_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 	let body = expect_statement(tokens, &[TokenType::LeftBrace])?;
 
 	let for_stmt = Stmt::For(ForValue {
-		condition: condition.map(Box::new),
+		condition,
 		body: Box::new(body),
 		closer: closer.map(|c| {
-			Box::new(Stmt::Expression(ExpressionValue {
-				expression: Box::new(c),
-			}))
+			Box::new(Stmt::Expression(ExpressionValue { expression: c }))
 		}),
 	});
 
@@ -195,6 +191,22 @@ pub fn class_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 		Some("Expected identifier"),
 	)?;
 
+	let superclass =
+		if match_then_consume(tokens, &[TokenType::Extends]).is_some() {
+			let superclass_name = expect(
+				tokens,
+				&[TokenType::Identifier("".into())],
+				Some("Expected identifier"),
+			)?;
+
+			Some(Expr::Identifier(IdentifierValue {
+				name: superclass_name,
+				env_distance: Default::default(),
+			}))
+		} else {
+			None
+		};
+
 	expect(tokens, &[TokenType::LeftBrace], None)?;
 
 	let mut methods = Vec::new();
@@ -205,5 +217,9 @@ pub fn class_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 
 	expect(tokens, &[TokenType::RightBrace], None)?;
 
-	Ok(Some(Stmt::Class(ClassValue { name, methods })))
+	Ok(Some(Stmt::Class(ClassValue {
+		name,
+		methods,
+		superclass,
+	})))
 }

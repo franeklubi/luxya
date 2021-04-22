@@ -50,7 +50,7 @@ pub fn declaration(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 
 		let initializer =
 			if match_then_consume(tokens, &[TokenType::Equal]).is_some() {
-				Some(Box::new(expression(tokens)?))
+				Some(expression(tokens)?)
 			} else {
 				None
 			};
