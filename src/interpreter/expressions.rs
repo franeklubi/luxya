@@ -247,22 +247,47 @@ pub fn get_expression(
 	env: &InterpreterEnvironment,
 ) -> Result<InterpreterValue, RuntimeError> {
 	#[inline(always)]
-	fn get_property(
+	fn find_method(
 		key: &str,
-		methods: &HashMap<String, InterpreterValue>,
-		properties: &HashMap<String, InterpreterValue>,
-		getee: &InterpreterValue,
-		blame: Token,
+		class: &InterpreterValue,
+		instance: &InterpreterValue,
+		blame: &Token,
 	) -> Result<InterpreterValue, RuntimeError> {
-		if let Some(v) = properties.get(key) {
-			Ok(v.clone())
-		} else if let Some(v) = methods.get(key) {
-			Ok(bind_function(v, getee.clone()))
+		let (methods, superclass) = if let InterpreterValue::Class {
+			methods,
+			superclass,
+			..
+		} = &class
+		{
+			(methods, superclass)
+		} else {
+			unreachable!("Class is not a class? 🤔")
+		};
+
+		if let Some(method) = methods.get(key) {
+			Ok(bind_function(method, instance.clone()))
+		} else if let Some(superclass) = &superclass {
+			find_method(key, superclass, instance, blame)
 		} else {
 			Err(RuntimeError {
 				message: format!("Property {} not defined", key),
-				token: blame,
+				token: blame.clone(),
 			})
+		}
+	}
+
+	#[inline(always)]
+	fn get_property(
+		key: &str,
+		properties: &HashMap<String, InterpreterValue>,
+		class: &InterpreterValue,
+		instance: &InterpreterValue,
+		blame: &Token,
+	) -> Result<InterpreterValue, RuntimeError> {
+		if let Some(p) = properties.get(key) {
+			Ok(p.clone())
+		} else {
+			find_method(key, class, instance, blame)
 		}
 	}
 
@@ -281,31 +306,21 @@ pub fn get_expression(
 			});
 		};
 
-	let methods = if let InterpreterValue::Class { methods, .. } = &**class {
-		methods
-	} else {
-		unreachable!("Class is not a class? 🤔");
-	};
-
 	let borrowed_props = properties.borrow();
 
 	match &v.key {
-		DotAccessor::Name(iden) => get_property(
-			iden,
-			&methods,
-			&borrowed_props,
-			&getee,
-			v.blame.clone(),
-		),
+		DotAccessor::Name(iden) => {
+			get_property(iden, &borrowed_props, &class, &getee, &v.blame)
+		}
 		DotAccessor::Eval(expr) => {
 			let key = eval_expression(expr, env)?.to_string();
 
 			get_property(
-				key.as_str(),
-				&methods,
+				&key.as_str(),
 				&borrowed_props,
+				&class,
 				&getee,
-				v.blame.clone(),
+				&v.blame,
 			)
 		}
 	}

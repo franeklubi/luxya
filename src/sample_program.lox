@@ -11,7 +11,11 @@
 // 	print str(i) + ": " + str(fib(i));
 // }
 
-class Elo {};
+class Elo {
+	siemka() {
+		print "from siemka";
+	}
+};
 
 class Node extends Elo {
 	constructor(data) {
@@ -73,6 +77,8 @@ class Node extends Elo {
 }
 
 const root = Node(2);
+
+root.siemka();
 
 root.insert(1);
 root.insert(3);

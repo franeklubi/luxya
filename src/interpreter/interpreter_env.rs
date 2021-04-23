@@ -51,10 +51,8 @@ impl EnvironmentWrapper<InterpreterValue> for InterpreterEnvironment {
 		for _ in 0..steps {
 			let new_scope = {
 				let borrowed = scope.borrow();
-				let enclosing = borrowed
-					.enclosing
-					.as_ref()
-					.expect("The enclosing environment to exist");
+				let enclosing =
+					borrowed.enclosing.as_ref().expect("Enclosing environment");
 
 				enclosing.0.clone()
 			};
@@ -66,11 +64,7 @@ impl EnvironmentWrapper<InterpreterValue> for InterpreterEnvironment {
 
 		let borrowed = scope.borrow();
 
-		Ok(borrowed
-			.scope
-			.get(name)
-			.expect("The identifier to be there")
-			.clone())
+		Ok(borrowed.scope.get(name).expect("Identifier").clone())
 	}
 
 	fn declare(
