@@ -20,7 +20,7 @@ pub struct FunctionValue {
 
 pub struct SetValue {
 	pub setee: Box<Expr>,
-	pub key: DotAccessor,
+	pub key: GetAccessor,
 	pub value: Box<Expr>,
 	pub blame: Token,
 }
@@ -51,7 +51,7 @@ pub struct BinaryValue {
 
 pub struct GetValue {
 	pub getee: Box<Expr>,
-	pub key: DotAccessor,
+	pub key: GetAccessor,
 	pub blame: Token,
 }
 
@@ -89,9 +89,11 @@ pub enum Expr {
 	Literal(LiteralValue),
 }
 
-pub enum DotAccessor {
-	Name(Rc<str>),
-	Eval(Box<Expr>),
+pub enum GetAccessor {
+	DotName(Rc<str>),
+	DotEval(Box<Expr>),
+	SubscriptionNumber(usize),
+	SubscriptionEval(Box<Expr>),
 }
 
 pub enum SuperAccessor {

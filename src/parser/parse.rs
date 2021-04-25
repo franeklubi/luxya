@@ -91,7 +91,7 @@ pub fn statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 		],
 	);
 
-	let token_type = consumed_token.clone().map(|ct| ct.token_type);
+	let token_type = consumed_token.as_ref().map(|ct| &ct.token_type);
 
 	match token_type {
 		Some(TokenType::If) => if_statement(tokens),
@@ -298,26 +298,18 @@ fn finish_call(tokens: ParserIter, calee: Expr) -> Result<Expr, ParseError> {
 	}))
 }
 
-#[inline(always)]
 fn finish_get(tokens: ParserIter, getee: Expr) -> Result<Expr, ParseError> {
 	let consumed = tokens.next();
 	let consumed_token_type = consumed.as_ref().map(|c| c.token_type.clone());
 
 	match consumed_token_type {
-		Some(TokenType::Identifier(_)) => {
-			let i = if let Some(TokenType::Identifier(i)) = consumed_token_type
-			{
-				i
-			} else {
-				unreachable!("Identifier name extraction failed")
-			};
-
+		Some(TokenType::Identifier(i)) => {
 			// unwrap_unchecked because we just matched peek 😇
 			let blame = unsafe { consumed.unwrap_unchecked() };
 
 			Ok(Expr::Get(GetValue {
 				getee: Box::new(getee),
-				key: DotAccessor::Name(i),
+				key: GetAccessor::DotName(i),
 				blame,
 			}))
 		}
@@ -331,7 +323,7 @@ fn finish_get(tokens: ParserIter, getee: Expr) -> Result<Expr, ParseError> {
 
 			Ok(Expr::Get(GetValue {
 				getee: Box::new(getee),
-				key: DotAccessor::Eval(Box::new(eval)),
+				key: GetAccessor::DotEval(Box::new(eval)),
 				blame,
 			}))
 		}
@@ -344,17 +336,67 @@ fn finish_get(tokens: ParserIter, getee: Expr) -> Result<Expr, ParseError> {
 	}
 }
 
+fn finish_sub(tokens: ParserIter, getee: Expr) -> Result<Expr, ParseError> {
+	let peek_type = tokens.peek().as_ref().map(|p| p.token_type.clone());
+
+	let accessor = match peek_type {
+		Some(TokenType::Number(n)) => {
+			// unwrap_unchecked because we just matched peek 😇
+			let blame = unsafe { tokens.next().unwrap_unchecked() };
+
+			if n.fract() != 0.0 {
+				return Err(ParseError {
+					message: format!(
+						"Cannot access element on float index {}",
+						n
+					),
+					token: Some(blame),
+				});
+			}
+
+			Ok(Expr::Get(GetValue {
+				getee: Box::new(getee),
+				key: GetAccessor::SubscriptionNumber(n as usize),
+				blame,
+			}))
+		}
+		_ => {
+			// same here, unwrapping what we already matched
+			let blame = unsafe { tokens.peek().unwrap_unchecked().clone() };
+
+			let eval = expression(tokens)?;
+
+			Ok(Expr::Get(GetValue {
+				getee: Box::new(getee),
+				key: GetAccessor::SubscriptionEval(Box::new(eval)),
+				blame,
+			}))
+		}
+	}?;
+
+	expect(tokens, &[TokenType::RightSquareBracket], None)?;
+
+	Ok(accessor)
+}
+
 fn call(tokens: ParserIter) -> Result<Expr, ParseError> {
 	let mut expr = primary(tokens)?;
 
-	while let Some(consumed) =
-		match_then_consume(tokens, &[TokenType::LeftParen, TokenType::Dot])
-	{
+	while let Some(consumed) = match_then_consume(
+		tokens,
+		&[
+			TokenType::LeftParen,
+			TokenType::Dot,
+			TokenType::LeftSquareBracket,
+		],
+	) {
 		match consumed.token_type {
 			TokenType::LeftParen => {
 				expr = finish_call(tokens, expr)?;
 			}
-			// TokenType::Dot
+			TokenType::LeftSquareBracket => {
+				expr = finish_sub(tokens, expr)?;
+			}
 			_ => {
 				expr = finish_get(tokens, expr)?;
 			}

@@ -285,8 +285,7 @@ fn find_method(
 	}
 }
 
-#[inline(always)]
-pub fn get_expression(
+fn get_dot(
 	v: &GetValue,
 	env: &InterpreterEnvironment,
 ) -> Result<InterpreterValue, RuntimeError> {
@@ -323,10 +322,10 @@ pub fn get_expression(
 	let borrowed_props = properties.borrow();
 
 	match &v.key {
-		DotAccessor::Name(iden) => {
+		GetAccessor::DotName(iden) => {
 			get_property(iden, &borrowed_props, &class, &getee, &v.blame)
 		}
-		DotAccessor::Eval(expr) => {
+		GetAccessor::DotEval(expr) => {
 			let key = eval_expression(expr, env)?.to_string();
 
 			get_property(
@@ -337,6 +336,34 @@ pub fn get_expression(
 				&v.blame,
 			)
 		}
+		_ => unreachable!("wrong accessor in dot"),
+	}
+}
+
+fn get_subscription(
+	v: &GetValue,
+	_env: &InterpreterEnvironment,
+) -> Result<InterpreterValue, RuntimeError> {
+	match &v.key {
+		GetAccessor::SubscriptionNumber(_num) => {
+			unimplemented!("get sub number")
+		}
+		GetAccessor::SubscriptionEval(_expr) => {
+			unimplemented!("get sub eval")
+		}
+		_ => unreachable!("wrong accessor in subscription"),
+	}
+}
+
+#[inline(always)]
+pub fn get_expression(
+	v: &GetValue,
+	env: &InterpreterEnvironment,
+) -> Result<InterpreterValue, RuntimeError> {
+	if matches!(v.key, GetAccessor::DotName(_) | GetAccessor::DotEval(_)) {
+		get_dot(v, env)
+	} else {
+		get_subscription(v, env)
 	}
 }
 
@@ -365,12 +392,18 @@ pub fn set_expression(
 	let mut borrowed_props = properties.borrow_mut();
 
 	match &v.key {
-		DotAccessor::Name(key) => {
+		GetAccessor::DotName(key) => {
 			borrowed_props.insert(key.to_string(), value.clone());
 		}
-		DotAccessor::Eval(expr) => {
+		GetAccessor::DotEval(expr) => {
 			let key = eval_expression(expr, env)?.to_string();
 			borrowed_props.insert(key, value.clone());
+		}
+		GetAccessor::SubscriptionNumber(_num) => {
+			unimplemented!("set sub number")
+		}
+		GetAccessor::SubscriptionEval(_expr) => {
+			unimplemented!("set sub eval")
 		}
 	};
 

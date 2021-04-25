@@ -108,7 +108,7 @@ def gen_expr() -> str:
 		""",
 		"""
 			Set ->
-				setee: Box<Expr>, key: DotAccessor,
+				setee: Box<Expr>, key: GetAccessor,
 				value: Box<Expr>, blame: Token
 		""",
 		"""
@@ -119,7 +119,7 @@ def gen_expr() -> str:
 		'Call -> calee: Box<Expr>, closing_paren: Token, arguments: Vec<Expr>',
 		'Assignment -> name: Token, value: Box<Expr>, env_distance: Cell<u32>',
 		'Binary -> left: Box<Expr>, operator: Token, right: Box<Expr>',
-		'Get -> getee: Box<Expr>, key: DotAccessor, blame: Token',
+		'Get -> getee: Box<Expr>, key: GetAccessor, blame: Token',
 		'Identifier -> name: Token, env_distance: Cell<u32>',
 		'This -> blame: Token, env_distance: Cell<u32>',
 		'Unary -> operator: Token, right: Box<Expr>',
@@ -142,9 +142,11 @@ def gen_expr() -> str:
 	]
 
 	additional_code = """
-		pub enum DotAccessor {
-			Name(Rc<str>),
-			Eval(Box<Expr>),
+		pub enum GetAccessor {
+			DotName(Rc<str>),
+			DotEval(Box<Expr>),
+			SubscriptionNumber(usize),
+			SubscriptionEval(Box<Expr>),
 		}
 
 		pub enum SuperAccessor {

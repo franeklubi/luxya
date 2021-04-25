@@ -69,6 +69,9 @@ fn native_len(
 		InterpreterValue::String(s) => {
 			Ok(InterpreterValue::Number(s.len() as f64))
 		}
+		InterpreterValue::List(l) => {
+			Ok(InterpreterValue::Number(l.len() as f64))
+		}
 		_ => Err(RuntimeError {
 			message: format!(
 				"Can't get length of {}",
