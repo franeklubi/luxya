@@ -6,10 +6,11 @@ use std::rc::Rc;
 
 // A shorthand way to extract identifier's name
 pub fn assume_identifier(t: &Token) -> &str {
-	if let TokenType::Identifier(i) = &t.token_type {
-		i
-	} else {
-		unreachable!("Couldn't extract identifier. This shouldn't happen")
+	match &t.token_type {
+		TokenType::Identifier(i) => i,
+		TokenType::Super => "super",
+		TokenType::This => "this",
+		_ => unreachable!("Couldn't extract identifier."),
 	}
 }
 

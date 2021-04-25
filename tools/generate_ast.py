@@ -110,12 +110,16 @@ def gen_expr() -> str:
 				setee: Box<Expr>, key: DotAccessor,
 				value: Box<Expr>, blame: Token
 		""",
+		"""
+			Super ->
+				blame: Token, accessor: SuperAccessor,
+				env_distance: Cell<u32>
+		""",
 		'Call -> calee: Box<Expr>, closing_paren: Token, arguments: Vec<Expr>',
 		'Assignment -> name: Token, value: Box<Expr>, env_distance: Cell<u32>',
 		'Binary -> left: Box<Expr>, operator: Token, right: Box<Expr>',
 		'Get -> getee: Box<Expr>, key: DotAccessor, blame: Token',
 		'Identifier -> name: Token, env_distance: Cell<u32>',
-		'Super -> keyword: Token, accessor: SuperAccessor',
 		'This -> blame: Token, env_distance: Cell<u32>',
 		'Unary -> operator: Token, right: Box<Expr>',
 		'Grouping -> expression: Box<Expr>',

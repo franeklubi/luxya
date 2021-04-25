@@ -9,7 +9,7 @@ use crate::{
 	resolver_unwrap_enclosing,
 	resolver_unwrap_scope,
 	resolver_unwrap_scope_mut,
-	token::{Token, TokenType},
+	token::Token,
 };
 
 use std::{cell::RefCell, rc::Rc};
@@ -134,11 +134,7 @@ impl ResolverEnvironment {
 		resolvable_node: &Expr,
 		resolvable_token: &Token,
 	) -> Result<(), RuntimeError> {
-		let name = if let TokenType::This = resolvable_token.token_type {
-			"this"
-		} else {
-			assume_identifier(resolvable_token)
-		};
+		let name = assume_identifier(resolvable_token);
 
 		if let Some(_dv) = resolver_unwrap_scope!(self).get(name) {
 			let env_distance = assume_resolvable_expr(resolvable_node);

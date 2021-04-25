@@ -24,6 +24,12 @@ pub struct SetValue {
 	pub blame: Token,
 }
 
+pub struct SuperValue {
+	pub blame: Token,
+	pub accessor: SuperAccessor,
+	pub env_distance: Cell<u32>,
+}
+
 pub struct CallValue {
 	pub calee: Box<Expr>,
 	pub closing_paren: Token,
@@ -53,11 +59,6 @@ pub struct IdentifierValue {
 	pub env_distance: Cell<u32>,
 }
 
-pub struct SuperValue {
-	pub keyword: Token,
-	pub accessor: SuperAccessor,
-}
-
 pub struct ThisValue {
 	pub blame: Token,
 	pub env_distance: Cell<u32>,
@@ -75,12 +76,12 @@ pub struct GroupingValue {
 pub enum Expr {
 	Function(FunctionValue),
 	Set(SetValue),
+	Super(SuperValue),
 	Call(CallValue),
 	Assignment(AssignmentValue),
 	Binary(BinaryValue),
 	Get(GetValue),
 	Identifier(IdentifierValue),
-	Super(SuperValue),
 	This(ThisValue),
 	Unary(UnaryValue),
 	Grouping(GroupingValue),

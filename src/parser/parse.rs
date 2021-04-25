@@ -411,10 +411,7 @@ fn primary(tokens: ParserIter) -> Result<Expr, ParseError> {
 			token_type: TokenType::This,
 			..
 		}) => Ok(Expr::This(ThisValue {
-			blame: Token {
-				token_type: TokenType::Identifier("this".into()),
-				..token.unwrap()
-			},
+			blame: token.unwrap(),
 			env_distance: Cell::new(0),
 		})),
 
@@ -455,8 +452,9 @@ fn primary(tokens: ParserIter) -> Result<Expr, ParseError> {
 			}?;
 
 			Ok(Expr::Super(SuperValue {
-				keyword: token.unwrap(),
+				blame: token.unwrap(),
 				accessor,
+				env_distance: Cell::new(0),
 			}))
 		}
 

@@ -9,6 +9,7 @@ pub fn assume_resolvable_expr(expr: &Expr) -> &Cell<u32> {
 		Expr::Identifier(i) => &i.env_distance,
 		Expr::Assignment(a) => &a.env_distance,
 		Expr::This(t) => &t.env_distance,
+		Expr::Super(s) => &s.env_distance,
 		_ => unreachable!(
 			"Couldn't extract resolvable expr. This shouldn't happen"
 		),

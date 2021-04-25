@@ -148,3 +148,19 @@ pub fn this_expression(
 
 	Ok(InterpreterValue::Nil)
 }
+
+#[inline(always)]
+pub fn super_expression(
+	expr: &Expr,
+	v: &SuperValue,
+	env: &ResolverEnvironment,
+) -> Result<InterpreterValue, RuntimeError> {
+	env.resolve_nest_level(expr, &v.blame)
+		.map_err(|err| RuntimeError {
+			token: err.token,
+			message: "Cannot call `super` outside of a child class method"
+				.into(),
+		})?;
+
+	Ok(InterpreterValue::Nil)
+}

@@ -19,10 +19,12 @@ class Elo {
 
 class Node extends Elo {
 	constructor(data) {
-		super(chuj);
+		this.heja = "chuj";
+
+		super.siemka();
 
 		print "in Node constructor";
-		super.siemka();
+		super();
 		print "after Node constructor";
 
 		this.data = data;

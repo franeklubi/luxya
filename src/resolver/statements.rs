@@ -86,6 +86,16 @@ pub fn class_statement(
 		},
 	);
 
+	let mut dummy_class_env = env.fork();
+
+	dummy_class_env.declare(
+		"this".to_owned(),
+		DeclaredValue {
+			mutable: false,
+			value: InterpreterValue::Nil,
+		},
+	);
+
 	if let Some(expr) = &v.superclass {
 		let superclass = if let Expr::Identifier(s) = expr {
 			s
@@ -103,17 +113,17 @@ pub fn class_statement(
 		}
 
 		resolve::resolve_expression(expr, env)?;
+
+		dummy_class_env = dummy_class_env.fork();
+
+		dummy_class_env.declare(
+			"super".to_owned(),
+			DeclaredValue {
+				mutable: false,
+				value: InterpreterValue::Nil,
+			},
+		);
 	}
-
-	let dummy_class_env = env.fork();
-
-	dummy_class_env.declare(
-		"this".to_owned(),
-		DeclaredValue {
-			mutable: false,
-			value: InterpreterValue::Nil,
-		},
-	);
 
 	for method in &v.methods {
 		// resolve_expression wires the method to function_expression
