@@ -242,40 +242,40 @@ pub fn binary_experssion(
 }
 
 #[inline(always)]
+fn find_method(
+	key: &str,
+	class: &InterpreterValue,
+	instance: &InterpreterValue,
+	blame: &Token,
+) -> Result<InterpreterValue, RuntimeError> {
+	let (methods, superclass) = if let InterpreterValue::Class {
+		methods,
+		superclass,
+		..
+	} = &class
+	{
+		(methods, superclass)
+	} else {
+		unreachable!("Class is not a class? 🤔")
+	};
+
+	if let Some(method) = methods.get(key) {
+		Ok(bind_function(method, instance.clone()))
+	} else if let Some(superclass) = &superclass {
+		find_method(key, superclass, instance, blame)
+	} else {
+		Err(RuntimeError {
+			message: format!("Property {} not defined", key),
+			token: blame.clone(),
+		})
+	}
+}
+
+#[inline(always)]
 pub fn get_expression(
 	v: &GetValue,
 	env: &InterpreterEnvironment,
 ) -> Result<InterpreterValue, RuntimeError> {
-	#[inline(always)]
-	fn find_method(
-		key: &str,
-		class: &InterpreterValue,
-		instance: &InterpreterValue,
-		blame: &Token,
-	) -> Result<InterpreterValue, RuntimeError> {
-		let (methods, superclass) = if let InterpreterValue::Class {
-			methods,
-			superclass,
-			..
-		} = &class
-		{
-			(methods, superclass)
-		} else {
-			unreachable!("Class is not a class? 🤔")
-		};
-
-		if let Some(method) = methods.get(key) {
-			Ok(bind_function(method, instance.clone()))
-		} else if let Some(superclass) = &superclass {
-			find_method(key, superclass, instance, blame)
-		} else {
-			Err(RuntimeError {
-				message: format!("Property {} not defined", key),
-				token: blame.clone(),
-			})
-		}
-	}
-
 	#[inline(always)]
 	fn get_property(
 		key: &str,
@@ -369,4 +369,53 @@ where
 	E: EnvironmentWrapper<T>,
 {
 	Ok(env.read(v.env_distance.get(), &v.blame)?.value)
+}
+
+#[inline(always)]
+pub fn super_expression(
+	v: &SuperValue,
+	env: &InterpreterEnvironment,
+) -> Result<InterpreterValue, RuntimeError> {
+	let env_distance = v.env_distance.get();
+
+	let superclass = env.read(env_distance, &v.blame)?.value;
+
+	// resolver got us this far, so we believe it that env with bound `this` is
+	// 1 env-hop closer to us
+	let instance = env
+		.read(
+			env_distance - 1,
+			&Token {
+				byte_offset: 0,
+				byte_length: 0,
+				token_type: TokenType::This,
+			},
+		)?
+		.value;
+
+	match &v.accessor {
+		SuperAccessor::Method(m) => {
+			let name = assume_identifier(m);
+
+			find_method(name, &superclass, &instance, m)
+		}
+		SuperAccessor::Call(args) => {
+			let constructor =
+				if let InterpreterValue::Class { constructor, .. } = superclass
+				{
+					constructor
+				} else {
+					unreachable!("Superclass should be a class like come on 🤦")
+				};
+
+			let constructor = constructor.ok_or_else(|| RuntimeError {
+				message: "Superclass does not have a constructor".into(),
+				token: v.blame.clone(),
+			})?;
+
+			let constructor = bind_function(&constructor, instance);
+
+			execute_call(&constructor, &args, &v.blame, env)
+		}
+	}
 }

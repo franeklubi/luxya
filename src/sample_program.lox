@@ -11,91 +11,27 @@
 // 	print str(i) + ": " + str(fib(i));
 // }
 
-class Elo {
-	siemka() {
-		print "from siemka";
-	}
-};
-
-class Node extends Elo {
-	constructor(data) {
-		this.heja = "chuj";
-
-		super.siemka();
-
-		print "in Node constructor";
-		super();
-		print "after Node constructor";
-
-		this.data = data;
-		this.left = nil;
-		this.right = nil;
+class Person {
+	constructor(name) {
+		this.name = name;
 	}
 
-	insert(data) {
-		if this.data == nil {
-			this.data = data;
-			return;
-		}
-
-		if data == nil {
-			return;
-		}
-
-		if data < this.data {
-			if this.left == nil {
-				this.left = Node(data);
-			} else {
-				this.left.insert(data);
-			}
-		} else if data > this.data {
-			if this.right == nil {
-				this.right = Node(data);
-			} else {
-				this.right.insert(data);
-			}
-		}
-	}
-
-	print_tree() {
-		if this.left != nil {
-			this.left.print_tree();
-		}
-
-		print this.data;
-
-		if this.right != nil {
-			this.right.print_tree();
-		}
-	}
-
-	reverse_tree() {
-		if this.left != nil {
-			this.left.reverse_tree();
-		}
-
-		if this.right != nil {
-			this.right.reverse_tree();
-		}
-
-		const temp = this.left;
-		this.left = this.right;
-		this.right = temp;
+	say_name() {
+		print this.name;
 	}
 }
 
-const root = Node(2);
+class Olus extends Person {
+	constructor() {
+		super("Olus");
+	}
 
-root.siemka();
+	kim_jestem() {
+		super.say_name();
+		print this.name + " to ja!";
+	}
+}
 
-root.insert(1);
-root.insert(3);
-root.insert(7);
+let olus = Olus();
 
-print "normal:";
-root.print_tree();
-
-print "";
-print "reversed:";
-root.reverse_tree();
-root.print_tree();
+olus.kim_jestem();

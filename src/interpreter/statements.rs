@@ -215,6 +215,38 @@ pub fn class_statement(
 ) -> Result<InterpreterStmtValue<InterpreterValue>, RuntimeError> {
 	let name = assume_identifier(&v.name);
 
+	let (superclass, super_env) = if let Some(expr) = &v.superclass {
+		let evaluated = eval_expression(expr, env)?;
+
+		if !matches!(evaluated, InterpreterValue::Class { .. }) {
+			return Err(RuntimeError {
+				message: format!(
+					"Cannot inherit from {}",
+					evaluated.to_human_readable()
+				),
+				token: v.name.clone(),
+			});
+		}
+
+		let superclass = eval_expression(expr, env)?;
+
+		let super_env = env.fork();
+
+		super_env.declare(
+			"super".into(),
+			DeclaredValue {
+				mutable: false,
+				value: superclass.clone(),
+			},
+		);
+
+		(Some(Rc::new(superclass)), Some(super_env))
+	} else {
+		(None, None)
+	};
+
+	let class_env = super_env.as_ref().unwrap_or(env);
+
 	let mut methods = HashMap::new();
 
 	let mut constructor = None;
@@ -229,7 +261,7 @@ pub fn class_statement(
 			)
 		};
 
-		let fun = construct_lox_defined_function(fv, env);
+		let fun = construct_lox_defined_function(fv, class_env);
 
 		let name = assume_identifier(fv.name.as_ref().expect("Method name"));
 
@@ -239,24 +271,6 @@ pub fn class_statement(
 			methods.insert(name.to_owned(), fun);
 		}
 	}
-
-	let superclass = if let Some(expr) = &v.superclass {
-		let evaluated = eval_expression(expr, env)?;
-
-		if !matches!(evaluated, InterpreterValue::Class { .. }) {
-			return Err(RuntimeError {
-				message: format!(
-					"Cannot inherit from {}",
-					evaluated.to_human_readable()
-				),
-				token: v.name.clone(),
-			});
-		}
-
-		Some(Rc::new(eval_expression(expr, env)?))
-	} else {
-		None
-	};
 
 	env.declare(
 		name.to_owned(),
