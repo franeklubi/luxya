@@ -15,6 +15,8 @@ pub enum TokenType {
 	Semicolon,
 	Slash,
 	Star,
+	LeftSquareBracket,
+	RightSquareBracket,
 
 	// One Or Two Character Tokens
 	Bang,
@@ -84,6 +86,8 @@ impl fmt::Display for TokenType {
 			TokenType::RightParen => write!(f, ")"),
 			TokenType::LeftBrace => write!(f, "{{"),
 			TokenType::RightBrace => write!(f, "}}"),
+			TokenType::LeftSquareBracket => write!(f, "["),
+			TokenType::RightSquareBracket => write!(f, "]"),
 			TokenType::Comma => write!(f, ","),
 			TokenType::Dot => write!(f, "."),
 			TokenType::Minus => write!(f, "-"),

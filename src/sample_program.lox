@@ -11,27 +11,6 @@
 // 	print str(i) + ": " + str(fib(i));
 // }
 
-class Person {
-	constructor(name) {
-		this.name = name;
-	}
+let lista = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
 
-	say_name() {
-		print this.name;
-	}
-}
-
-class Olus extends Person {
-	constructor() {
-		super("Olus");
-	}
-
-	kim_jestem() {
-		super.say_name();
-		print this.name + " to ja!";
-	}
-}
-
-let olus = Olus();
-
-olus.kim_jestem();
+print lista;

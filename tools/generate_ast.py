@@ -21,7 +21,8 @@ def generate_ast(
 
 	# generate literal values
 	if literal_types_name != None:
-		generated_file += '#[derive(Clone, PartialEq)]pub enum {} {{\n'.format(literal_types_name)
+		generated_file += '#[derive(Clone)]pub enum {} {{\n' \
+			.format(literal_types_name)
 
 		for l in literal_types:
 			lv = parse_arrow_expr(l)
@@ -132,6 +133,7 @@ def gen_expr() -> str:
 	]
 
 	literal_types = [
+		'List -> Rc<Vec<Expr>>',
 		'String -> Rc<str>',
 		'Number -> f64',
 		'True',

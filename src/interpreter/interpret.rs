@@ -71,7 +71,7 @@ pub fn eval_expression(
 	env: &InterpreterEnvironment,
 ) -> Result<InterpreterValue, RuntimeError> {
 	match expr {
-		Expr::Literal(v) => literal_expression(v),
+		Expr::Literal(v) => literal_expression(v, env),
 		Expr::Grouping(v) => eval_expression(&v.expression, env),
 		Expr::Unary(v) => unary_expression(v, env),
 		Expr::Binary(v) => binary_experssion(v, env),

@@ -5,11 +5,25 @@ use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 
 #[inline(always)]
-pub fn literal_expression<T>(v: &LiteralValue) -> Result<T, RuntimeError>
-where
-	T: From<LiteralValue>,
-{
-	Ok(v.clone().into())
+pub fn literal_expression(
+	v: &LiteralValue,
+	env: &InterpreterEnvironment,
+) -> Result<InterpreterValue, RuntimeError> {
+	match v {
+		LiteralValue::String(s) => Ok(InterpreterValue::String(Rc::clone(&s))),
+		LiteralValue::Number(n) => Ok(InterpreterValue::Number(*n)),
+		LiteralValue::True => Ok(InterpreterValue::True),
+		LiteralValue::False => Ok(InterpreterValue::False),
+		LiteralValue::Nil => Ok(InterpreterValue::Nil),
+		LiteralValue::List(l) => {
+			let values =
+				l.iter()
+					.map(|expr| eval_expression(expr, env))
+					.collect::<Result<Vec<InterpreterValue>, RuntimeError>>()?;
+
+			Ok(InterpreterValue::List(values))
+		}
+	}
 }
 
 #[inline(always)]

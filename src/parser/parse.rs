@@ -459,6 +459,28 @@ fn primary(tokens: ParserIter) -> Result<Expr, ParseError> {
 		}
 
 		Some(Token {
+			token_type: TokenType::LeftSquareBracket,
+			..
+		}) => {
+			let mut values = Vec::new();
+
+			if !peek_matches(tokens, &[TokenType::RightSquareBracket]) {
+				loop {
+					values.push(expression(tokens)?);
+
+					if match_then_consume(tokens, &[TokenType::Comma]).is_none()
+					{
+						break;
+					}
+				}
+			}
+
+			expect(tokens, &[TokenType::RightSquareBracket], None)?;
+
+			Ok(Expr::Literal(LiteralValue::List(Rc::new(values))))
+		}
+
+		Some(Token {
 			token_type: TokenType::Identifier(_),
 			..
 		}) => Ok(Expr::Identifier(IdentifierValue {

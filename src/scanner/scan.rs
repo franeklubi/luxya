@@ -42,6 +42,8 @@ fn scan_token(
 			')' => TokenType::RightParen,
 			'{' => TokenType::LeftBrace,
 			'}' => TokenType::RightBrace,
+			'[' => TokenType::LeftSquareBracket,
+			']' => TokenType::RightSquareBracket,
 			',' => TokenType::Comma,
 			'.' => TokenType::Dot,
 			'-' => TokenType::Minus,

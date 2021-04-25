@@ -4,6 +4,8 @@ use crate::{ast::expr::*, token::*};
 use std::{cell::RefCell, collections::HashMap, fmt, rc::Rc};
 
 
+const MAX_LIST_VALUES_PRINT: usize = 10;
+
 pub struct RuntimeError {
 	pub message: String,
 	pub token: Token,
@@ -25,6 +27,7 @@ pub enum InterpreterValue {
 		name: Rc<str>,
 		methods: Rc<HashMap<String, InterpreterValue>>,
 	},
+	List(Vec<InterpreterValue>),
 	String(Rc<str>),
 	Number(f64),
 	True,
@@ -41,6 +44,7 @@ impl InterpreterValue {
 			InterpreterValue::String(_) => "string",
 			InterpreterValue::Number(_) => "number",
 			InterpreterValue::False => "boolean",
+			InterpreterValue::List(_) => "list",
 			InterpreterValue::True => "boolean",
 			InterpreterValue::Nil => "nil",
 		}
@@ -97,23 +101,34 @@ impl From<bool> for InterpreterValue {
 	}
 }
 
-impl From<LiteralValue> for InterpreterValue {
-	fn from(v: LiteralValue) -> Self {
-		match v {
-			LiteralValue::String(s) => InterpreterValue::String(Rc::clone(&s)),
-			LiteralValue::Number(n) => InterpreterValue::Number(n),
-			LiteralValue::True => InterpreterValue::True,
-			LiteralValue::False => InterpreterValue::False,
-			LiteralValue::Nil => InterpreterValue::Nil,
-		}
-	}
-}
-
 // TODO: convert to a method
 // (like to_human_readable we already have or something)
 impl fmt::Display for InterpreterValue {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		match self {
+			InterpreterValue::List(l) => {
+				let mut list_repr = String::from("[ ");
+
+				list_repr += &l
+					.iter()
+					.take(MAX_LIST_VALUES_PRINT)
+					.map(|v| v.to_string())
+					.collect::<Vec<String>>()
+					.join(", ");
+
+				let list_len = l.len();
+
+				if list_len > MAX_LIST_VALUES_PRINT {
+					list_repr += &format!(
+						", ...{} hidden ]",
+						list_len - MAX_LIST_VALUES_PRINT
+					);
+				} else {
+					list_repr += "]";
+				}
+
+				write!(f, "{}", list_repr)
+			}
 			InterpreterValue::Instance { class, .. } => {
 				write!(f, "instance of {}", class)
 			}

@@ -1,8 +1,9 @@
 use crate::{ast::stmt::*, token::Token};
 use std::{cell::Cell, rc::Rc};
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone)]
 pub enum LiteralValue {
+	List(Rc<Vec<Expr>>),
 	String(Rc<str>),
 	Number(f64),
 	True,
