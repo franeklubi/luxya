@@ -53,6 +53,11 @@ pub struct IdentifierValue {
 	pub env_distance: Cell<u32>,
 }
 
+pub struct SuperValue {
+	pub keyword: Token,
+	pub accessor: SuperAccessor,
+}
+
 pub struct ThisValue {
 	pub blame: Token,
 	pub env_distance: Cell<u32>,
@@ -75,6 +80,7 @@ pub enum Expr {
 	Binary(BinaryValue),
 	Get(GetValue),
 	Identifier(IdentifierValue),
+	Super(SuperValue),
 	This(ThisValue),
 	Unary(UnaryValue),
 	Grouping(GroupingValue),
@@ -84,4 +90,9 @@ pub enum Expr {
 pub enum DotAccessor {
 	Name(Rc<str>),
 	Eval(Box<Expr>),
+}
+
+pub enum SuperAccessor {
+	Method(Token),
+	Call(Vec<Expr>),
 }

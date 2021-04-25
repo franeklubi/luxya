@@ -277,79 +277,74 @@ pub fn function_declaration(
 	}
 }
 
+#[inline(always)]
+fn finish_call(tokens: ParserIter, calee: Expr) -> Result<Expr, ParseError> {
+	let mut arguments = Vec::new();
+
+	if !peek_matches(tokens, &[TokenType::RightParen]) {
+		loop {
+			arguments.push(expression(tokens)?);
+
+			if match_then_consume(tokens, &[TokenType::Comma]).is_none() {
+				break;
+			}
+		}
+	}
+
+	Ok(Expr::Call(CallValue {
+		arguments,
+		calee: Box::new(calee),
+		closing_paren: expect(tokens, &[TokenType::RightParen], None)?,
+	}))
+}
+
+#[inline(always)]
+fn finish_get(tokens: ParserIter, getee: Expr) -> Result<Expr, ParseError> {
+	let consumed = tokens.next();
+	let consumed_token_type = consumed.as_ref().map(|c| c.token_type.clone());
+
+	match consumed_token_type {
+		Some(TokenType::Identifier(_)) => {
+			let i = if let Some(TokenType::Identifier(i)) = consumed_token_type
+			{
+				i
+			} else {
+				unreachable!("Identifier name extraction failed")
+			};
+
+			// unwrap_unchecked because we just matched peek 😇
+			let blame = unsafe { consumed.unwrap_unchecked() };
+
+			Ok(Expr::Get(GetValue {
+				getee: Box::new(getee),
+				key: DotAccessor::Name(i),
+				blame,
+			}))
+		}
+		Some(TokenType::LeftParen) => {
+			// same here, unwrapping what we already matched
+			let blame = unsafe { tokens.peek().unwrap_unchecked().clone() };
+
+			let eval = expression(tokens)?;
+
+			expect(tokens, &[TokenType::RightParen], None)?;
+
+			Ok(Expr::Get(GetValue {
+				getee: Box::new(getee),
+				key: DotAccessor::Eval(Box::new(eval)),
+				blame,
+			}))
+		}
+		_ => Err(ParseError {
+			token: tokens.peek().cloned(),
+			message: "Expected identifier or a parenthesized expression to \
+			          evaluate"
+				.into(),
+		}),
+	}
+}
+
 fn call(tokens: ParserIter) -> Result<Expr, ParseError> {
-	#[inline(always)]
-	fn finish_call(
-		tokens: ParserIter,
-		calee: Expr,
-	) -> Result<Expr, ParseError> {
-		let mut arguments = Vec::new();
-
-		if !peek_matches(tokens, &[TokenType::RightParen]) {
-			loop {
-				arguments.push(expression(tokens)?);
-
-				if match_then_consume(tokens, &[TokenType::Comma]).is_none() {
-					break;
-				}
-			}
-		}
-
-		Ok(Expr::Call(CallValue {
-			arguments,
-			calee: Box::new(calee),
-			closing_paren: expect(tokens, &[TokenType::RightParen], None)?,
-		}))
-	}
-
-	#[inline(always)]
-	fn finish_get(tokens: ParserIter, getee: Expr) -> Result<Expr, ParseError> {
-		let consumed = tokens.next();
-		let consumed_token_type =
-			consumed.as_ref().map(|c| c.token_type.clone());
-
-		match consumed_token_type {
-			Some(TokenType::Identifier(_)) => {
-				let i = if let Some(TokenType::Identifier(i)) =
-					consumed_token_type
-				{
-					i
-				} else {
-					unreachable!("Identifier name extraction failed")
-				};
-
-				// unwrap_unchecked because we just matched peek 😇
-				let blame = unsafe { consumed.unwrap_unchecked() };
-
-				Ok(Expr::Get(GetValue {
-					getee: Box::new(getee),
-					key: DotAccessor::Name(i),
-					blame,
-				}))
-			}
-			Some(TokenType::LeftParen) => {
-				// same here, unwrapping what we already matched
-				let blame = unsafe { tokens.peek().unwrap_unchecked().clone() };
-
-				let eval = expression(tokens)?;
-
-				expect(tokens, &[TokenType::RightParen], None)?;
-
-				Ok(Expr::Get(GetValue {
-					getee: Box::new(getee),
-					key: DotAccessor::Eval(Box::new(eval)),
-					blame,
-				}))
-			}
-			_ => Err(ParseError {
-				token: tokens.peek().cloned(),
-				message: "Expected identifier or a parenthesized expression \
-				          to evaluate"
-					.into(),
-			}),
-		}
-	}
-
 	let mut expr = primary(tokens)?;
 
 	while let Some(consumed) =
@@ -422,6 +417,48 @@ fn primary(tokens: ParserIter) -> Result<Expr, ParseError> {
 			},
 			env_distance: Cell::new(0),
 		})),
+
+		Some(Token {
+			token_type: TokenType::Super,
+			..
+		}) => {
+			let dummy_expr = Expr::Literal(LiteralValue::Nil);
+
+			let accessor = match tokens.next().map(|next| next.token_type) {
+				Some(TokenType::LeftParen) => {
+					let call_expr = finish_call(tokens, dummy_expr)?;
+
+					let arguments = if let Expr::Call(cv) = call_expr {
+						cv.arguments
+					} else {
+						unreachable!("Call is not a call? Weird 😳")
+					};
+
+					Ok(SuperAccessor::Call(arguments))
+				}
+				Some(TokenType::Dot) => {
+					// TODO: optimize expect
+					let name = expect(
+						tokens,
+						&[TokenType::Identifier("".into())],
+						Some("Expected method name"),
+					)?;
+
+					Ok(SuperAccessor::Method(name))
+				}
+				_ => Err(ParseError {
+					token: token.clone(),
+					message: "Expected `.` or `(...args)` (constructor call) \
+					          after `super`"
+						.into(),
+				}),
+			}?;
+
+			Ok(Expr::Super(SuperValue {
+				keyword: token.unwrap(),
+				accessor,
+			}))
+		}
 
 		Some(Token {
 			token_type: TokenType::Identifier(_),

@@ -82,5 +82,6 @@ pub fn eval_expression(
 		Expr::Get(v) => get_expression(v, env),
 		Expr::Set(v) => set_expression(v, env),
 		Expr::This(v) => this_expression(v, env),
+		Expr::Super(_v) => unimplemented!("super in interpreter"),
 	}
 }

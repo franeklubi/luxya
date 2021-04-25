@@ -19,6 +19,12 @@ class Elo {
 
 class Node extends Elo {
 	constructor(data) {
+		super(chuj);
+
+		print "in Node constructor";
+		super.siemka();
+		print "after Node constructor";
+
 		this.data = data;
 		this.left = nil;
 		this.right = nil;

@@ -115,6 +115,7 @@ def gen_expr() -> str:
 		'Binary -> left: Box<Expr>, operator: Token, right: Box<Expr>',
 		'Get -> getee: Box<Expr>, key: DotAccessor, blame: Token',
 		'Identifier -> name: Token, env_distance: Cell<u32>',
+		'Super -> keyword: Token, accessor: SuperAccessor',
 		'This -> blame: Token, env_distance: Cell<u32>',
 		'Unary -> operator: Token, right: Box<Expr>',
 		'Grouping -> expression: Box<Expr>',
@@ -138,6 +139,11 @@ def gen_expr() -> str:
 		pub enum DotAccessor {
 			Name(Rc<str>),
 			Eval(Box<Expr>),
+		}
+
+		pub enum SuperAccessor {
+			Method(Token),
+			Call(Vec<Expr>),
 		}
 	"""
 
