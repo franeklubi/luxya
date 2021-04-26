@@ -145,7 +145,7 @@ def gen_expr() -> str:
 		pub enum GetAccessor {
 			DotName(Rc<str>),
 			DotEval(Box<Expr>),
-			SubscriptionNumber(usize),
+			SubscriptionNumber(f64),
 			SubscriptionEval(Box<Expr>),
 		}
 

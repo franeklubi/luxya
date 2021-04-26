@@ -342,16 +342,62 @@ fn get_dot(
 
 fn get_subscription(
 	v: &GetValue,
-	_env: &InterpreterEnvironment,
+	env: &InterpreterEnvironment,
 ) -> Result<InterpreterValue, RuntimeError> {
-	match &v.key {
-		GetAccessor::SubscriptionNumber(_num) => {
-			unimplemented!("get sub number")
+	#[inline(always)]
+	fn out_of_bounds(index: usize, blame: Token) -> RuntimeError {
+		RuntimeError {
+			message: format!("Index {} out of bounds", index),
+			token: blame,
 		}
-		GetAccessor::SubscriptionEval(_expr) => {
-			unimplemented!("get sub eval")
+	}
+
+	let extracted_n = match &v.key {
+		GetAccessor::SubscriptionNumber(n) => Ok(*n),
+		GetAccessor::SubscriptionEval(expr) => {
+			let eval = eval_expression(expr, env)?;
+
+			if let InterpreterValue::Number(n) = eval {
+				Ok(n)
+			} else {
+				Err(RuntimeError {
+					message: format!(
+						"Cannot use {} for indexing",
+						eval.to_human_readable()
+					),
+					token: v.blame.clone(),
+				})
+			}
 		}
 		_ => unreachable!("wrong accessor in subscription"),
+	}?;
+
+	let index = if extracted_n.fract() != 0.0 || extracted_n < 0.0 {
+		return Err(RuntimeError {
+			message: format!("Cannot access element on index {}", extracted_n),
+			token: v.blame.clone(),
+		});
+	} else {
+		extracted_n as usize
+	};
+
+	let getee_val = eval_expression(&v.getee, env)?;
+
+	match getee_val {
+		InterpreterValue::String(_s) => {
+			unimplemented!()
+		}
+		InterpreterValue::List(l) => {
+			if index >= l.len() {
+				return Err(out_of_bounds(index, v.blame.clone()));
+			}
+
+			unsafe { Ok(l.get_unchecked(index).clone()) }
+		}
+		_ => Err(RuntimeError {
+			message: format!("Cannot index {}", getee_val.to_human_readable()),
+			token: v.blame.clone(),
+		}),
 	}
 }
 

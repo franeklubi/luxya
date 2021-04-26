@@ -344,19 +344,9 @@ fn finish_sub(tokens: ParserIter, getee: Expr) -> Result<Expr, ParseError> {
 			// unwrap_unchecked because we just matched peek 😇
 			let blame = unsafe { tokens.next().unwrap_unchecked() };
 
-			if n.fract() != 0.0 {
-				return Err(ParseError {
-					message: format!(
-						"Cannot access element on float index {}",
-						n
-					),
-					token: Some(blame),
-				});
-			}
-
 			Ok(Expr::Get(GetValue {
 				getee: Box::new(getee),
-				key: GetAccessor::SubscriptionNumber(n as usize),
+				key: GetAccessor::SubscriptionNumber(n),
 				blame,
 			}))
 		}
