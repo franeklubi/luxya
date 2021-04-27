@@ -384,8 +384,16 @@ fn get_subscription(
 	let getee_val = eval_expression(&v.getee, env)?;
 
 	match getee_val {
-		InterpreterValue::String(_s) => {
-			unimplemented!()
+		InterpreterValue::String(s) => {
+			if index >= s.len() {
+				return Err(out_of_bounds(index, v.blame.clone()));
+			}
+
+			unsafe {
+				Ok(InterpreterValue::Char(
+					*s.as_bytes().get_unchecked(index) as char
+				))
+			}
 		}
 		InterpreterValue::List(l) => {
 			if index >= l.len() {

@@ -30,6 +30,7 @@ pub enum InterpreterValue {
 	List(Vec<InterpreterValue>),
 	String(Rc<str>),
 	Number(f64),
+	Char(char),
 	True,
 	False,
 	Nil,
@@ -45,6 +46,7 @@ impl InterpreterValue {
 			InterpreterValue::Number(_) => "number",
 			InterpreterValue::False => "boolean",
 			InterpreterValue::List(_) => "list",
+			InterpreterValue::Char(_) => "char",
 			InterpreterValue::True => "boolean",
 			InterpreterValue::Nil => "nil",
 		}
@@ -136,6 +138,7 @@ impl fmt::Display for InterpreterValue {
 			InterpreterValue::Function { .. } => write!(f, "function"),
 			InterpreterValue::String(s) => write!(f, "{}", s),
 			InterpreterValue::Number(n) => write!(f, "{}", n),
+			InterpreterValue::Char(c) => write!(f, "{}", c),
 			InterpreterValue::False => write!(f, "false"),
 			InterpreterValue::True => write!(f, "true"),
 			InterpreterValue::Nil => write!(f, "nil"),
