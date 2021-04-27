@@ -126,7 +126,7 @@ impl fmt::Display for InterpreterValue {
 						list_len - MAX_LIST_VALUES_PRINT
 					);
 				} else {
-					list_repr += "]";
+					list_repr += " ]";
 				}
 
 				write!(f, "{}", list_repr)

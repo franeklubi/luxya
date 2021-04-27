@@ -1,6 +1,4 @@
 
-let imie = "Olusiam";
+const imie_chars = chars("🥺olusia");
 
-for let n = 0; n < len(imie); n = n + 1 {
-	print imie[n];
-}
+print typeof(imie_chars);

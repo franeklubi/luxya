@@ -3,7 +3,8 @@ use crate::{env::*, token::*};
 
 use std::rc::Rc;
 
-pub const NATIVE_FUNCTION_NAMES: [&str; 4] = ["str", "typeof", "number", "len"];
+pub const NATIVE_FUNCTION_NAMES: [&str; 5] =
+	["str", "typeof", "number", "len", "chars"];
 
 struct FunctionDefinition<'a> {
 	name: &'a str,
@@ -82,6 +83,27 @@ fn native_len(
 	}
 }
 
+fn native_chars(
+	keyword: &Token,
+	_env: &InterpreterEnvironment,
+	args: &[InterpreterValue],
+) -> Result<InterpreterValue, RuntimeError> {
+	let val = &args[0];
+
+	match val {
+		InterpreterValue::String(s) => Ok(InterpreterValue::List(
+			s.chars().map(|c| InterpreterValue::Char(c)).collect(),
+		)),
+		_ => Err(RuntimeError {
+			message: format!(
+				"Can't extract chars out of {}",
+				val.to_human_readable()
+			),
+			token: keyword.clone(),
+		}),
+	}
+}
+
 fn declarator(env: &InterpreterEnvironment, funs: &[FunctionDefinition]) {
 	funs.iter().for_each(|fd| {
 		env.declare(
@@ -123,6 +145,11 @@ pub fn declare_native_functions(env: &InterpreterEnvironment) {
 				name: NATIVE_FUNCTION_NAMES[3],
 				arity: 1,
 				fun: native_len,
+			},
+			FunctionDefinition {
+				name: NATIVE_FUNCTION_NAMES[4],
+				arity: 1,
+				fun: native_chars,
 			},
 		],
 	);
