@@ -21,7 +21,7 @@ pub fn literal_expression(
 					.map(|expr| eval_expression(expr, env))
 					.collect::<Result<Vec<InterpreterValue>, RuntimeError>>()?;
 
-			Ok(InterpreterValue::List(values))
+			Ok(InterpreterValue::List(Rc::new(RefCell::new(values))))
 		}
 	}
 }
@@ -396,11 +396,13 @@ fn get_subscription(
 			}
 		}
 		InterpreterValue::List(l) => {
-			if index >= l.len() {
+			let l_borrow = l.borrow();
+
+			if index >= l_borrow.len() {
 				return Err(out_of_bounds(index, v.blame.clone()));
 			}
 
-			unsafe { Ok(l.get_unchecked(index).clone()) }
+			unsafe { Ok(l_borrow.get_unchecked(index).clone()) }
 		}
 		_ => Err(RuntimeError {
 			message: format!("Cannot index {}", getee_val.to_human_readable()),

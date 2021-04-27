@@ -27,7 +27,7 @@ pub enum InterpreterValue {
 		name: Rc<str>,
 		methods: Rc<HashMap<String, InterpreterValue>>,
 	},
-	List(Vec<InterpreterValue>),
+	List(Rc<RefCell<Vec<InterpreterValue>>>),
 	String(Rc<str>),
 	Number(f64),
 	Char(char),
@@ -111,14 +111,16 @@ impl fmt::Display for InterpreterValue {
 			InterpreterValue::List(l) => {
 				let mut list_repr = String::from("[ ");
 
-				list_repr += &l
+				let l_borrow = l.borrow();
+
+				list_repr += &l_borrow
 					.iter()
 					.take(MAX_LIST_VALUES_PRINT)
 					.map(|v| v.to_string())
 					.collect::<Vec<String>>()
 					.join(", ");
 
-				let list_len = l.len();
+				let list_len = l_borrow.len();
 
 				if list_len > MAX_LIST_VALUES_PRINT {
 					list_repr += &format!(

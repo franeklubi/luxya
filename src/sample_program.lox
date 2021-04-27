@@ -1,4 +1,8 @@
 
 const imie_chars = chars("🥺olusia");
 
-print typeof(imie_chars);
+const charsy_2 = imie_chars;
+
+push(charsy_2, 2);
+
+print imie_chars;

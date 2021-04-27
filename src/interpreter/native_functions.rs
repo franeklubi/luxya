@@ -1,16 +1,18 @@
 use super::{interpreter_env::InterpreterEnvironment, types::*};
 use crate::{env::*, token::*};
 
-use std::rc::Rc;
+use std::{cell::RefCell, rc::Rc};
 
-pub const NATIVE_FUNCTION_NAMES: [&str; 5] =
-	["str", "typeof", "number", "len", "chars"];
+
+pub const NATIVE_FUNCTION_NAMES: [&str; 6] =
+	["str", "typeof", "number", "len", "chars", "push"];
 
 struct FunctionDefinition<'a> {
 	name: &'a str,
 	arity: usize,
 	fun: NativeFunctionSignature,
 }
+
 
 fn native_str(
 	_keyword: &Token,
@@ -71,7 +73,9 @@ fn native_len(
 			Ok(InterpreterValue::Number(s.len() as f64))
 		}
 		InterpreterValue::List(l) => {
-			Ok(InterpreterValue::Number(l.len() as f64))
+			let l_borrow = l.borrow();
+
+			Ok(InterpreterValue::Number(l_borrow.len() as f64))
 		}
 		_ => Err(RuntimeError {
 			message: format!(
@@ -91,9 +95,11 @@ fn native_chars(
 	let val = &args[0];
 
 	match val {
-		InterpreterValue::String(s) => Ok(InterpreterValue::List(
-			s.chars().map(|c| InterpreterValue::Char(c)).collect(),
-		)),
+		InterpreterValue::String(s) => {
+			Ok(InterpreterValue::List(Rc::new(RefCell::new(
+				s.chars().map(|c| InterpreterValue::Char(c)).collect(),
+			))))
+		}
 		_ => Err(RuntimeError {
 			message: format!(
 				"Can't extract chars out of {}",
@@ -102,6 +108,27 @@ fn native_chars(
 			token: keyword.clone(),
 		}),
 	}
+}
+
+fn native_push(
+	keyword: &Token,
+	_env: &InterpreterEnvironment,
+	args: &[InterpreterValue],
+) -> Result<InterpreterValue, RuntimeError> {
+	let mut l_borrow = if let InterpreterValue::List(l) = &args[0] {
+		l.borrow_mut()
+	} else {
+		return Err(RuntimeError {
+			message: "First argument must be a target of type list".into(),
+			token: keyword.clone(),
+		});
+	};
+
+	l_borrow.push(args[1].clone());
+
+	drop(l_borrow);
+
+	Ok(args[0].clone())
 }
 
 fn declarator(env: &InterpreterEnvironment, funs: &[FunctionDefinition]) {
@@ -150,6 +177,11 @@ pub fn declare_native_functions(env: &InterpreterEnvironment) {
 				name: NATIVE_FUNCTION_NAMES[4],
 				arity: 1,
 				fun: native_chars,
+			},
+			FunctionDefinition {
+				name: NATIVE_FUNCTION_NAMES[5],
+				arity: 2,
+				fun: native_push,
 			},
 		],
 	);
