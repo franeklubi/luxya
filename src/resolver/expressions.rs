@@ -112,8 +112,14 @@ pub fn get_expression(
 ) -> Result<InterpreterValue, RuntimeError> {
 	resolve::resolve_expression(&v.getee, env)?;
 
-	if let GetAccessor::DotEval(key) = &v.key {
-		resolve::resolve_expression(key, env)?;
+	match &v.key {
+		GetAccessor::DotEval(key) => {
+			resolve::resolve_expression(key, env)?;
+		}
+		GetAccessor::SubscriptionEval(expr) => {
+			resolve::resolve_expression(expr, env)?;
+		}
+		_ => (),
 	}
 
 	Ok(InterpreterValue::Nil)
