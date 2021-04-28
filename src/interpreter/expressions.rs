@@ -336,7 +336,7 @@ fn get_dot(
 				&v.blame,
 			)
 		}
-		_ => unreachable!("wrong accessor in dot"),
+		_ => unreachable!("Wrong accessor in dot"),
 	}
 }
 
@@ -344,50 +344,12 @@ fn get_subscription(
 	v: &GetValue,
 	env: &InterpreterEnvironment,
 ) -> Result<InterpreterValue, RuntimeError> {
-	#[inline(always)]
-	fn out_of_bounds(index: usize, blame: Token) -> RuntimeError {
-		RuntimeError {
-			message: format!("Index {} out of bounds", index),
-			token: blame,
-		}
-	}
-
-	let extracted_n = match &v.key {
-		GetAccessor::SubscriptionNumber(n) => Ok(*n),
-		GetAccessor::SubscriptionEval(expr) => {
-			let eval = eval_expression(expr, env)?;
-
-			if let InterpreterValue::Number(n) = eval {
-				Ok(n)
-			} else {
-				Err(RuntimeError {
-					message: format!(
-						"Cannot use {} for indexing",
-						eval.to_human_readable()
-					),
-					token: v.blame.clone(),
-				})
-			}
-		}
-		_ => unreachable!("wrong accessor in subscription"),
-	}?;
-
-	let index = if extracted_n.fract() != 0.0 || extracted_n < 0.0 {
-		return Err(RuntimeError {
-			message: format!("Cannot access element on index {}", extracted_n),
-			token: v.blame.clone(),
-		});
-	} else {
-		extracted_n as usize
-	};
-
 	let getee_val = eval_expression(&v.getee, env)?;
 
 	match getee_val {
 		InterpreterValue::String(s) => {
-			if index >= s.len() {
-				return Err(out_of_bounds(index, v.blame.clone()));
-			}
+			let index =
+				extract_subscription_index(&v.key, &v.blame, s.len(), env)?;
 
 			unsafe {
 				Ok(InterpreterValue::Char(
@@ -398,9 +360,12 @@ fn get_subscription(
 		InterpreterValue::List(l) => {
 			let l_borrow = l.borrow();
 
-			if index >= l_borrow.len() {
-				return Err(out_of_bounds(index, v.blame.clone()));
-			}
+			let index = extract_subscription_index(
+				&v.key,
+				&v.blame,
+				l_borrow.len(),
+				env,
+			)?;
 
 			unsafe { Ok(l_borrow.get_unchecked(index).clone()) }
 		}
@@ -423,8 +388,7 @@ pub fn get_expression(
 	}
 }
 
-#[inline(always)]
-pub fn set_expression(
+fn set_dot(
 	v: &SetValue,
 	env: &InterpreterEnvironment,
 ) -> Result<InterpreterValue, RuntimeError> {
@@ -455,15 +419,49 @@ pub fn set_expression(
 			let key = eval_expression(expr, env)?.to_string();
 			borrowed_props.insert(key, value.clone());
 		}
-		GetAccessor::SubscriptionNumber(_num) => {
-			unimplemented!("set sub number")
-		}
-		GetAccessor::SubscriptionEval(_expr) => {
-			unimplemented!("set sub eval")
-		}
+		_ => unreachable!("How"),
 	};
 
 	Ok(value)
+}
+
+fn set_subscription(
+	v: &SetValue,
+	env: &InterpreterEnvironment,
+) -> Result<InterpreterValue, RuntimeError> {
+	let setee = eval_expression(&v.setee, env)?;
+
+	let mut l_borrow = unwrap_list(
+		&setee,
+		&v.blame,
+		0,
+		Some(
+			"Setting values by using the `[]` operator is allowed only on \
+			 lists"
+				.to_owned(),
+		),
+	)?;
+
+	let index =
+		extract_subscription_index(&v.key, &v.blame, l_borrow.len(), env)?;
+
+	let value = eval_expression(&v.value, env)?;
+
+	l_borrow[index] = value.clone();
+
+	Ok(value)
+}
+
+#[inline(always)]
+pub fn set_expression(
+	v: &SetValue,
+	env: &InterpreterEnvironment,
+) -> Result<InterpreterValue, RuntimeError> {
+	if matches!(v.key, GetAccessor::DotName(_) | GetAccessor::DotEval(_)) {
+		set_dot(v, env)
+	} else {
+		set_subscription(v, env)
+	}
 }
 
 #[inline(always)]

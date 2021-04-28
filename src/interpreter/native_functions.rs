@@ -1,10 +1,11 @@
-use super::{interpreter_env::InterpreterEnvironment, types::*};
+use super::{
+	helpers::unwrap_list,
+	interpreter_env::InterpreterEnvironment,
+	types::*,
+};
 use crate::{env::*, token::*};
 
-use std::{
-	cell::{RefCell, RefMut},
-	rc::Rc,
-};
+use std::{cell::RefCell, rc::Rc};
 
 
 pub const NATIVE_FUNCTION_NAMES: [&str; 8] = [
@@ -124,7 +125,7 @@ fn native_push(
 	_env: &InterpreterEnvironment,
 	args: &[InterpreterValue],
 ) -> Result<InterpreterValue, RuntimeError> {
-	let mut l_borrow = unwrap_list(&args[0], &keyword, 0)?;
+	let mut l_borrow = unwrap_list(&args[0], &keyword, 0, None)?;
 
 	l_borrow.push(args[1].clone());
 
@@ -138,12 +139,12 @@ fn native_extend(
 	_env: &InterpreterEnvironment,
 	args: &[InterpreterValue],
 ) -> Result<InterpreterValue, RuntimeError> {
-	let second_items = unwrap_list(&args[1], keyword, 1)?
+	let second_items = unwrap_list(&args[1], keyword, 1, None)?
 		.iter()
 		.cloned()
 		.collect::<Vec<InterpreterValue>>();
 
-	unwrap_list(&args[0], keyword, 0)?.extend(second_items);
+	unwrap_list(&args[0], keyword, 0, None)?.extend(second_items);
 
 	Ok(args[0].clone())
 }
@@ -153,7 +154,7 @@ fn native_from_chars(
 	_env: &InterpreterEnvironment,
 	args: &[InterpreterValue],
 ) -> Result<InterpreterValue, RuntimeError> {
-	let l_borrow = unwrap_list(&args[0], keyword, 0)?;
+	let l_borrow = unwrap_list(&args[0], keyword, 0, None)?;
 
 	let string = l_borrow
 		.iter()
@@ -239,20 +240,4 @@ pub fn declare_native_functions(env: &InterpreterEnvironment) {
 			},
 		],
 	);
-}
-
-#[inline(always)]
-fn unwrap_list<'a>(
-	value: &'a InterpreterValue,
-	blame: &Token,
-	arg_index: usize,
-) -> Result<RefMut<'a, Vec<InterpreterValue>>, RuntimeError> {
-	if let InterpreterValue::List(l) = &value {
-		Ok(l.borrow_mut())
-	} else {
-		Err(RuntimeError {
-			message: format!("Argument {} must be of type list", arg_index),
-			token: blame.clone(),
-		})
-	}
 }

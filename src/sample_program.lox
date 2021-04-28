@@ -1,9 +1,6 @@
 
-let imie = "olusia";
+let imie = chars("olusia");
 
-for let x = 0; x < 10; x = x + 1 {
-	print "iks: " + str(x);
-	imie = imie + imie;
-}
+imie[0] = "s";
 
-print "długość: " + str(len(imie));
+print imie;

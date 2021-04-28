@@ -1,7 +1,11 @@
-use super::{interpreter_env::*, types::*};
-use crate::{ast::expr::FunctionValue, env::*, token::*};
+use super::{interpret::eval_expression, interpreter_env::*, types::*};
+use crate::{
+	ast::expr::{FunctionValue, GetAccessor},
+	env::*,
+	token::*,
+};
 
-use std::rc::Rc;
+use std::{cell::RefMut, rc::Rc};
 
 
 // A shorthand way to extract identifier's name
@@ -140,5 +144,70 @@ pub fn bind_function(
 	InterpreterValue::Function {
 		fun,
 		enclosing_env: new_env,
+	}
+}
+
+#[inline(always)]
+pub fn unwrap_list<'a>(
+	value: &'a InterpreterValue,
+	blame: &Token,
+	arg_index: usize,
+	override_msg: Option<String>,
+) -> Result<RefMut<'a, Vec<InterpreterValue>>, RuntimeError> {
+	if let InterpreterValue::List(l) = &value {
+		Ok(l.borrow_mut())
+	} else {
+		Err(RuntimeError {
+			message: override_msg.unwrap_or_else(|| {
+				format!("Argument {} must be of type list", arg_index)
+			}),
+			token: blame.clone(),
+		})
+	}
+}
+
+#[inline(always)]
+pub fn extract_subscription_index(
+	accessor: &GetAccessor,
+	blame: &Token,
+	max_len: usize,
+	env: &InterpreterEnvironment,
+) -> Result<usize, RuntimeError> {
+	let extracted_n = match &accessor {
+		GetAccessor::SubscriptionNumber(n) => Ok(*n),
+		GetAccessor::SubscriptionEval(expr) => {
+			let eval = eval_expression(expr, env)?;
+
+			if let InterpreterValue::Number(n) = eval {
+				Ok(n)
+			} else {
+				Err(RuntimeError {
+					message: format!(
+						"Cannot use {} for indexing",
+						eval.to_human_readable()
+					),
+					token: blame.clone(),
+				})
+			}
+		}
+		_ => unreachable!("Wrong accessor in subscription"),
+	}?;
+
+	if extracted_n.fract() != 0.0 || extracted_n < 0.0 {
+		return Err(RuntimeError {
+			message: format!("Cannot access element on index {}", extracted_n),
+			token: blame.clone(),
+		});
+	}
+
+	let index = extracted_n as usize;
+
+	if index >= max_len {
+		Err(RuntimeError {
+			message: format!("Index {} out of bounds", extracted_n),
+			token: blame.clone(),
+		})
+	} else {
+		Ok(extracted_n as usize)
 	}
 }
