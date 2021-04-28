@@ -15,6 +15,7 @@ pub fn literal_expression(
 		LiteralValue::True => Ok(InterpreterValue::True),
 		LiteralValue::False => Ok(InterpreterValue::False),
 		LiteralValue::Nil => Ok(InterpreterValue::Nil),
+		LiteralValue::Char(c) => Ok(InterpreterValue::Char(*c)),
 		LiteralValue::List(l) => {
 			let values =
 				l.iter()

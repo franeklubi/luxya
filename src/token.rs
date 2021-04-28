@@ -32,6 +32,7 @@ pub enum TokenType {
 	Identifier(Rc<str>),
 	String(Rc<str>),
 	Number(f64),
+	Char(char),
 
 	// Keywords
 	And,
@@ -80,8 +81,9 @@ impl fmt::Display for TokenType {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		match self {
 			TokenType::String(s) => write!(f, "{:?}", s),
-			TokenType::Identifier(s) => write!(f, "{}", s),
+			TokenType::Identifier(i) => write!(f, "{}", i),
 			TokenType::Number(n) => write!(f, "{:?}", n),
+			TokenType::Char(c) => write!(f, "{:?}", c),
 			TokenType::LeftParen => write!(f, "("),
 			TokenType::RightParen => write!(f, ")"),
 			TokenType::LeftBrace => write!(f, "{{"),

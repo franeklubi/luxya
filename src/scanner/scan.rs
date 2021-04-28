@@ -120,6 +120,24 @@ fn scan_token(
 					}));
 				}
 			},
+			'\'' => {
+				let c = chars.next()?.1;
+
+				let closer = chars.next()?.1;
+
+				if '\'' == closer {
+					TokenType::Char(c)
+				} else {
+					// get rid of remaining chars
+					let _ = consume_while_peek(chars, |c| *c != '\'');
+					chars.next();
+
+					return Some(Err(ScanError {
+						offset: i,
+						message: "Expected closing ' after char".to_owned(),
+					}));
+				}
+			}
 			// the way we parse may be a lil bit problematic, because we
 			// consume the `.` if the parsing somewhat fails
 			// i mean idk, if it causes problems then TODO, but I don't think

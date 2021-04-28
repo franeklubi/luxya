@@ -1,6 +1,6 @@
 
 let imie = chars("olusia");
 
-imie[0] = "s";
+imie[0] = 'ss';
 
-print imie;
+print from_chars(imie);

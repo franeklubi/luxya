@@ -136,6 +136,7 @@ def gen_expr() -> str:
 		'List -> Rc<Vec<Expr>>',
 		'String -> Rc<str>',
 		'Number -> f64',
+		'Char -> char',
 		'True',
 		'False',
 		'Nil',

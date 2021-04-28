@@ -513,6 +513,11 @@ fn primary(tokens: ParserIter) -> Result<Expr, ParseError> {
 		}
 
 		Some(Token {
+			token_type: TokenType::Char(c),
+			..
+		}) => Ok(Expr::Literal(LiteralValue::Char(c))),
+
+		Some(Token {
 			token_type: TokenType::Identifier(_),
 			..
 		}) => Ok(Expr::Identifier(IdentifierValue {

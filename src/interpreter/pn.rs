@@ -18,6 +18,7 @@ pub fn pn_stringify_tree(expr: &Expr) -> String {
 			LiteralValue::False => "false".into(),
 			LiteralValue::Nil => "nil".into(),
 			LiteralValue::List(_) => "[ ... ]".into(),
+			LiteralValue::Char(c) => format!("{:?}", c),
 		},
 		Expr::Identifier(v) => v.name.token_type.to_string(),
 		Expr::Assignment(v) => pn_gen(&format!("= {}", v.name), &[&v.value]),
