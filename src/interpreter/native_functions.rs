@@ -1,11 +1,14 @@
 use super::{interpreter_env::InterpreterEnvironment, types::*};
 use crate::{env::*, token::*};
 
-use std::{cell::RefCell, rc::Rc};
+use std::{
+	cell::{RefCell, RefMut},
+	rc::Rc,
+};
 
 
-pub const NATIVE_FUNCTION_NAMES: [&str; 6] =
-	["str", "typeof", "number", "len", "chars", "push"];
+pub const NATIVE_FUNCTION_NAMES: [&str; 7] =
+	["str", "typeof", "number", "len", "chars", "push", "extend"];
 
 struct FunctionDefinition<'a> {
 	name: &'a str,
@@ -95,15 +98,13 @@ fn native_chars(
 	let val = &args[0];
 
 	match val {
-		InterpreterValue::String(s) => {
-			Ok(InterpreterValue::List(Rc::new(RefCell::new(
-				s.chars().map(|c| InterpreterValue::Char(c)).collect(),
-			))))
-		}
+		InterpreterValue::String(s) => Ok(InterpreterValue::List(Rc::new(
+			RefCell::new(s.chars().map(InterpreterValue::Char).collect()),
+		))),
 		_ => Err(RuntimeError {
 			message: format!(
 				"Can't extract chars out of {}",
-				val.to_human_readable()
+				val.to_human_readable(),
 			),
 			token: keyword.clone(),
 		}),
@@ -115,18 +116,26 @@ fn native_push(
 	_env: &InterpreterEnvironment,
 	args: &[InterpreterValue],
 ) -> Result<InterpreterValue, RuntimeError> {
-	let mut l_borrow = if let InterpreterValue::List(l) = &args[0] {
-		l.borrow_mut()
-	} else {
-		return Err(RuntimeError {
-			message: "First argument must be a target of type list".into(),
-			token: keyword.clone(),
-		});
-	};
+	let mut l_borrow = unwrap_list(&args[0], &keyword, 0)?;
 
 	l_borrow.push(args[1].clone());
 
 	drop(l_borrow);
+
+	Ok(args[0].clone())
+}
+
+fn native_extend(
+	keyword: &Token,
+	_env: &InterpreterEnvironment,
+	args: &[InterpreterValue],
+) -> Result<InterpreterValue, RuntimeError> {
+	let second_items = unwrap_list(&args[1], keyword, 1)?
+		.iter()
+		.cloned()
+		.collect::<Vec<InterpreterValue>>();
+
+	unwrap_list(&args[0], keyword, 0)?.extend(second_items);
 
 	Ok(args[0].clone())
 }
@@ -183,6 +192,27 @@ pub fn declare_native_functions(env: &InterpreterEnvironment) {
 				arity: 2,
 				fun: native_push,
 			},
+			FunctionDefinition {
+				name: NATIVE_FUNCTION_NAMES[6],
+				arity: 2,
+				fun: native_extend,
+			},
 		],
 	);
+}
+
+#[inline(always)]
+fn unwrap_list<'a>(
+	value: &'a InterpreterValue,
+	blame: &Token,
+	arg_num: usize,
+) -> Result<RefMut<'a, Vec<InterpreterValue>>, RuntimeError> {
+	if let InterpreterValue::List(l) = &value {
+		Ok(l.borrow_mut())
+	} else {
+		Err(RuntimeError {
+			message: format!("Argument {} must be of type list", arg_num),
+			token: blame.clone(),
+		})
+	}
 }

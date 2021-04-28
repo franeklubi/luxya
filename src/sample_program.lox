@@ -1,8 +1,9 @@
 
 const imie_chars = chars("🥺olusia");
 
-const charsy_2 = imie_chars;
+const elo_chars = imie_chars;
 
-push(charsy_2, 2);
+extend(elo_chars, imie_chars);
 
+print elo_chars;
 print imie_chars;
