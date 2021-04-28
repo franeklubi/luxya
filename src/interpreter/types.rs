@@ -4,7 +4,7 @@ use crate::{ast::expr::*, token::*};
 use std::{cell::RefCell, collections::HashMap, fmt, rc::Rc};
 
 
-const MAX_LIST_VALUES_PRINT: usize = 10;
+const MAX_LIST_VALUES_PRINT: usize = 100;
 
 pub struct RuntimeError {
 	pub message: String,

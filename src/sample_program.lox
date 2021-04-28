@@ -1,9 +1,9 @@
 
-const imie_chars = chars("🥺olusia");
+let imie = "olusia";
 
-const elo_chars = imie_chars;
+for let x = 0; x < 10; x = x + 1 {
+	print "iks: " + str(x);
+	imie = imie + imie;
+}
 
-extend(elo_chars, imie_chars);
-
-print elo_chars;
-print imie_chars;
+print "długość: " + str(len(imie));

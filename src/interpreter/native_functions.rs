@@ -7,8 +7,16 @@ use std::{
 };
 
 
-pub const NATIVE_FUNCTION_NAMES: [&str; 7] =
-	["str", "typeof", "number", "len", "chars", "push", "extend"];
+pub const NATIVE_FUNCTION_NAMES: [&str; 8] = [
+	"str",
+	"typeof",
+	"number",
+	"len",
+	"chars",
+	"push",
+	"extend",
+	"from_chars",
+];
 
 struct FunctionDefinition<'a> {
 	name: &'a str,
@@ -140,6 +148,33 @@ fn native_extend(
 	Ok(args[0].clone())
 }
 
+fn native_from_chars(
+	keyword: &Token,
+	_env: &InterpreterEnvironment,
+	args: &[InterpreterValue],
+) -> Result<InterpreterValue, RuntimeError> {
+	let l_borrow = unwrap_list(&args[0], keyword, 0)?;
+
+	let string = l_borrow
+		.iter()
+		.map(|v| {
+			if let InterpreterValue::Char(c) = v {
+				Ok(*c)
+			} else {
+				Err(RuntimeError {
+					message: format!(
+						"Cannot convert from {} to char",
+						v.to_human_readable()
+					),
+					token: keyword.clone(),
+				})
+			}
+		})
+		.collect::<Result<String, RuntimeError>>()?;
+
+	Ok(InterpreterValue::String(Rc::from(string)))
+}
+
 fn declarator(env: &InterpreterEnvironment, funs: &[FunctionDefinition]) {
 	funs.iter().for_each(|fd| {
 		env.declare(
@@ -197,6 +232,11 @@ pub fn declare_native_functions(env: &InterpreterEnvironment) {
 				arity: 2,
 				fun: native_extend,
 			},
+			FunctionDefinition {
+				name: NATIVE_FUNCTION_NAMES[7],
+				arity: 1,
+				fun: native_from_chars,
+			},
 		],
 	);
 }
@@ -205,13 +245,13 @@ pub fn declare_native_functions(env: &InterpreterEnvironment) {
 fn unwrap_list<'a>(
 	value: &'a InterpreterValue,
 	blame: &Token,
-	arg_num: usize,
+	arg_index: usize,
 ) -> Result<RefMut<'a, Vec<InterpreterValue>>, RuntimeError> {
 	if let InterpreterValue::List(l) = &value {
 		Ok(l.borrow_mut())
 	} else {
 		Err(RuntimeError {
-			message: format!("Argument {} must be of type list", arg_num),
+			message: format!("Argument {} must be of type list", arg_index),
 			token: blame.clone(),
 		})
 	}
