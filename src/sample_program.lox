@@ -9,4 +9,6 @@ const object = {
 	test_short,
 };
 
+print object.("test 🥺 literal");
 print object.test;
+print object.test_short;

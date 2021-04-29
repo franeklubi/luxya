@@ -531,7 +531,7 @@ fn primary(tokens: ParserIter) -> Result<Expr, ParseError> {
 						TokenType::Identifier("".into()),
 						TokenType::String("".into()),
 					],
-					None,
+					Some("Expected property name"),
 				)?;
 
 				let key = match &key_token.token_type {
@@ -543,11 +543,18 @@ fn primary(tokens: ParserIter) -> Result<Expr, ParseError> {
 					.is_some()
 				{
 					expression(tokens)?
-				} else {
+				} else if let TokenType::Identifier(_) = key_token.token_type {
 					Expr::Identifier(IdentifierValue {
 						name: key_token.clone(),
 						env_distance: Default::default(),
 					})
+				} else {
+					return Err(ParseError {
+						token: Some(key_token),
+						message: "Cannot use short property declaration with \
+						          string"
+							.into(),
+					});
 				};
 
 				properties.push(Property {
