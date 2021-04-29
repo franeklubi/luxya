@@ -560,7 +560,12 @@ fn primary(tokens: ParserIter) -> Result<Expr, ParseError> {
 				}
 			}
 
-			unimplemented!("Object expression")
+			expect(tokens, &[TokenType::RightBrace], None)?;
+
+			Ok(Expr::Object(ObjectValue {
+				blame: token.unwrap(),
+				properties,
+			}))
 		}
 
 		Some(Token {

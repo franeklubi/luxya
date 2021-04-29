@@ -107,7 +107,7 @@ pub fn execute_call(
 		}
 		InterpreterValue::Class { constructor, .. } => {
 			let instance = InterpreterValue::Instance {
-				class: Rc::new(callee.clone()),
+				class: Some(Rc::new(callee.clone())),
 				properties: Rc::new(RefCell::new(HashMap::new())),
 			};
 
@@ -280,7 +280,10 @@ fn find_method(
 		find_method(key, superclass, instance, blame)
 	} else {
 		Err(RuntimeError {
-			message: format!("Property {} not defined", key),
+			message: format!(
+				"Couldnt find property nor method with key {}",
+				key
+			),
 			token: blame.clone(),
 		})
 	}
@@ -294,14 +297,19 @@ fn get_dot(
 	fn get_property(
 		key: &str,
 		properties: &HashMap<String, InterpreterValue>,
-		class: &InterpreterValue,
+		class: &Option<Rc<InterpreterValue>>,
 		instance: &InterpreterValue,
 		blame: &Token,
 	) -> Result<InterpreterValue, RuntimeError> {
 		if let Some(p) = properties.get(key) {
 			Ok(p.clone())
-		} else {
+		} else if let Some(class) = class {
 			find_method(key, class, instance, blame)
+		} else {
+			Err(RuntimeError {
+				message: format!("Property {} not defined", key),
+				token: blame.clone(),
+			})
 		}
 	}
 
@@ -473,7 +481,6 @@ where
 	Ok(env.read(v.env_distance.get(), &v.blame)?.value)
 }
 
-#[inline(always)]
 pub fn super_expression(
 	v: &SuperValue,
 	env: &InterpreterEnvironment,
@@ -520,4 +527,24 @@ pub fn super_expression(
 			execute_call(&constructor, &args, &v.blame, env)
 		}
 	}
+}
+
+pub fn object_expression(
+	v: &ObjectValue,
+	env: &InterpreterEnvironment,
+) -> Result<InterpreterValue, RuntimeError> {
+	let properties = v
+		.properties
+		.iter()
+		.map(|p| {
+			let value = eval_expression(&p.value, env)?;
+
+			Ok((p.key.to_string(), value))
+		})
+		.collect::<Result<HashMap<String, InterpreterValue>, RuntimeError>>()?;
+
+	Ok(InterpreterValue::Instance {
+		class: None,
+		properties: Rc::new(RefCell::new(properties)),
+	})
 }

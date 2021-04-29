@@ -121,6 +121,7 @@ def gen_expr() -> str:
 		'Binary -> left: Box<Expr>, operator: Token, right: Box<Expr>',
 		'Get -> getee: Box<Expr>, key: GetAccessor, blame: Token',
 		'Identifier -> name: Token, env_distance: Cell<u32>',
+		'Object -> blame: Token, properties: Vec<Property>',
 		'This -> blame: Token, env_distance: Cell<u32>',
 		'Unary -> operator: Token, right: Box<Expr>',
 		'Grouping -> expression: Box<Expr>',
@@ -128,7 +129,7 @@ def gen_expr() -> str:
 	]
 
 	imports = [
-		'crate::{ast::stmt::*, token::Token}',
+		'crate::{ast::stmt::*, token::Token, parser::types::Property}',
 		'std::{rc::Rc, cell::Cell}',
 	]
 

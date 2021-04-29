@@ -24,6 +24,7 @@ impl Expr {
 			Expr::Set(_) => "property setter",
 			Expr::This(_) => "a this expression",
 			Expr::Super(_) => "a super expression",
+			Expr::Object(_) => "an object definition",
 		}
 	}
 }

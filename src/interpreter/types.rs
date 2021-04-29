@@ -18,7 +18,7 @@ pub enum InterpreterValue {
 		enclosing_env: InterpreterEnvironment,
 	},
 	Instance {
-		class: Rc<InterpreterValue>,
+		class: Option<Rc<InterpreterValue>>,
 		properties: Rc<RefCell<HashMap<String, InterpreterValue>>>,
 	},
 	Class {
@@ -134,7 +134,11 @@ impl fmt::Display for InterpreterValue {
 				write!(f, "{}", list_repr)
 			}
 			InterpreterValue::Instance { class, .. } => {
-				write!(f, "instance of {}", class)
+				if let Some(class) = class {
+					write!(f, "instance of {}", class)
+				} else {
+					write!(f, "object")
+				}
 			}
 			InterpreterValue::Class { name, .. } => write!(f, "class {}", name),
 			InterpreterValue::Function { .. } => write!(f, "function"),

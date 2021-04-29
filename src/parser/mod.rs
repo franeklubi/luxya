@@ -1,6 +1,7 @@
 mod helpers;
 mod parse;
 mod statements;
-mod types;
+
+pub mod types;
 
 pub use parse::parse;

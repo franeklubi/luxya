@@ -1,4 +1,4 @@
-use crate::{ast::stmt::*, token::Token};
+use crate::{ast::stmt::*, parser::types::Property, token::Token};
 use std::{cell::Cell, rc::Rc};
 
 #[derive(Clone)]
@@ -61,6 +61,11 @@ pub struct IdentifierValue {
 	pub env_distance: Cell<u32>,
 }
 
+pub struct ObjectValue {
+	pub blame: Token,
+	pub properties: Vec<Property>,
+}
+
 pub struct ThisValue {
 	pub blame: Token,
 	pub env_distance: Cell<u32>,
@@ -84,6 +89,7 @@ pub enum Expr {
 	Binary(BinaryValue),
 	Get(GetValue),
 	Identifier(IdentifierValue),
+	Object(ObjectValue),
 	This(ThisValue),
 	Unary(UnaryValue),
 	Grouping(GroupingValue),

@@ -83,5 +83,6 @@ pub fn eval_expression(
 		Expr::Set(v) => set_expression(v, env),
 		Expr::This(v) => this_expression(v, env),
 		Expr::Super(v) => super_expression(v, env),
+		Expr::Object(v) => object_expression(v, env),
 	}
 }

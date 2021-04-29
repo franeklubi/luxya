@@ -32,6 +32,7 @@ pub fn pn_stringify_tree(expr: &Expr) -> String {
 		Expr::Set(_v) => unimplemented!(),
 		Expr::This(_v) => unimplemented!(),
 		Expr::Super(_v) => unimplemented!(),
+		Expr::Object(_v) => unimplemented!(),
 	}
 }
 

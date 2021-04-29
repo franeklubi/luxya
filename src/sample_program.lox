@@ -8,3 +8,5 @@ const object = {
 	test: string,
 	test_short,
 };
+
+print object.test;

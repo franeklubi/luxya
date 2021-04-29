@@ -82,6 +82,7 @@ pub fn resolve_expression(
 		Expr::Super(v) => super_expression(expr, v, env),
 		Expr::This(v) => this_expression(expr, v, env),
 		Expr::Binary(v) => binary_expression(v, env),
+		Expr::Object(v) => object_expression(v, env),
 		Expr::Call(v) => call_expression(v, env),
 		Expr::Get(v) => get_expression(v, env),
 		Expr::Set(v) => set_expression(v, env),

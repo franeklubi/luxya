@@ -170,3 +170,15 @@ pub fn super_expression(
 
 	Ok(InterpreterValue::Nil)
 }
+
+#[inline(always)]
+pub fn object_expression(
+	v: &ObjectValue,
+	env: &ResolverEnvironment,
+) -> Result<InterpreterValue, RuntimeError> {
+	for value in v.properties.iter().map(|p| &p.value) {
+		resolve::resolve_expression(&value, env)?;
+	}
+
+	Ok(InterpreterValue::Nil)
+}
