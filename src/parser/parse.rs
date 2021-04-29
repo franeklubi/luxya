@@ -518,6 +518,52 @@ fn primary(tokens: ParserIter) -> Result<Expr, ParseError> {
 		}) => Ok(Expr::Literal(LiteralValue::Char(c))),
 
 		Some(Token {
+			token_type: TokenType::LeftBrace,
+			..
+		}) => {
+			let mut properties: Vec<Property> = Vec::new();
+
+			while !peek_matches(tokens, &[TokenType::RightBrace]) {
+				// TODO: optimize expect
+				let key_token = expect(
+					tokens,
+					&[
+						TokenType::Identifier("".into()),
+						TokenType::String("".into()),
+					],
+					None,
+				)?;
+
+				let key = match &key_token.token_type {
+					TokenType::Identifier(s) | TokenType::String(s) => s,
+					_ => unreachable!("Hi!! Welcome to my kitchen"),
+				};
+
+				let value = if match_then_consume(tokens, &[TokenType::Colon])
+					.is_some()
+				{
+					expression(tokens)?
+				} else {
+					Expr::Identifier(IdentifierValue {
+						name: key_token.clone(),
+						env_distance: Default::default(),
+					})
+				};
+
+				properties.push(Property {
+					key: key.clone(),
+					value,
+				});
+
+				if match_then_consume(tokens, &[TokenType::Comma]).is_none() {
+					break;
+				}
+			}
+
+			unimplemented!("Object expression")
+		}
+
+		Some(Token {
 			token_type: TokenType::Identifier(_),
 			..
 		}) => Ok(Expr::Identifier(IdentifierValue {

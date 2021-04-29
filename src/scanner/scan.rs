@@ -49,6 +49,7 @@ fn scan_token(
 			'-' => TokenType::Minus,
 			'+' => TokenType::Plus,
 			';' => TokenType::Semicolon,
+			':' => TokenType::Colon,
 			'*' => TokenType::Star,
 			'!' => {
 				if match_to_peek(chars, '=') {

@@ -1,6 +1,6 @@
 use crate::{ast::expr::*, token::*};
 
-use std::{iter, vec};
+use std::{iter, rc::Rc, vec};
 
 pub type ParserIter<'a> = &'a mut iter::Peekable<vec::IntoIter<Token>>;
 
@@ -26,4 +26,9 @@ impl Expr {
 			Expr::Super(_) => "a super expression",
 		}
 	}
+}
+
+pub struct Property {
+	pub key: Rc<str>,
+	pub value: Expr,
 }

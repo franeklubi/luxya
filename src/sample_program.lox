@@ -1,6 +1,10 @@
 
-let imie = chars("olusia");
+const string = "test";
 
-imie[0] = 'ss';
+const test_short = "test_short";
 
-print from_chars(imie);
+const object = {
+	"test 🥺 literal": "joł",
+	test: string,
+	test_short,
+};
