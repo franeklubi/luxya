@@ -1,14 +1,8 @@
 
-const string = "test";
+const jeden = [1, 2, 3, 4];
 
-const test_short = "test_short";
+const dwa = deep_copy(jeden);
 
-const object = {
-	"test 🥺 literal": "joł",
-	test: string,
-	test_short,
-};
+jeden[0] = "heja";
 
-print object.("test 🥺 literal");
-print object.test;
-print object.test_short;
+print dwa;

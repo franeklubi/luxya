@@ -8,7 +8,7 @@ use crate::{env::*, token::*};
 use std::{cell::RefCell, rc::Rc};
 
 
-pub const NATIVE_FUNCTION_NAMES: [&str; 8] = [
+pub const NATIVE_FUNCTION_NAMES: [&str; 9] = [
 	"str",
 	"typeof",
 	"number",
@@ -17,6 +17,7 @@ pub const NATIVE_FUNCTION_NAMES: [&str; 8] = [
 	"push",
 	"extend",
 	"from_chars",
+	"deep_copy",
 ];
 
 struct FunctionDefinition<'a> {
@@ -176,6 +177,44 @@ fn native_from_chars(
 	Ok(InterpreterValue::String(Rc::from(string)))
 }
 
+fn native_deep_copy(
+	keyword: &Token,
+	env: &InterpreterEnvironment,
+	args: &[InterpreterValue],
+) -> Result<InterpreterValue, RuntimeError> {
+	let value = &args[0];
+
+	match value {
+		InterpreterValue::Instance { class, properties } => {
+			let cloned_properties = properties
+				.borrow()
+				.iter()
+				.map(|p| {
+					let key = p.0.clone();
+					let value = native_deep_copy(keyword, env, &[p.1.clone()])?;
+
+					Ok((key, value))
+				})
+				.collect::<Result<_, _>>()?;
+
+			Ok(InterpreterValue::Instance {
+				class: class.clone(),
+				properties: Rc::new(RefCell::new(cloned_properties)),
+			})
+		}
+		InterpreterValue::List(l) => {
+			let cloned_list = l
+				.borrow()
+				.iter()
+				.map(|v| native_deep_copy(keyword, env, &[v.clone()]))
+				.collect::<Result<_, _>>()?;
+
+			Ok(InterpreterValue::List(Rc::new(RefCell::new(cloned_list))))
+		}
+		_ => Ok(value.clone()),
+	}
+}
+
 fn declarator(env: &InterpreterEnvironment, funs: &[FunctionDefinition]) {
 	funs.iter().for_each(|fd| {
 		env.declare(
@@ -237,6 +276,11 @@ pub fn declare_native_functions(env: &InterpreterEnvironment) {
 				name: NATIVE_FUNCTION_NAMES[7],
 				arity: 1,
 				fun: native_from_chars,
+			},
+			FunctionDefinition {
+				name: NATIVE_FUNCTION_NAMES[8],
+				arity: 1,
+				fun: native_deep_copy,
 			},
 		],
 	);
