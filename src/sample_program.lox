@@ -1,7 +1,13 @@
 
-const elo = [1, 2, 3, 4, 5, 6, 7, "asdf"];
+const obiekt = {
+	jed: 1,
+	dwa: 2,
+	elo: {
+		heja: 2,
+	},
+	trzy: 3,
+	czter: 4,
+	piec: 5,
+};
 
-push(elo, elo);
-push(elo, elo);
-
-print elo;
+print obiekt;

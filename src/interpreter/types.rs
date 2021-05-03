@@ -83,12 +83,38 @@ impl InterpreterValue {
 
 				list_repr
 			}
-			InterpreterValue::Instance { class, .. } => {
+			InterpreterValue::Instance { class, properties } => {
 				if let Some(class) = class {
-					format!("instance of {}", class)
-				} else {
-					String::from("object")
+					return format!("instance of {}", class);
 				}
+
+				let take_amount =
+					if nested { 0 } else { MAX_LIST_VALUES_PRINT };
+
+				let p_borrow = properties.borrow();
+
+				let mut obj_repr = String::from("{ ");
+
+				obj_repr += &p_borrow
+					.iter()
+					.take(take_amount)
+					.map(|(k, v)| format!("\n\t{}: {},", k, v.gen_repr(true)))
+					.collect::<String>();
+
+				let key_num = p_borrow.len();
+
+				if key_num > take_amount {
+					obj_repr += &format!(
+						"{}...{} hidden{}}}",
+						if nested { "" } else { "\n\t" },
+						key_num - take_amount,
+						if nested { " " } else { ",\n" },
+					);
+				} else {
+					obj_repr += "\n}";
+				}
+
+				obj_repr
 			}
 			InterpreterValue::Class { name, .. } => format!("class {}", name),
 			InterpreterValue::Function { .. } => String::from("function"),
