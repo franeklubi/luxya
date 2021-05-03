@@ -1,8 +1,7 @@
 
-const jeden = [1, 2, 3, 4];
+const elo = [1, 2, 3, 4, 5, 6, 7, "asdf"];
 
-const dwa = deep_copy(jeden);
+push(elo, elo);
+push(elo, elo);
 
-jeden[0] = "heja";
-
-print dwa;
+print elo;

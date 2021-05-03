@@ -51,6 +51,55 @@ impl InterpreterValue {
 			InterpreterValue::Nil => "nil",
 		}
 	}
+
+	pub fn gen_repr(&self, nested: bool) -> String {
+		match self {
+			InterpreterValue::List(l) => {
+				let take_amount =
+					if nested { 0 } else { MAX_LIST_VALUES_PRINT };
+
+				let l_borrow = l.borrow();
+
+				let mut list_repr = String::from("[ ");
+
+				list_repr += &l_borrow
+					.iter()
+					.take(take_amount)
+					.map(|v| v.gen_repr(true))
+					.collect::<Vec<String>>()
+					.join(", ");
+
+				let list_len = l_borrow.len();
+
+				if list_len > take_amount {
+					list_repr += &format!(
+						"{}...{} hidden ]",
+						if nested { "" } else { ", " },
+						list_len - take_amount
+					);
+				} else {
+					list_repr += " ]";
+				}
+
+				list_repr
+			}
+			InterpreterValue::Instance { class, .. } => {
+				if let Some(class) = class {
+					format!("instance of {}", class)
+				} else {
+					String::from("object")
+				}
+			}
+			InterpreterValue::Class { name, .. } => format!("class {}", name),
+			InterpreterValue::Function { .. } => String::from("function"),
+			InterpreterValue::String(s) => format!("{}", s),
+			InterpreterValue::Number(n) => format!("{}", n),
+			InterpreterValue::Char(c) => format!("{}", c),
+			InterpreterValue::False => String::from("false"),
+			InterpreterValue::True => String::from("true"),
+			InterpreterValue::Nil => String::from("nil"),
+		}
+	}
 }
 
 pub enum InterpreterStmtValue<T> {
@@ -107,47 +156,6 @@ impl From<bool> for InterpreterValue {
 // (like to_human_readable we already have or something)
 impl fmt::Display for InterpreterValue {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-		match self {
-			InterpreterValue::List(l) => {
-				let mut list_repr = String::from("[ ");
-
-				let l_borrow = l.borrow();
-
-				list_repr += &l_borrow
-					.iter()
-					.take(MAX_LIST_VALUES_PRINT)
-					.map(|v| v.to_string())
-					.collect::<Vec<String>>()
-					.join(", ");
-
-				let list_len = l_borrow.len();
-
-				if list_len > MAX_LIST_VALUES_PRINT {
-					list_repr += &format!(
-						", ...{} hidden ]",
-						list_len - MAX_LIST_VALUES_PRINT
-					);
-				} else {
-					list_repr += " ]";
-				}
-
-				write!(f, "{}", list_repr)
-			}
-			InterpreterValue::Instance { class, .. } => {
-				if let Some(class) = class {
-					write!(f, "instance of {}", class)
-				} else {
-					write!(f, "object")
-				}
-			}
-			InterpreterValue::Class { name, .. } => write!(f, "class {}", name),
-			InterpreterValue::Function { .. } => write!(f, "function"),
-			InterpreterValue::String(s) => write!(f, "{}", s),
-			InterpreterValue::Number(n) => write!(f, "{}", n),
-			InterpreterValue::Char(c) => write!(f, "{}", c),
-			InterpreterValue::False => write!(f, "false"),
-			InterpreterValue::True => write!(f, "true"),
-			InterpreterValue::Nil => write!(f, "nil"),
-		}
+		write!(f, "{}", self.gen_repr(false))
 	}
 }
