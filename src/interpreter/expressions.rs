@@ -224,6 +224,7 @@ pub fn binary_experssion(
 					TokenType::GreaterEqual => Ok((n1 >= n2).into()),
 					TokenType::Less => Ok((n1 < n2).into()),
 					TokenType::LessEqual => Ok((n1 <= n2).into()),
+					TokenType::Modulo => Ok(InterpreterValue::Number(n1 % n2)),
 
 					_ => unreachable!("Scanner did a bad job 😎."),
 				}

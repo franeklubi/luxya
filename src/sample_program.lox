@@ -1,4 +1,2 @@
 
-const dwa = number('1');
-
-print dwa + dwa;
+print 101.1 % 100;

@@ -18,6 +18,7 @@ pub enum TokenType {
 	Star,
 	LeftSquareBracket,
 	RightSquareBracket,
+	Modulo,
 
 	// One Or Two Character Tokens
 	Bang,
@@ -127,6 +128,7 @@ impl fmt::Display for TokenType {
 			TokenType::Break => write!(f, "break"),
 			TokenType::Continue => write!(f, "continue"),
 			TokenType::Extends => write!(f, "extends"),
+			TokenType::Modulo => write!(f, "%"),
 		}
 	}
 }

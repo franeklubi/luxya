@@ -1,3 +1,4 @@
+mod expression;
 mod helpers;
 mod parse;
 mod statements;

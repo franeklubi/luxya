@@ -48,6 +48,7 @@ fn scan_token(
 			'.' => TokenType::Dot,
 			'-' => TokenType::Minus,
 			'+' => TokenType::Plus,
+			'%' => TokenType::Modulo,
 			';' => TokenType::Semicolon,
 			':' => TokenType::Colon,
 			'*' => TokenType::Star,
