@@ -1,13 +1,4 @@
 
-const obiekt = {
-	jed: 1,
-	dwa: 2,
-	elo: {
-		heja: 2,
-	},
-	trzy: 3,
-	czter: 4,
-	piec: 5,
-};
+const dwa = number('1');
 
-print obiekt;
+print dwa + dwa;

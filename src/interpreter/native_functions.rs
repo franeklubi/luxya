@@ -8,7 +8,7 @@ use crate::{env::*, token::*};
 use std::{cell::RefCell, rc::Rc};
 
 
-pub const NATIVE_FUNCTION_NAMES: [&str; 9] = [
+pub const NATIVE_FUNCTION_NAMES: [&str; 10] = [
 	"str",
 	"typeof",
 	"number",
@@ -18,6 +18,7 @@ pub const NATIVE_FUNCTION_NAMES: [&str; 9] = [
 	"extend",
 	"from_chars",
 	"deep_copy",
+	"is_nan",
 ];
 
 struct FunctionDefinition<'a> {
@@ -59,13 +60,11 @@ fn native_number(
 	match input {
 		InterpreterValue::Number(_) => Ok(input.clone()),
 		InterpreterValue::String(s) => {
-			Ok(InterpreterValue::Number(s.parse().map_err(|_| {
-				RuntimeError {
-					message: format!("Couldn't parse `{}` to number", s),
-					token: keyword.clone(),
-				}
-			})?))
+			Ok(InterpreterValue::Number(s.parse().or(Ok(f64::NAN))?))
 		}
+		InterpreterValue::Char(c) => Ok(InterpreterValue::Number(
+			c.to_digit(10).map_or(f64::NAN, |d| d.into()),
+		)),
 		_ => Err(RuntimeError {
 			message: format!(
 				"Can't parse {} to number",
@@ -215,6 +214,26 @@ fn native_deep_copy(
 	}
 }
 
+fn native_is_nan(
+	keyword: &Token,
+	_env: &InterpreterEnvironment,
+	args: &[InterpreterValue],
+) -> Result<InterpreterValue, RuntimeError> {
+	let value = &args[0];
+
+	if let InterpreterValue::Number(n) = value {
+		Ok(n.is_nan().into())
+	} else {
+		Err(RuntimeError {
+			message: format!(
+				"Cannot use is_nan on {}",
+				value.to_human_readable()
+			),
+			token: keyword.clone(),
+		})
+	}
+}
+
 fn declarator(env: &InterpreterEnvironment, funs: &[FunctionDefinition]) {
 	funs.iter().for_each(|fd| {
 		env.declare(
@@ -281,6 +300,11 @@ pub fn declare_native_functions(env: &InterpreterEnvironment) {
 				name: NATIVE_FUNCTION_NAMES[8],
 				arity: 1,
 				fun: native_deep_copy,
+			},
+			FunctionDefinition {
+				name: NATIVE_FUNCTION_NAMES[9],
+				arity: 1,
+				fun: native_is_nan,
 			},
 		],
 	);
