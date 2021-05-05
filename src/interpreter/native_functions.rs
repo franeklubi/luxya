@@ -8,7 +8,7 @@ use crate::{env::*, token::*};
 use std::{cell::RefCell, rc::Rc};
 
 
-pub const NATIVE_FUNCTION_NAMES: [&str; 10] = [
+pub const NATIVE_FUNCTION_NAMES: [&str; 12] = [
 	"str",
 	"typeof",
 	"number",
@@ -19,6 +19,8 @@ pub const NATIVE_FUNCTION_NAMES: [&str; 10] = [
 	"from_chars",
 	"deep_copy",
 	"is_nan",
+	"floor",
+	"ceil",
 ];
 
 struct FunctionDefinition<'a> {
@@ -234,6 +236,46 @@ fn native_is_nan(
 	}
 }
 
+fn native_floor(
+	keyword: &Token,
+	_env: &InterpreterEnvironment,
+	args: &[InterpreterValue],
+) -> Result<InterpreterValue, RuntimeError> {
+	let value = &args[0];
+
+	if let InterpreterValue::Number(n) = value {
+		Ok(InterpreterValue::Number(n.floor()))
+	} else {
+		Err(RuntimeError {
+			message: format!(
+				"Cannot use floor on {}",
+				value.to_human_readable()
+			),
+			token: keyword.clone(),
+		})
+	}
+}
+
+fn native_ceil(
+	keyword: &Token,
+	_env: &InterpreterEnvironment,
+	args: &[InterpreterValue],
+) -> Result<InterpreterValue, RuntimeError> {
+	let value = &args[0];
+
+	if let InterpreterValue::Number(n) = value {
+		Ok(InterpreterValue::Number(n.ceil()))
+	} else {
+		Err(RuntimeError {
+			message: format!(
+				"Cannot use floor on {}",
+				value.to_human_readable()
+			),
+			token: keyword.clone(),
+		})
+	}
+}
+
 fn declarator(env: &InterpreterEnvironment, funs: &[FunctionDefinition]) {
 	funs.iter().for_each(|fd| {
 		env.declare(
@@ -305,6 +347,16 @@ pub fn declare_native_functions(env: &InterpreterEnvironment) {
 				name: NATIVE_FUNCTION_NAMES[9],
 				arity: 1,
 				fun: native_is_nan,
+			},
+			FunctionDefinition {
+				name: NATIVE_FUNCTION_NAMES[10],
+				arity: 1,
+				fun: native_floor,
+			},
+			FunctionDefinition {
+				name: NATIVE_FUNCTION_NAMES[11],
+				arity: 1,
+				fun: native_ceil,
 			},
 		],
 	);
