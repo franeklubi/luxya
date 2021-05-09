@@ -8,11 +8,7 @@ pub fn parse(tokens: Vec<Token>) -> (Vec<Stmt>, Vec<ParseError>) {
 	let mut statements = Vec::new();
 	let mut errors = Vec::new();
 
-	while let Some(token) = tokens.peek() {
-		if token.token_type == TokenType::Eof {
-			break;
-		}
-
+	while tokens.peek().is_some() {
 		match declaration(tokens) {
 			Ok(Some(s)) => statements.push(s),
 

@@ -226,16 +226,5 @@ pub fn scan(source: &str) -> (Vec<token::Token>, Vec<ScanError>) {
 		}
 	}
 
-	let last_offset = match tokens.last() {
-		Some(token) => token.byte_offset + token.byte_length,
-		None => 0,
-	};
-
-	tokens.push(token::Token {
-		token_type: token::TokenType::Eof,
-		byte_offset: last_offset,
-		byte_length: 1,
-	});
-
 	(tokens, errors)
 }

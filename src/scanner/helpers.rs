@@ -15,7 +15,7 @@ pub fn match_to_peek(chars: ScannerIter, expected: char) -> bool {
 // returns a result with the index (in bytes) of where the next char would be
 // (regardless of it being there or the stream ending)
 //
-// returns an error with last_offset when the scanning has reached the eof
+// returns an error with last_offset when the scanning has reached eof
 pub fn consume_while_peek(
 	chars: ScannerIter,
 	predicate: impl Fn(&char) -> bool,

@@ -1,14 +1,28 @@
 
 class Superclass {
-	constructor(nonimportant) {
-		this.nonimportant = nonimportant;
+	constructor(superarg) {
+		this.superarg = superarg;
+	}
+
+	method_test() {
+		print "method test";
 	}
 }
 
-class Mainclass extends Superclass {
-	constructor(some) {
-		super(some + str("asdf"));
+class ChildClass extends Superclass {
+	constructor(childarg) {
+		super(childarg + str(" 😍 testtsette s sdsafdsaf"));
+
+		this.childproperty = childarg;
+	}
+
+	print_superarg() {
+		super.method_test();
+
+		print this.superarg;
 	}
 }
 
-const instance = Mainclass("pizda");
+const instance = ChildClass("heja");
+
+instance.print_superarg();
