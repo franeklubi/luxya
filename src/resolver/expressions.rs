@@ -168,6 +168,12 @@ pub fn super_expression(
 				.into(),
 		})?;
 
+	if let SuperAccessor::Call(args) = &v.accessor {
+		for arg in args.iter() {
+			resolve::resolve_expression(arg, env)?;
+		}
+	}
+
 	Ok(InterpreterValue::Nil)
 }
 

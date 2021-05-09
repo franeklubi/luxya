@@ -1,10 +1,14 @@
 
-print ceil(101.1) % 100;
-
-let x = 0;
-
-{
-	for ; x < 10; x = x + 1 {
-		print x;
+class Superclass {
+	constructor(nonimportant) {
+		this.nonimportant = nonimportant;
 	}
 }
+
+class Mainclass extends Superclass {
+	constructor(some) {
+		super(some + str("asdf"));
+	}
+}
+
+const instance = Mainclass("pizda");
