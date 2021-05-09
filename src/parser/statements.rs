@@ -40,25 +40,25 @@ pub fn expression_statement(
 pub fn if_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 	let condition = expression(tokens)?;
 
-	let then = Box::new(expect_statement(
-		tokens,
-		&[TokenType::LeftBrace, TokenType::If],
-	)?);
+	let then = statement_from(tokens, &[TokenType::LeftBrace])?.map(Box::new);
+
 	let otherwise = if match_then_consume(tokens, &[TokenType::Else]).is_some()
 	{
-		Some(Box::new(expect_statement(
-			tokens,
-			&[TokenType::LeftBrace, TokenType::If],
-		)?))
+		statement_from(tokens, &[TokenType::LeftBrace, TokenType::If])?
+			.map(Box::new)
 	} else {
 		None
 	};
 
-	Ok(Some(Stmt::If(IfValue {
-		condition,
-		then,
-		otherwise,
-	})))
+	if then.is_none() && otherwise.is_none() {
+		Ok(None)
+	} else {
+		Ok(Some(Stmt::If(IfValue {
+			condition,
+			then,
+			otherwise,
+		})))
+	}
 }
 
 #[inline(always)]
@@ -73,6 +73,12 @@ pub fn block_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 
 	expect(tokens, &[TokenType::RightBrace], None)?;
 
+	// as though it may not seem as an optimization, it really is a useful
+	// heuristic to return an empty statement rather than block
+	// with 0 statements
+	//
+	// for example: I use this in `if` statements to determine if I need to
+	// even return them or not
 	if statements.is_empty() {
 		Ok(None)
 	} else {
@@ -119,8 +125,17 @@ pub fn for_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 		Some(expression(tokens)?)
 	};
 
-	// parse while body
-	let body = expect_statement(tokens, &[TokenType::LeftBrace])?;
+
+	// parse for's body. If the body is None, then we may as well
+	// short-circuit it there, and return Ok(None)
+	let body_stmt = statement_from(tokens, &[TokenType::LeftBrace])?;
+
+	let body = if let Some(body) = body_stmt {
+		body
+	} else {
+		return Ok(None);
+	};
+
 
 	let for_stmt = Stmt::For(ForValue {
 		condition,

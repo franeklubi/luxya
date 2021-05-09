@@ -9,7 +9,7 @@ pub struct ForValue {
 
 pub struct IfValue {
 	pub condition: Expr,
-	pub then: Box<Stmt>,
+	pub then: Option<Box<Stmt>>,
 	pub otherwise: Option<Box<Stmt>>,
 }
 

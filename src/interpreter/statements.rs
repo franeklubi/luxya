@@ -104,7 +104,11 @@ where
 	E: EnvironmentWrapper<InterpreterValue>,
 {
 	if expr_evaluator(&v.condition, env)? == InterpreterValue::True {
-		stmt_evaluator(&v.then, env)
+		if let Some(then) = &v.then {
+			stmt_evaluator(then, env)
+		} else {
+			Ok(InterpreterStmtValue::Noop)
+		}
 	} else if let Some(otherwise) = &v.otherwise {
 		stmt_evaluator(otherwise, env)
 	} else {

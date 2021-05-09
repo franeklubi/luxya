@@ -176,7 +176,7 @@ def gen_stmt() -> str:
 		""",
 		"""
 			If ->
-				condition: Expr, then: Box<Stmt>,
+				condition: Expr, then: Option<Box<Stmt>>,
 				otherwise: Option<Box<Stmt>>
 		""",
 		"""

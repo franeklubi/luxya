@@ -45,7 +45,10 @@ pub fn if_statement(
 	env: &ResolverEnvironment,
 ) -> Result<InterpreterStmtValue<InterpreterValue>, RuntimeError> {
 	resolve::resolve_expression(&v.condition, env)?;
-	resolve::resolve_statement(&v.then, env)?;
+
+	if let Some(then) = &v.then {
+		resolve::resolve_statement(then, env)?;
+	}
 
 	if let Some(otherwise) = &v.otherwise {
 		resolve::resolve_statement(otherwise, env)?;

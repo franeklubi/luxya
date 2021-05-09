@@ -1,4 +1,17 @@
 
+let x = 0;
+
+for ; x < 4; x = x + 1 {
+}
+
+print x;
+
+
+print "";
+print "";
+print "";
+
+
 class Superclass {
 	constructor(superarg) {
 		this.superarg = superarg;

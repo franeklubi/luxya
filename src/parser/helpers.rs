@@ -95,34 +95,20 @@ pub fn synchronize(tokens: ParserIter) {
 	}
 }
 
-pub fn unwrap_statement(
-	tokens: ParserIter,
-	stmt: Option<Stmt>,
-	expected: &[TokenType],
-	override_message: Option<&str>,
-) -> Result<Stmt, ParseError> {
-	stmt.ok_or_else(|| ParseError {
-		message: if let Some(msg) = override_message {
-			msg.into()
-		} else if expected.is_empty() {
-			"Expected statement".into()
-		} else {
-			gen_expected_msg(expected)
-		},
-		token: tokens.peek().cloned(),
-	})
-}
-
-pub fn expect_statement(
+pub fn statement_from(
 	tokens: ParserIter,
 	starts_with: &[TokenType],
-) -> Result<Stmt, ParseError> {
-	if !peek_matches(tokens, starts_with) {
-		unwrap_statement(tokens, None, starts_with, None)
+) -> Result<Option<Stmt>, ParseError> {
+	if peek_matches(tokens, starts_with) {
+		statement(tokens)
 	} else {
-		let stmt = statement(tokens)?;
-
-		unwrap_statement(tokens, stmt, starts_with, None)
+		Err(ParseError {
+			message: format!(
+				"Expected statement starting with {:?}",
+				starts_with
+			),
+			token: tokens.peek().cloned(),
+		})
 	}
 }
 
