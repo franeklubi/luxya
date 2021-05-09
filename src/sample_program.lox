@@ -30,3 +30,11 @@ instance.print_superarg();
 const char = 'c';
 
 print char;
+
+print 5 == 6;
+
+const heja = 1235324.;
+
+print heja;
+
+3221;

@@ -1,37 +1,38 @@
-use super::types::{ScanError, ScannerIter};
+use super::types::{ConsumptionResult, ScanError, ScannerIter};
 
 
-// match_to_peek returns true (and consumes next char)
-// only if it maches the expected char
-pub fn match_to_peek(chars: ScannerIter, expected: char) -> bool {
-	match chars.peek() {
-		Some((_, c)) => *c == expected,
-		None => false,
-	}
-}
-
-// will consume chars while peek matches the predicate
-//
-// returns a result with the index (in bytes) of where the next char would be
-// (regardless of it being there or the stream ending)
-//
-// returns an error with last_offset when the scanning has reached eof
+/// will consume chars while peek matches the predicate
+///
+/// returns a struct with the last offset (in bytes) of where
+/// the next char would be
+/// (regardless of it being there or the iterator ending)
+///
+/// sets hit_eof when the scanning has reached eof
 pub fn consume_while_peek(
 	chars: ScannerIter,
 	predicate: impl Fn(&char) -> bool,
-) -> Result<usize, usize> {
+) -> ConsumptionResult {
 	let mut last_offset = 0;
 
 	loop {
 		break match chars.peek() {
+			// peek matches the predicate, so we continue on
 			Some((i, c)) if predicate(c) => {
 				last_offset = i + c.len_utf8();
 				chars.next();
 
 				continue;
 			}
-			Some((i, _)) => Ok(*i),
-			None => Err(last_offset),
+			// char doesn't match the predicate, so we return the result
+			Some((i, _)) => ConsumptionResult {
+				last_offset: *i,
+				hit_eof: false,
+			},
+			// we hit the eof
+			None => ConsumptionResult {
+				last_offset,
+				hit_eof: true,
+			},
 		};
 	}
 }

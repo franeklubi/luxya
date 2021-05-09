@@ -7,3 +7,8 @@ pub struct ScanError {
 }
 
 pub type ScannerIter<'a, 'b> = &'a mut iter::Peekable<str::CharIndices<'b>>;
+
+pub struct ConsumptionResult {
+	pub last_offset: usize,
+	pub hit_eof: bool,
+}

@@ -53,7 +53,7 @@ fn scan_token(
 			':' => TokenType::Colon,
 			'*' => TokenType::Star,
 			'!' => {
-				if match_to_peek(chars, '=') {
+				if matches!(chars.peek(), Some((_, '='))) {
 					chars.next();
 
 					token_len += 1;
@@ -64,7 +64,7 @@ fn scan_token(
 				}
 			}
 			'=' => {
-				if match_to_peek(chars, '=') {
+				if matches!(chars.peek(), Some((_, '='))) {
 					chars.next();
 
 					token_len += 1;
@@ -75,7 +75,7 @@ fn scan_token(
 				}
 			}
 			'<' => {
-				if match_to_peek(chars, '=') {
+				if matches!(chars.peek(), Some((_, '='))) {
 					chars.next();
 
 					token_len += 1;
@@ -86,7 +86,7 @@ fn scan_token(
 				}
 			}
 			'>' => {
-				if match_to_peek(chars, '=') {
+				if matches!(chars.peek(), Some((_, '='))) {
 					chars.next();
 
 					token_len += 1;
@@ -97,7 +97,7 @@ fn scan_token(
 				}
 			}
 			'/' => {
-				if match_to_peek(chars, '/') {
+				if matches!(chars.peek(), Some((_, '/'))) {
 					// comment goes until the end of the line
 					chars.take_while(|(_, c)| *c != '\n').for_each(drop);
 
@@ -106,22 +106,20 @@ fn scan_token(
 					TokenType::Slash
 				}
 			}
-			'"' => match consume_while_peek(chars, |c| *c != '"') {
-				Ok(identifier_end) => {
-					// consume the found peek
-					chars.next();
+			'"' => {
+				let res = consume_while_peek(chars, |c| *c != '"');
 
-					token_len = identifier_end - i;
-
-					TokenType::String(source[i + 1..identifier_end].into())
-				}
-				Err(_) => {
+				if res.hit_eof {
 					return Err(ScanError {
 						offset: i,
 						message: "Unterminated string literal".to_owned(),
 					});
 				}
-			},
+
+				chars.next();
+
+				TokenType::String(source[i + 1..res.last_offset].into())
+			}
 			'\'' => {
 				let c = expect_char(chars, '\'', i, None)?;
 
@@ -140,50 +138,23 @@ fn scan_token(
 					});
 				}
 			}
-			// the way we parse may be a lil bit problematic, because we
-			// consume the `.` if the parsing somewhat fails
-			// i mean idk, if it causes problems then TODO, but I don't think
-			// it's that problematic for me rn
 			c if c.is_ascii_digit() => {
-				let consume_closure = |peek: &char| -> bool {
-					*peek == '.' || peek.is_ascii_digit()
-				};
+				let number_end = consume_while_peek(chars, |c| {
+					*c == '.' || c.is_ascii_digit()
+				})
+				.last_offset;
 
-				match consume_while_peek(chars, consume_closure) {
-					Ok(identifier_end) => {
-						let to_parse = &source[i..identifier_end];
+				let to_parse = &source[i..number_end];
 
-						token_len = identifier_end - i;
+				token_len = number_end - i;
 
-						match to_parse.parse() {
-							Ok(parsed) => TokenType::Number(parsed),
-							Err(e) => {
-								return Err(ScanError {
-									offset: i,
-									message: format!(
-										"Couldn't parse {}; {}",
-										to_parse,
-										e.to_string()
-									),
-								});
-							}
-						}
-					}
-					Err(_) => {
-						return Err(ScanError {
-							offset: i,
-							message: "I mean, the unterminated number hmm 🤔"
-								.to_owned(),
-						});
-					}
-				}
+				TokenType::Number(to_parse.parse().expect("Parsed number"))
 			}
 			c if c.is_alphabetic() || c == '_' => {
-				let identifier_end = match consume_while_peek(chars, |peek| {
+				let identifier_end = consume_while_peek(chars, |peek| {
 					peek.is_alphanumeric() || *peek == '_'
-				}) {
-					Ok(found_i) | Err(found_i) => found_i,
-				};
+				})
+				.last_offset;
 
 				token_len = identifier_end - i;
 
