@@ -8,7 +8,7 @@ use crate::{env::*, token::*};
 use std::{cell::RefCell, rc::Rc};
 
 
-pub const NATIVE_FUNCTION_NAMES: [&str; 12] = [
+pub const NATIVE_FUNCTION_NAMES: [&str; 13] = [
 	"str",
 	"typeof",
 	"number",
@@ -21,6 +21,7 @@ pub const NATIVE_FUNCTION_NAMES: [&str; 12] = [
 	"is_nan",
 	"floor",
 	"ceil",
+	"has",
 ];
 
 struct FunctionDefinition<'a> {
@@ -252,9 +253,45 @@ fn native_ceil(
 		Ok(InterpreterValue::Number(n.ceil()))
 	} else {
 		Err(RuntimeError {
-			message: format!("Cannot use floor on {}", value.human_type()),
+			message: format!("Cannot use ceil on {}", value.human_type()),
 			token: keyword.clone(),
 		})
+	}
+}
+
+fn native_has(
+	keyword: &Token,
+	_env: &InterpreterEnvironment,
+	args: &[InterpreterValue],
+) -> Result<InterpreterValue, RuntimeError> {
+	let searchee = &args[0];
+	let value = &args[1];
+
+	match (searchee, value) {
+		(InterpreterValue::Instance { properties, .. }, _) => {
+			let borrowed_props = properties.borrow();
+
+			Ok(borrowed_props.contains_key(&value.to_string()).into())
+		}
+		(InterpreterValue::List(l), _) => {
+			let l_borrow = l.borrow();
+
+			Ok(l_borrow.iter().any(|v| v == value).into())
+		}
+		(InterpreterValue::String(s1), InterpreterValue::String(s2)) => {
+			Ok(s1.contains(&**s2).into())
+		}
+		(InterpreterValue::String(s), InterpreterValue::Char(c)) => {
+			Ok(s.contains(*c).into())
+		}
+		_ => Err(RuntimeError {
+			message: format!(
+				"Cannot use has with {} and {}",
+				searchee.human_type(),
+				value.human_type()
+			),
+			token: keyword.clone(),
+		}),
 	}
 }
 
@@ -339,6 +376,11 @@ pub fn declare_native_functions(env: &InterpreterEnvironment) {
 				name: NATIVE_FUNCTION_NAMES[11],
 				arity: 1,
 				fun: native_ceil,
+			},
+			FunctionDefinition {
+				name: NATIVE_FUNCTION_NAMES[12],
+				arity: 2,
+				fun: native_has,
 			},
 		],
 	);

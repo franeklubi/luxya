@@ -38,3 +38,50 @@ const heja = 1235324.;
 print heja;
 
 3221;
+
+print "";
+print "";
+print "";
+
+const list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, "siema"];
+
+
+print "lists";
+
+// should be true
+print has(list, 5);
+print has(list, "siema");
+
+// should be false
+print has(list, 11);
+print has(list, "siemak");
+
+
+print "";
+print "objects";
+
+// should be true
+print has(instance, "superarg");
+
+// should be false
+print has(instance, "asdf");
+
+
+print "";
+print "strings";
+
+// should be true
+print has("abcd", "bc");
+
+// should be false
+print has("dcba", "bc");
+
+
+print "";
+print "chars";
+
+// should be true
+print has("abcd", 'b');
+
+// should be false
+print has("abcd", 'e');
