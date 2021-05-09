@@ -117,7 +117,7 @@ impl EnvironmentWrapper<InterpreterValue> for InterpreterEnvironment {
 			Err(RuntimeError {
 				message: format!(
 					"Cannot reassign a const {} `{}`",
-					entry.value.to_human_readable(),
+					entry.value.human_type(),
 					name
 				),
 				token: identifier.clone(),

@@ -163,7 +163,7 @@ pub fn extract_subscription_index(
 				Err(RuntimeError {
 					message: format!(
 						"Cannot use {} for indexing",
-						eval.to_human_readable()
+						eval.human_type()
 					),
 					token: blame.clone(),
 				})

@@ -120,7 +120,7 @@ pub fn execute_call(
 			Ok(instance)
 		}
 		_ => Err(RuntimeError {
-			message: format!("Cannot call {}", callee.to_human_readable()),
+			message: format!("Cannot call {}", callee.human_type()),
 			token: blame.clone(),
 		}),
 	}
@@ -248,8 +248,8 @@ pub fn binary_experssion(
 				message: format!(
 					"Cannot use `{}` on {} and {}",
 					v.operator.token_type,
-					left_value.to_human_readable(),
-					right_value.to_human_readable()
+					left_value.human_type(),
+					right_value.human_type()
 				),
 				token: v.operator.clone(),
 			}),
@@ -323,7 +323,7 @@ fn get_dot(
 			return Err(RuntimeError {
 				message: format!(
 					"Can't access properties on {}",
-					getee.to_human_readable()
+					getee.human_type()
 				),
 				token: v.blame.clone(),
 			});
@@ -380,7 +380,7 @@ fn get_subscription(
 			unsafe { Ok(l_borrow.get_unchecked(index).clone()) }
 		}
 		_ => Err(RuntimeError {
-			message: format!("Cannot index {}", getee_val.to_human_readable()),
+			message: format!("Cannot index {}", getee_val.human_type()),
 			token: v.blame.clone(),
 		}),
 	}
@@ -404,18 +404,16 @@ fn set_dot(
 ) -> Result<InterpreterValue, RuntimeError> {
 	let setee = eval_expression(&v.setee, env)?;
 
-	let properties =
-		if let InterpreterValue::Instance { properties, .. } = setee {
-			properties
-		} else {
-			return Err(RuntimeError {
-				message: format!(
-					"Can't set properties on {}",
-					setee.to_human_readable()
-				),
-				token: v.blame.clone(),
-			});
-		};
+	let properties = if let InterpreterValue::Instance { properties, .. } =
+		setee
+	{
+		properties
+	} else {
+		return Err(RuntimeError {
+			message: format!("Can't set properties on {}", setee.human_type()),
+			token: v.blame.clone(),
+		});
+	};
 
 	let value = eval_expression(&v.value, env)?;
 

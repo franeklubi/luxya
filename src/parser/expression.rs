@@ -31,7 +31,7 @@ fn assignment(tokens: ParserIter) -> Result<Expr, ParseError> {
 				token: Some(equals),
 				message: format!(
 					"Invalid l-value. Cannot assign to {}",
-					expr.to_human_readable()
+					expr.human_type()
 				),
 			}),
 		}

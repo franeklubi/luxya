@@ -37,7 +37,7 @@ pub enum InterpreterValue {
 }
 
 impl InterpreterValue {
-	pub fn to_human_readable(&self) -> &str {
+	pub fn human_type(&self) -> &str {
 		match self {
 			InterpreterValue::Instance { .. } => "class instance",
 			InterpreterValue::Function { .. } => "function",
@@ -178,8 +178,6 @@ impl From<bool> for InterpreterValue {
 	}
 }
 
-// TODO: convert to a method
-// (like to_human_readable we already have or something)
 impl fmt::Display for InterpreterValue {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		write!(f, "{}", self.gen_repr(false))

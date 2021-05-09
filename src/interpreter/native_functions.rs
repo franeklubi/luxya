@@ -49,7 +49,7 @@ fn native_typeof(
 	_env: &InterpreterEnvironment,
 	args: &[InterpreterValue],
 ) -> InterpreterValue {
-	InterpreterValue::String(Rc::from(args[0].to_human_readable()))
+	InterpreterValue::String(Rc::from(args[0].human_type()))
 }
 
 fn native_number(
@@ -68,10 +68,7 @@ fn native_number(
 			c.to_digit(10).map_or(f64::NAN, |d| d.into()),
 		)),
 		_ => Err(RuntimeError {
-			message: format!(
-				"Can't parse {} to number",
-				input.to_human_readable()
-			),
+			message: format!("Can't parse {} to number", input.human_type()),
 			token: keyword.clone(),
 		}),
 	}
@@ -92,10 +89,7 @@ fn native_len(
 			Ok(InterpreterValue::Number(l_borrow.len() as f64))
 		}
 		_ => Err(RuntimeError {
-			message: format!(
-				"Can't get length of {}",
-				&args[0].to_human_readable()
-			),
+			message: format!("Can't get length of {}", &args[0].human_type()),
 			token: keyword.clone(),
 		}),
 	}
@@ -113,10 +107,7 @@ fn native_chars(
 			RefCell::new(s.chars().map(InterpreterValue::Char).collect()),
 		))),
 		_ => Err(RuntimeError {
-			message: format!(
-				"Can't extract chars out of {}",
-				val.to_human_readable(),
-			),
+			message: format!("Can't extract chars out of {}", val.human_type()),
 			token: keyword.clone(),
 		}),
 	}
@@ -167,7 +158,7 @@ fn native_from_chars(
 				Err(RuntimeError {
 					message: format!(
 						"Cannot convert from {} to char",
-						v.to_human_readable()
+						v.human_type()
 					),
 					token: keyword.clone(),
 				})
@@ -227,10 +218,7 @@ fn native_is_nan(
 		Ok(n.is_nan().into())
 	} else {
 		Err(RuntimeError {
-			message: format!(
-				"Cannot use is_nan on {}",
-				value.to_human_readable()
-			),
+			message: format!("Cannot use is_nan on {}", value.human_type()),
 			token: keyword.clone(),
 		})
 	}
@@ -247,10 +235,7 @@ fn native_floor(
 		Ok(InterpreterValue::Number(n.floor()))
 	} else {
 		Err(RuntimeError {
-			message: format!(
-				"Cannot use floor on {}",
-				value.to_human_readable()
-			),
+			message: format!("Cannot use floor on {}", value.human_type()),
 			token: keyword.clone(),
 		})
 	}
@@ -267,10 +252,7 @@ fn native_ceil(
 		Ok(InterpreterValue::Number(n.ceil()))
 	} else {
 		Err(RuntimeError {
-			message: format!(
-				"Cannot use floor on {}",
-				value.to_human_readable()
-			),
+			message: format!("Cannot use floor on {}", value.human_type()),
 			token: keyword.clone(),
 		})
 	}

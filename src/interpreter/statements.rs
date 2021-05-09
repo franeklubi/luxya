@@ -222,7 +222,7 @@ pub fn class_statement(
 			return Err(RuntimeError {
 				message: format!(
 					"Cannot inherit from {}",
-					evaluated.to_human_readable()
+					evaluated.human_type()
 				),
 				token: v.name.clone(),
 			});

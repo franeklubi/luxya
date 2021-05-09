@@ -10,7 +10,7 @@ pub struct ParseError {
 }
 
 impl Expr {
-	pub fn to_human_readable(&self) -> &str {
+	pub fn human_type(&self) -> &str {
 		match self {
 			Expr::Assignment(_) => "an assignment",
 			Expr::Binary(_) => "a binary expression",
