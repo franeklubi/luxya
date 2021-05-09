@@ -1,4 +1,25 @@
 
+
+
+fun test_fun(
+	a,
+	b,
+) {
+	print a;
+	print b;
+}
+
+test_fun(
+	"heja",
+	"siema",
+);
+
+
+print "";
+print "";
+print "";
+
+
 let x = 0;
 
 for ; x < 4; x = x + 1 {

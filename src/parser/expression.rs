@@ -135,13 +135,11 @@ pub fn function_declaration(
 
 		let mut params = Vec::new();
 
-		if !peek_matches(tokens, &[TokenType::RightParen]) {
-			loop {
-				params.push(expect(tokens, &[fake_identifier.clone()], None)?);
+		while !peek_matches(tokens, &[TokenType::RightParen]) {
+			params.push(expect(tokens, &[fake_identifier.clone()], None)?);
 
-				if match_then_consume(tokens, &[TokenType::Comma]).is_none() {
-					break;
-				}
+			if match_then_consume(tokens, &[TokenType::Comma]).is_none() {
+				break;
 			}
 		}
 
@@ -176,13 +174,11 @@ pub fn function_declaration(
 fn finish_call(tokens: ParserIter, calee: Expr) -> Result<Expr, ParseError> {
 	let mut arguments = Vec::new();
 
-	if !peek_matches(tokens, &[TokenType::RightParen]) {
-		loop {
-			arguments.push(expression(tokens)?);
+	while !peek_matches(tokens, &[TokenType::RightParen]) {
+		arguments.push(expression(tokens)?);
 
-			if match_then_consume(tokens, &[TokenType::Comma]).is_none() {
-				break;
-			}
+		if match_then_consume(tokens, &[TokenType::Comma]).is_none() {
+			break;
 		}
 	}
 
@@ -391,14 +387,11 @@ fn primary(tokens: ParserIter) -> Result<Expr, ParseError> {
 		}) => {
 			let mut values = Vec::new();
 
-			if !peek_matches(tokens, &[TokenType::RightSquareBracket]) {
-				loop {
-					values.push(expression(tokens)?);
+			while !peek_matches(tokens, &[TokenType::RightSquareBracket]) {
+				values.push(expression(tokens)?);
 
-					if match_then_consume(tokens, &[TokenType::Comma]).is_none()
-					{
-						break;
-					}
+				if match_then_consume(tokens, &[TokenType::Comma]).is_none() {
+					break;
 				}
 			}
 
