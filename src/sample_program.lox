@@ -1,2 +1,10 @@
 
 print ceil(101.1) % 100;
+
+let x = 0;
+
+{
+	for ; x < 10; x = x + 1 {
+		print x;
+	}
+}

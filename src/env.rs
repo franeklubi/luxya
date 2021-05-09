@@ -47,3 +47,24 @@ pub trait EnvironmentWrapper<V> {
 		value: V,
 	) -> Result<V, RuntimeError>;
 }
+
+#[macro_export]
+macro_rules! unwrap_scope {
+	($wie:expr) => {{
+		&$wie.0.borrow().scope
+	}};
+}
+
+#[macro_export]
+macro_rules! unwrap_scope_mut {
+	($wie:expr) => {{
+		&mut $wie.0.borrow_mut().scope
+	}};
+}
+
+#[macro_export]
+macro_rules! unwrap_enclosing {
+	($wie:expr) => {{
+		&$wie.0.borrow().enclosing
+	}};
+}

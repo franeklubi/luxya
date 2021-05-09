@@ -7,7 +7,7 @@ use crate::{
 		statements as interpreter_stmts,
 		types::{InterpreterStmtValue, InterpreterValue, RuntimeError},
 	},
-	resolver_unwrap_scope_mut,
+	unwrap_scope_mut,
 };
 
 
@@ -15,7 +15,7 @@ pub fn resolve(statements: &[Stmt]) -> Result<(), RuntimeError> {
 	let scope = ResolverEnvironment::new();
 
 	{
-		let scope_map = resolver_unwrap_scope_mut!(scope);
+		let scope_map = unwrap_scope_mut!(scope);
 
 		NATIVE_FUNCTION_NAMES.iter().for_each(|k| {
 			scope_map.insert(k.to_string(), true);

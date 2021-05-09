@@ -43,27 +43,6 @@ pub fn no_identifier(token: &Token, name: &str) -> RuntimeError {
 	}
 }
 
-#[macro_export]
-macro_rules! unwrap_scope {
-	($wie:expr) => {{
-		&$wie.0.borrow().scope
-	}};
-}
-
-#[macro_export]
-macro_rules! unwrap_scope_mut {
-	($wie:expr) => {{
-		&mut $wie.0.borrow_mut().scope
-	}};
-}
-
-#[macro_export]
-macro_rules! unwrap_enclosing {
-	($wie:expr) => {{
-		&$wie.0.borrow().enclosing
-	}};
-}
-
 #[inline(always)]
 pub fn confirm_arity(
 	target: usize,

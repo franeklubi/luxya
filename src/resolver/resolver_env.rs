@@ -6,10 +6,10 @@ use crate::{
 		helpers::{assume_identifier, no_identifier},
 		types::{InterpreterValue, RuntimeError},
 	},
-	resolver_unwrap_enclosing,
-	resolver_unwrap_scope,
-	resolver_unwrap_scope_mut,
 	token::Token,
+	unwrap_enclosing,
+	unwrap_scope,
+	unwrap_scope_mut,
 };
 
 use std::{cell::RefCell, rc::Rc};
@@ -17,13 +17,10 @@ use std::{cell::RefCell, rc::Rc};
 
 // Everything we need to create resolved map will have to be inside this env
 #[derive(Clone)]
-pub struct ResolverEnvironment {
+pub struct ResolverEnvironment(
 	// true if variable, false if const
-	pub env: Rc<RefCell<EnvironmentBase<ResolverEnvironment, bool>>>,
-
-	// current nest level
-	level: u32,
-}
+	pub Rc<RefCell<EnvironmentBase<ResolverEnvironment, bool>>>,
+);
 
 // The InterpreterValue in this implementation tells us basically nothing, as
 // we won't be resolving the true values of our nodes.
@@ -34,19 +31,13 @@ pub struct ResolverEnvironment {
 // I'll always supply Nil here
 impl EnvironmentWrapper<InterpreterValue> for ResolverEnvironment {
 	fn new() -> Self {
-		ResolverEnvironment {
-			env: Rc::new(RefCell::new(EnvironmentBase::new(None))),
-			level: 0,
-		}
+		ResolverEnvironment(Rc::new(RefCell::new(EnvironmentBase::new(None))))
 	}
 
 	fn fork(&self) -> Self {
-		ResolverEnvironment {
-			env: Rc::new(RefCell::new(EnvironmentBase::new(Some(
-				self.clone(),
-			)))),
-			level: self.level + 1,
-		}
+		ResolverEnvironment(Rc::new(RefCell::new(EnvironmentBase::new(Some(
+			self.clone(),
+		)))))
 	}
 
 	fn read(
@@ -54,7 +45,7 @@ impl EnvironmentWrapper<InterpreterValue> for ResolverEnvironment {
 		steps: u32,
 		identifier: &Token,
 	) -> Result<DeclaredValue<InterpreterValue>, RuntimeError> {
-		let mut scope: Rc<RefCell<EnvironmentBase<_, _>>> = self.env.clone();
+		let mut scope: Rc<RefCell<EnvironmentBase<_, _>>> = self.0.clone();
 
 		for _ in 0..steps {
 			let new_scope = {
@@ -64,7 +55,7 @@ impl EnvironmentWrapper<InterpreterValue> for ResolverEnvironment {
 					.as_ref()
 					.expect("The enclosing environment to exist");
 
-				enclosing.env.clone()
+				enclosing.0.clone()
 			};
 
 			scope = new_scope;
@@ -88,7 +79,7 @@ impl EnvironmentWrapper<InterpreterValue> for ResolverEnvironment {
 		name: String,
 		value: DeclaredValue<InterpreterValue>,
 	) -> Option<DeclaredValue<InterpreterValue>> {
-		resolver_unwrap_scope_mut!(self).insert(name, value.mutable);
+		unwrap_scope_mut!(self).insert(name, value.mutable);
 
 		None
 	}
@@ -121,30 +112,26 @@ impl ResolverEnvironment {
 		resolvable_node: &Expr,
 		resolvable_token: &Token,
 	) -> Result<(), RuntimeError> {
-		self.resolve_nest_level_worker(
-			self.level,
-			resolvable_node,
-			resolvable_token,
-		)
+		self.resolve_nest_level_worker(0, resolvable_node, resolvable_token)
 	}
 
 	fn resolve_nest_level_worker(
 		&self,
-		initial_level: u32,
+		curr_distance: u32,
 		resolvable_node: &Expr,
 		resolvable_token: &Token,
 	) -> Result<(), RuntimeError> {
 		let name = assume_identifier(resolvable_token);
 
-		if let Some(_dv) = resolver_unwrap_scope!(self).get(name) {
+		if let Some(_dv) = unwrap_scope!(self).get(name) {
 			let env_distance = assume_resolvable_expr(resolvable_node);
 
-			env_distance.set(initial_level - self.level);
+			env_distance.set(curr_distance);
 
 			Ok(())
-		} else if let Some(enclosing) = resolver_unwrap_enclosing!(self) {
+		} else if let Some(enclosing) = unwrap_enclosing!(self) {
 			enclosing.resolve_nest_level_worker(
-				initial_level,
+				curr_distance + 1,
 				resolvable_node,
 				resolvable_token,
 			)?;
