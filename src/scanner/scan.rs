@@ -31,8 +31,8 @@ fn resolve_identifier(identifier: &str) -> TokenType {
 fn scan_token(
 	chars: ScannerIter,
 	source: &str,
-	// TODO: change that to only return result lol
-) -> Option<Result<token::Token, ScanError>> {
+) -> Result<Option<token::Token>, ScanError> {
+	// using while, because we want to skip unimportant chars, like whitespace
 	while let Some((i, c)) = chars.next() {
 		// We should be at the beginning of the next lexeme
 		let mut token_len = c.len_utf8();
@@ -116,16 +116,16 @@ fn scan_token(
 					TokenType::String(source[i + 1..identifier_end].into())
 				}
 				Err(_) => {
-					return Some(Err(ScanError {
+					return Err(ScanError {
 						offset: i,
 						message: "Unterminated string literal".to_owned(),
-					}));
+					});
 				}
 			},
 			'\'' => {
-				let c = chars.next()?.1;
+				let c = expect_char(chars, '\'', i, None)?;
 
-				let closer = chars.next()?.1;
+				let closer = expect_char(chars, c, i, None)?;
 
 				if '\'' == closer {
 					TokenType::Char(c)
@@ -134,10 +134,10 @@ fn scan_token(
 					let _ = consume_while_peek(chars, |c| *c != '\'');
 					chars.next();
 
-					return Some(Err(ScanError {
+					return Err(ScanError {
 						offset: i,
 						message: "Expected closing ' after char".to_owned(),
-					}));
+					});
 				}
 			}
 			// the way we parse may be a lil bit problematic, because we
@@ -158,23 +158,23 @@ fn scan_token(
 						match to_parse.parse() {
 							Ok(parsed) => TokenType::Number(parsed),
 							Err(e) => {
-								return Some(Err(ScanError {
+								return Err(ScanError {
 									offset: i,
 									message: format!(
 										"Couldn't parse {}; {}",
 										to_parse,
 										e.to_string()
 									),
-								}));
+								});
 							}
 						}
 					}
 					Err(_) => {
-						return Some(Err(ScanError {
+						return Err(ScanError {
 							offset: i,
 							message: "I mean, the unterminated number hmm 🤔"
 								.to_owned(),
-						}));
+						});
 					}
 				}
 			}
@@ -193,21 +193,21 @@ fn scan_token(
 				continue;
 			}
 			_ => {
-				return Some(Err(ScanError {
+				return Err(ScanError {
 					offset: i,
-					message: format!("Unexpected token {:?}", c),
-				}));
+					message: format!("Unexpected character {:?}", c),
+				});
 			}
 		};
 
-		return Some(Ok(token::Token {
+		return Ok(Some(token::Token {
 			token_type,
 			byte_offset: i,
 			byte_length: token_len,
 		}));
 	}
 
-	None
+	Ok(None)
 }
 
 pub fn scan(source: &str) -> (Vec<token::Token>, Vec<ScanError>) {
@@ -216,13 +216,12 @@ pub fn scan(source: &str) -> (Vec<token::Token>, Vec<ScanError>) {
 
 	let mut chars = source.char_indices().peekable();
 
-	while let Some(res) = scan_token(&mut chars, source) {
+	while let Some(_peek) = chars.peek() {
 		// We should be at the beginning of the next lexeme
-		match res {
-			Ok(token) => tokens.push(token),
-			Err(err) => {
-				errors.push(err);
-			}
+		match scan_token(&mut chars, source) {
+			Ok(Some(token)) => tokens.push(token),
+			Ok(None) => break, // iterator is exhausted
+			Err(err) => errors.push(err),
 		}
 	}
 

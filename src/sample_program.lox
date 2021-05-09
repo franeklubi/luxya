@@ -26,3 +26,7 @@ class ChildClass extends Superclass {
 const instance = ChildClass("heja");
 
 instance.print_superarg();
+
+const char = 'c';
+
+print char;

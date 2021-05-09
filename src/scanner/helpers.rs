@@ -1,4 +1,4 @@
-use super::types::ScannerIter;
+use super::types::{ScanError, ScannerIter};
 
 
 // match_to_peek returns true (and consumes next char)
@@ -33,5 +33,26 @@ pub fn consume_while_peek(
 			Some((i, _)) => Ok(*i),
 			None => Err(last_offset),
 		};
+	}
+}
+
+pub fn expect_char(
+	chars: ScannerIter,
+	after: char,
+	offset: usize,
+	override_message: Option<&str>,
+) -> Result<char, ScanError> {
+	if let Some(c) = chars.next() {
+		Ok(c.1)
+	} else if let Some(msg) = override_message {
+		Err(ScanError {
+			message: msg.to_owned(),
+			offset,
+		})
+	} else {
+		Err(ScanError {
+			message: format!("Expected char after `{}`", after),
+			offset,
+		})
 	}
 }
