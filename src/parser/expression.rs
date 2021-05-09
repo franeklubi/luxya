@@ -81,27 +81,22 @@ fn factor(tokens: ParserIter) -> Result<Expr, ParseError> {
 	build_binary_expr(tokens, unary, &[TokenType::Slash, TokenType::Star])
 }
 
-// TODO: optimize unary
 fn unary(tokens: ParserIter) -> Result<Expr, ParseError> {
-	if let Some(operator) = tokens.peek() {
-		if !match_token_type(
-			&operator.token_type,
-			&[TokenType::Bang, TokenType::Minus],
-		) {
-			return function_declaration(tokens, false);
-		}
-
+	if matches!(
+		tokens.peek().map(|t| &t.token_type),
+		Some(TokenType::Bang) | Some(TokenType::Minus)
+	) {
 		let operator = tokens.next().unwrap();
 
 		let right = unary(tokens)?;
 
-		return Ok(Expr::Unary(UnaryValue {
+		Ok(Expr::Unary(UnaryValue {
 			operator,
 			right: Box::new(right),
-		}));
+		}))
+	} else {
+		function_declaration(tokens, false)
 	}
-
-	function_declaration(tokens, false)
 }
 
 pub fn function_declaration(

@@ -19,6 +19,9 @@ print "";
 print "";
 print "";
 
+print !true;
+
+print "";
 
 let x = 0;
 
