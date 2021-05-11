@@ -1,6 +1,7 @@
 use super::{expression::*, helpers::*, parse::*, types::*};
 use crate::{
 	ast::{expr::*, stmt::*},
+	mtc,
 	token::*,
 };
 
@@ -42,8 +43,7 @@ pub fn if_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 
 	let then = statement_from(tokens, &[TokenType::LeftBrace])?.map(Box::new);
 
-	let otherwise = if match_then_consume(tokens, &[TokenType::Else]).is_some()
-	{
+	let otherwise = if mtc!(tokens, TokenType::Else).is_some() {
 		statement_from(tokens, &[TokenType::LeftBrace, TokenType::If])?
 			.map(Box::new)
 	} else {
@@ -107,16 +107,15 @@ pub fn for_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 		};
 
 	// parse condition
-	let condition =
-		if match_then_consume(tokens, &[TokenType::Semicolon]).is_some() {
-			None
-		} else {
-			let expr = expression(tokens)?;
+	let condition = if mtc!(tokens, TokenType::Semicolon).is_some() {
+		None
+	} else {
+		let expr = expression(tokens)?;
 
-			expect(tokens, &[TokenType::Semicolon], None)?;
+		expect(tokens, &[TokenType::Semicolon], None)?;
 
-			Some(expr)
-		};
+		Some(expr)
+	};
 
 	// parse closer (the increment or whatever)
 	let closer = if peek_matches(tokens, &[TokenType::LeftBrace]) {
@@ -206,21 +205,20 @@ pub fn class_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 		Some("Expected identifier"),
 	)?;
 
-	let superclass =
-		if match_then_consume(tokens, &[TokenType::Extends]).is_some() {
-			let superclass_name = expect(
-				tokens,
-				&[TokenType::Identifier("".into())],
-				Some("Expected identifier"),
-			)?;
+	let superclass = if mtc!(tokens, TokenType::Extends).is_some() {
+		let superclass_name = expect(
+			tokens,
+			&[TokenType::Identifier("".into())],
+			Some("Expected identifier"),
+		)?;
 
-			Some(Expr::Identifier(IdentifierValue {
-				name: superclass_name,
-				env_distance: Default::default(),
-			}))
-		} else {
-			None
-		};
+		Some(Expr::Identifier(IdentifierValue {
+			name: superclass_name,
+			env_distance: Default::default(),
+		}))
+	} else {
+		None
+	};
 
 	expect(tokens, &[TokenType::LeftBrace], None)?;
 

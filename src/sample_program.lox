@@ -9,6 +9,7 @@ fun test_fun(
 	print b;
 }
 
+print "should print 'heja', then 'siema'";
 test_fun(
 	"heja",
 	"siema",
@@ -16,9 +17,7 @@ test_fun(
 
 
 print "";
-print "";
-print "";
-
+print "should print false";
 print !true;
 
 print "";
@@ -28,11 +27,10 @@ let x = 0;
 for ; x < 4; x = x + 1 {
 }
 
+print "should print 0";
 print x;
 
 
-print "";
-print "";
 print "";
 
 
@@ -62,8 +60,12 @@ class ChildClass extends Superclass {
 
 const instance = ChildClass("heja");
 
+print "should print 'method test', then 'heja 😍...'";
 instance.print_superarg();
 
+print "";
+
+print "should print 'c', false, 1235324";
 const char = 'c';
 
 print char;
@@ -76,14 +78,12 @@ print heja;
 
 3221;
 
+
+
 print "";
-print "";
-print "";
+print "lists, should print true, true, false, false";
 
 const list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, "siema"];
-
-
-print "lists";
 
 // should be true
 print has(list, 5);
@@ -95,7 +95,7 @@ print has(list, "siemak");
 
 
 print "";
-print "objects";
+print "objects, should print true, false";
 
 // should be true
 print has(instance, "superarg");
@@ -105,7 +105,7 @@ print has(instance, "asdf");
 
 
 print "";
-print "strings";
+print "strings, should print true, false";
 
 // should be true
 print has("abcd", "bc");
@@ -115,10 +115,17 @@ print has("dcba", "bc");
 
 
 print "";
-print "chars";
+print "chars, should print true, false";
 
 // should be true
 print has("abcd", 'b');
 
 // should be false
 print has("abcd", 'e');
+
+
+print "";
+print "should print 'chuj'";
+const ahahash = "chuj";
+
+print ahahash;

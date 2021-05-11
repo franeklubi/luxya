@@ -1,6 +1,7 @@
 use super::{helpers::*, statements::*, types::*};
 use crate::{
 	ast::{expr::*, stmt::*},
+	mtc,
 	token::*,
 };
 
@@ -14,7 +15,7 @@ pub fn expression(tokens: ParserIter) -> Result<Expr, ParseError> {
 fn assignment(tokens: ParserIter) -> Result<Expr, ParseError> {
 	let expr = logic_or(tokens)?;
 
-	if let Some(equals) = match_then_consume(tokens, &[TokenType::Equal]) {
+	if let Some(equals) = mtc!(tokens, TokenType::Equal) {
 		match expr {
 			Expr::Identifier(v) => Ok(Expr::Assignment(AssignmentValue {
 				name: v.name,
@@ -119,11 +120,10 @@ pub fn function_declaration(
 			expect(tokens, &[TokenType::Fun], None)?
 		};
 
-		// TODO: optimize expect
 		let name = if method {
 			Some(keyword.clone())
 		} else {
-			match_then_consume(tokens, &[fake_identifier.clone()])
+			mtc!(tokens, TokenType::Identifier(_))
 		};
 
 		expect(tokens, &[TokenType::LeftParen], None)?;
@@ -133,7 +133,7 @@ pub fn function_declaration(
 		while !peek_matches(tokens, &[TokenType::RightParen]) {
 			params.push(expect(tokens, &[fake_identifier.clone()], None)?);
 
-			if match_then_consume(tokens, &[TokenType::Comma]).is_none() {
+			if mtc!(tokens, TokenType::Comma).is_none() {
 				break;
 			}
 		}
@@ -172,7 +172,7 @@ fn finish_call(tokens: ParserIter, calee: Expr) -> Result<Expr, ParseError> {
 	while !peek_matches(tokens, &[TokenType::RightParen]) {
 		arguments.push(expression(tokens)?);
 
-		if match_then_consume(tokens, &[TokenType::Comma]).is_none() {
+		if mtc!(tokens, TokenType::Comma).is_none() {
 			break;
 		}
 	}
@@ -258,13 +258,9 @@ fn finish_sub(tokens: ParserIter, getee: Expr) -> Result<Expr, ParseError> {
 fn call(tokens: ParserIter) -> Result<Expr, ParseError> {
 	let mut expr = primary(tokens)?;
 
-	while let Some(consumed) = match_then_consume(
+	while let Some(consumed) = mtc!(
 		tokens,
-		&[
-			TokenType::LeftParen,
-			TokenType::Dot,
-			TokenType::LeftSquareBracket,
-		],
+		TokenType::LeftParen | TokenType::Dot | TokenType::LeftSquareBracket
 	) {
 		match consumed.token_type {
 			TokenType::LeftParen => {
@@ -385,7 +381,7 @@ fn primary(tokens: ParserIter) -> Result<Expr, ParseError> {
 			while !peek_matches(tokens, &[TokenType::RightSquareBracket]) {
 				values.push(expression(tokens)?);
 
-				if match_then_consume(tokens, &[TokenType::Comma]).is_none() {
+				if mtc!(tokens, TokenType::Comma).is_none() {
 					break;
 				}
 			}
@@ -422,9 +418,7 @@ fn primary(tokens: ParserIter) -> Result<Expr, ParseError> {
 					_ => unreachable!("Hi!! Welcome to my kitchen"),
 				};
 
-				let value = if match_then_consume(tokens, &[TokenType::Colon])
-					.is_some()
-				{
+				let value = if mtc!(tokens, TokenType::Colon).is_some() {
 					expression(tokens)?
 				} else if let TokenType::Identifier(_) = key_token.token_type {
 					Expr::Identifier(IdentifierValue {
@@ -445,7 +439,7 @@ fn primary(tokens: ParserIter) -> Result<Expr, ParseError> {
 					value,
 				});
 
-				if match_then_consume(tokens, &[TokenType::Comma]).is_none() {
+				if mtc!(tokens, TokenType::Comma).is_none() {
 					break;
 				}
 			}

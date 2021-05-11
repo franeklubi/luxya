@@ -30,6 +30,35 @@ pub fn match_then_consume(
 		.and_then(|b| b.then(|| tokens.next().unwrap()))
 }
 
+#[macro_export]
+macro_rules! mtc {
+	($tokens:expr, $( $expected:pat )|+ $(,)?) => {{
+		match $tokens.peek().map(|t| &t.token_type) {
+			Some($( $expected )|+) => $tokens.next(),
+			_ => None,
+		}
+	}};
+}
+
+// #[macro_export]
+// macro_rules! mtcexpect {
+// 	($tokens:expr, $( $expected:pat )|+, $override_message:expr $(,)?) => {{
+// 		mtc!($tokens, $expected).ok_or_else(|| {
+// 			let message = if let Some(m) = override_message {
+// 				m.to_string()
+// 			} else {
+// 				gen_expected_msg(expected)
+// 			};
+//
+// 			ParseError {
+// 				message,
+// 				token: tokens.peek().cloned(),
+// 			}
+// 		})
+// 	}};
+// }
+
+
 pub fn expect(
 	tokens: ParserIter,
 	expected: &[TokenType],
