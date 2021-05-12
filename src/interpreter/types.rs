@@ -52,7 +52,7 @@ impl InterpreterValue {
 		}
 	}
 
-	pub fn gen_repr(&self, nested: bool) -> String {
+	pub fn repr(&self, nested: bool) -> String {
 		match self {
 			InterpreterValue::List(l) => {
 				let take_amount =
@@ -65,7 +65,7 @@ impl InterpreterValue {
 				list_repr += &l_borrow
 					.iter()
 					.take(take_amount)
-					.map(|v| v.gen_repr(true))
+					.map(|v| v.repr(true))
 					.collect::<Vec<String>>()
 					.join(", ");
 
@@ -98,7 +98,7 @@ impl InterpreterValue {
 				obj_repr += &p_borrow
 					.iter()
 					.take(take_amount)
-					.map(|(k, v)| format!("\n\t{}: {},", k, v.gen_repr(true)))
+					.map(|(k, v)| format!("\n\t{}: {},", k, v.repr(true)))
 					.collect::<String>();
 
 				let key_num = p_borrow.len();
@@ -180,6 +180,6 @@ impl From<bool> for InterpreterValue {
 
 impl fmt::Display for InterpreterValue {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-		write!(f, "{}", self.gen_repr(false))
+		write!(f, "{}", self.repr(false))
 	}
 }

@@ -4,6 +4,7 @@ use crate::{
 	token::*,
 };
 
+
 #[inline(always)]
 pub fn match_token_type(t: &TokenType, expected: &[TokenType]) -> bool {
 	expected.iter().any(|a| a == t)
@@ -40,63 +41,35 @@ macro_rules! mtc {
 	}};
 }
 
-// #[macro_export]
-// macro_rules! mtcexpect {
-// 	($tokens:expr, $( $expected:pat )|+, $override_message:expr $(,)?) => {{
-// 		mtc!($tokens, $expected).ok_or_else(|| {
-// 			let message = if let Some(m) = override_message {
-// 				m.to_string()
-// 			} else {
-// 				gen_expected_msg(expected)
-// 			};
-//
-// 			ParseError {
-// 				message,
-// 				token: tokens.peek().cloned(),
-// 			}
-// 		})
-// 	}};
-// }
+#[macro_export]
+macro_rules! mtcexpect {
+	($tokens:ident, $( $expected:pat )|+, $message:expr $(,)?) => {{
+		mtc!($tokens, $( $expected )|+).ok_or_else(|| ParseError {
+			message: $message.into(),
+			token: $tokens.peek().cloned(),
+		})
+	}};
+}
 
-
-pub fn expect(
-	tokens: ParserIter,
-	expected: &[TokenType],
-	override_message: Option<&str>,
-) -> Result<Token, ParseError> {
-	match_then_consume(tokens, expected).ok_or_else(|| {
-		let message = if let Some(m) = override_message {
-			m.to_string()
-		} else {
-			gen_expected_msg(expected)
-		};
-
-		ParseError {
-			message,
-			token: tokens.peek().cloned(),
+#[macro_export]
+macro_rules! mtcexpectone {
+	($tokens:ident, $expected:expr $(,)?) => {{
+		match $tokens.peek() {
+			Some(Token { token_type, .. }) if token_type == &$expected => {
+				// i mean we just matched that, unsafe is pretty justified
+				Ok(unsafe { $tokens.next().unwrap_unchecked() })
+			}
+			_ => Err(ParseError {
+				message: format!("Expected `{}`", $expected.human_type()),
+				token: $tokens.peek().cloned(),
+			}),
 		}
-	})
+	}};
 }
 
-pub fn gen_expected_msg(expected: &[TokenType]) -> String {
-	let msg = if expected.len() > 1 {
-		"Expected one of: "
-	} else {
-		"Expected: "
-	}
-	.to_string();
-
-	let enumerated: String = expected
-		.iter()
-		.map(|e| format!("`{}`", e))
-		.collect::<Vec<String>>()
-		.join(", ");
-
-	msg + &enumerated
-}
-
+#[inline(always)]
 pub fn expect_semicolon(tokens: ParserIter) -> Result<Token, ParseError> {
-	expect(tokens, &[TokenType::Semicolon], None)
+	mtcexpectone!(tokens, TokenType::Semicolon)
 }
 
 // call only if the token that the parser choked on is not ';'

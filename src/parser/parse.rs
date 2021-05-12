@@ -1,5 +1,5 @@
 use super::{expression::expression, helpers::*, statements::*, types::*};
-use crate::{ast::stmt::*, mtc, token::*};
+use crate::{ast::stmt::*, mtc, mtcexpect, token::*};
 
 
 pub fn parse(tokens: Vec<Token>) -> (Vec<Stmt>, Vec<ParseError>) {
@@ -30,11 +30,10 @@ pub fn declaration(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 		tokens: ParserIter,
 		matched: TokenType,
 	) -> Result<Option<Stmt>, ParseError> {
-		// TODO: optimize expect
-		let token = expect(
+		let token = mtcexpect!(
 			tokens,
-			&[TokenType::Identifier("".into())],
-			Some("Expected identifier"),
+			TokenType::Identifier(_),
+			"Expected identifier",
 		)?;
 
 		let initializer = if mtc!(tokens, TokenType::Equal).is_some() {

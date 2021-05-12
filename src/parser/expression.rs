@@ -2,6 +2,8 @@ use super::{helpers::*, statements::*, types::*};
 use crate::{
 	ast::{expr::*, stmt::*},
 	mtc,
+	mtcexpect,
+	mtcexpectone,
 	token::*,
 };
 
@@ -105,42 +107,51 @@ pub fn function_declaration(
 	method: bool,
 ) -> Result<Expr, ParseError> {
 	// TODO: optimize function parsing
-	if method || peek_matches(tokens, &[TokenType::Fun]) {
-		// TODO: optimize expect
-		let fake_identifier = TokenType::Identifier("".into());
 
+	// methods don't have the `fun` keyword
+	if method || peek_matches(tokens, &[TokenType::Fun]) {
+		// expect the `fun` keyword if normal function, an identifier otherwise
 		let keyword = if method {
-			// TODO: optimize expect
-			expect(
+			mtcexpect!(
 				tokens,
-				&[fake_identifier.clone()],
-				Some("Expected method name"),
+				TokenType::Identifier(_),
+				"Expected method name",
 			)?
 		} else {
-			expect(tokens, &[TokenType::Fun], None)?
+			mtcexpectone!(tokens, TokenType::Fun)?
 		};
 
+		// if we're parsing a method, we actually already have
+		// parse it's name in the keyword
 		let name = if method {
 			Some(keyword.clone())
 		} else {
 			mtc!(tokens, TokenType::Identifier(_))
 		};
 
-		expect(tokens, &[TokenType::LeftParen], None)?;
+		// intro to parameter parsing
+		mtcexpectone!(tokens, TokenType::LeftParen)?;
 
 		let mut params = Vec::new();
 
+		// parse parameters
 		while !peek_matches(tokens, &[TokenType::RightParen]) {
-			params.push(expect(tokens, &[fake_identifier.clone()], None)?);
+			params.push(mtcexpect!(
+				tokens,
+				TokenType::Identifier(_),
+				"Expected parameter name"
+			)?);
 
 			if mtc!(tokens, TokenType::Comma).is_none() {
 				break;
 			}
 		}
 
-		expect(tokens, &[TokenType::RightParen], None)?;
+		mtcexpectone!(tokens, TokenType::RightParen)?;
+		// outro of parameter parsing
 
-		expect(tokens, &[TokenType::LeftBrace], None)?;
+		// parse the body
+		mtcexpectone!(tokens, TokenType::LeftBrace)?;
 
 		let body = block_statement(tokens)?;
 
@@ -180,7 +191,7 @@ fn finish_call(tokens: ParserIter, calee: Expr) -> Result<Expr, ParseError> {
 	Ok(Expr::Call(CallValue {
 		arguments,
 		calee: Box::new(calee),
-		closing_paren: expect(tokens, &[TokenType::RightParen], None)?,
+		closing_paren: mtcexpectone!(tokens, TokenType::RightParen)?,
 	}))
 }
 
@@ -205,7 +216,7 @@ fn finish_get(tokens: ParserIter, getee: Expr) -> Result<Expr, ParseError> {
 
 			let eval = expression(tokens)?;
 
-			expect(tokens, &[TokenType::RightParen], None)?;
+			mtcexpectone!(tokens, TokenType::RightParen)?;
 
 			Ok(Expr::Get(GetValue {
 				getee: Box::new(getee),
@@ -250,7 +261,7 @@ fn finish_sub(tokens: ParserIter, getee: Expr) -> Result<Expr, ParseError> {
 		}
 	}?;
 
-	expect(tokens, &[TokenType::RightSquareBracket], None)?;
+	mtcexpectone!(tokens, TokenType::RightSquareBracket)?;
 
 	Ok(accessor)
 }
@@ -314,7 +325,7 @@ fn primary(tokens: ParserIter) -> Result<Expr, ParseError> {
 		}) => {
 			let expr = expression(tokens)?;
 
-			expect(tokens, &[TokenType::RightParen], None)?;
+			mtcexpectone!(tokens, TokenType::RightParen)?;
 
 			Ok(Expr::Grouping(GroupingValue {
 				expression: Box::new(expr),
@@ -348,11 +359,10 @@ fn primary(tokens: ParserIter) -> Result<Expr, ParseError> {
 					Ok(SuperAccessor::Call(arguments))
 				}
 				Some(TokenType::Dot) => {
-					// TODO: optimize expect
-					let name = expect(
+					let name = mtcexpect!(
 						tokens,
-						&[TokenType::Identifier("".into())],
-						Some("Expected method name"),
+						TokenType::Identifier(_),
+						"Expected a superclass method name",
 					)?;
 
 					Ok(SuperAccessor::Method(name))
@@ -386,7 +396,7 @@ fn primary(tokens: ParserIter) -> Result<Expr, ParseError> {
 				}
 			}
 
-			expect(tokens, &[TokenType::RightSquareBracket], None)?;
+			mtcexpectone!(tokens, TokenType::RightSquareBracket)?;
 
 			Ok(Expr::Literal(LiteralValue::List(Rc::new(values))))
 		}
@@ -396,6 +406,7 @@ fn primary(tokens: ParserIter) -> Result<Expr, ParseError> {
 			..
 		}) => Ok(Expr::Literal(LiteralValue::Char(c))),
 
+		// parse objects
 		Some(Token {
 			token_type: TokenType::LeftBrace,
 			..
@@ -403,14 +414,10 @@ fn primary(tokens: ParserIter) -> Result<Expr, ParseError> {
 			let mut properties: Vec<Property> = Vec::new();
 
 			while !peek_matches(tokens, &[TokenType::RightBrace]) {
-				// TODO: optimize expect
-				let key_token = expect(
+				let key_token = mtcexpect!(
 					tokens,
-					&[
-						TokenType::Identifier("".into()),
-						TokenType::String("".into()),
-					],
-					Some("Expected property name"),
+					TokenType::Identifier(_) | TokenType::String(_),
+					"Expected property name",
 				)?;
 
 				let key = match &key_token.token_type {
@@ -444,7 +451,7 @@ fn primary(tokens: ParserIter) -> Result<Expr, ParseError> {
 				}
 			}
 
-			expect(tokens, &[TokenType::RightBrace], None)?;
+			mtcexpectone!(tokens, TokenType::RightBrace)?;
 
 			Ok(Expr::Object(ObjectValue {
 				blame: token.unwrap(),

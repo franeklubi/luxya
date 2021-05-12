@@ -2,6 +2,8 @@ use super::{expression::*, helpers::*, parse::*, types::*};
 use crate::{
 	ast::{expr::*, stmt::*},
 	mtc,
+	mtcexpect,
+	mtcexpectone,
 	token::*,
 };
 
@@ -71,7 +73,7 @@ pub fn block_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 		}
 	}
 
-	expect(tokens, &[TokenType::RightBrace], None)?;
+	mtcexpectone!(tokens, TokenType::RightBrace)?;
 
 	// as though it may not seem as an optimization, it really is a useful
 	// heuristic to return an empty statement rather than block
@@ -89,9 +91,11 @@ pub fn block_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 pub fn for_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 	let expected = &[TokenType::Semicolon, TokenType::Let, TokenType::Const];
 
+	// parse declaration
 	if !peek_matches(tokens, expected) {
 		return Err(ParseError {
-			message: gen_expected_msg(expected),
+			message: "Expected `let`, `const`, or `;` to omit declaration"
+				.to_owned(),
 			token: tokens.peek().cloned(),
 		});
 	}
@@ -112,7 +116,7 @@ pub fn for_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 	} else {
 		let expr = expression(tokens)?;
 
-		expect(tokens, &[TokenType::Semicolon], None)?;
+		mtcexpectone!(tokens, TokenType::Semicolon)?;
 
 		Some(expr)
 	};
@@ -198,18 +202,14 @@ pub fn continue_statement(
 
 #[inline(always)]
 pub fn class_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
-	// TODO: optimize expect
-	let name = expect(
-		tokens,
-		&[TokenType::Identifier("".into())],
-		Some("Expected identifier"),
-	)?;
+	let name =
+		mtcexpect!(tokens, TokenType::Identifier(_), "Expected class name")?;
 
 	let superclass = if mtc!(tokens, TokenType::Extends).is_some() {
-		let superclass_name = expect(
+		let superclass_name = mtcexpect!(
 			tokens,
-			&[TokenType::Identifier("".into())],
-			Some("Expected identifier"),
+			TokenType::Identifier(_),
+			"Expected identifier",
 		)?;
 
 		Some(Expr::Identifier(IdentifierValue {
@@ -220,7 +220,7 @@ pub fn class_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 		None
 	};
 
-	expect(tokens, &[TokenType::LeftBrace], None)?;
+	mtcexpectone!(tokens, TokenType::LeftBrace)?;
 
 	let mut methods = Vec::new();
 
@@ -228,7 +228,7 @@ pub fn class_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 		methods.push(function_declaration(tokens, true)?);
 	}
 
-	expect(tokens, &[TokenType::RightBrace], None)?;
+	mtcexpectone!(tokens, TokenType::RightBrace)?;
 
 	Ok(Some(Stmt::Class(ClassValue {
 		name,

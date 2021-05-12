@@ -9,6 +9,11 @@ generate_ast_path=./tools/generate_ast.py
 main:
 	cargo build
 
+prod:
+	make -s clippy
+	clear
+	cargo build --release
+
 clippy:
 	clear
 	cargo clippy --all-features -- -D warnings

@@ -58,6 +58,69 @@ pub enum TokenType {
 	Extends,
 }
 
+impl TokenType {
+	pub fn repr(&self) -> String {
+		match self {
+			TokenType::String(s) => format!("{:?}", s),
+			TokenType::Identifier(i) => format!("{}", i),
+			TokenType::Number(n) => format!("{:?}", n),
+			TokenType::Char(c) => format!("{:?}", c),
+			_ => self.human_type().to_owned(),
+		}
+	}
+
+	pub fn human_type(&self) -> &str {
+		match self {
+			TokenType::String(_) => "string",
+			TokenType::Identifier(_) => "identifier",
+			TokenType::Number(_) => "number",
+			TokenType::Char(_) => "char",
+			TokenType::LeftParen => "(",
+			TokenType::RightParen => ")",
+			TokenType::LeftBrace => "{{",
+			TokenType::RightBrace => "}}",
+			TokenType::LeftSquareBracket => "[",
+			TokenType::RightSquareBracket => "]",
+			TokenType::Comma => ",",
+			TokenType::Dot => ".",
+			TokenType::Minus => "-",
+			TokenType::Plus => "+",
+			TokenType::Colon => ":",
+			TokenType::Semicolon => ";",
+			TokenType::Slash => "/",
+			TokenType::Star => "*",
+			TokenType::Bang => "!",
+			TokenType::BangEqual => "!=",
+			TokenType::Equal => "=",
+			TokenType::EqualEqual => "==",
+			TokenType::Greater => ">",
+			TokenType::GreaterEqual => ">=",
+			TokenType::Less => "<",
+			TokenType::LessEqual => "<=",
+			TokenType::And => "and",
+			TokenType::Class => "class",
+			TokenType::Else => "else",
+			TokenType::False => "false",
+			TokenType::Fun => "fun",
+			TokenType::For => "for",
+			TokenType::If => "if",
+			TokenType::Nil => "nil",
+			TokenType::Or => "or",
+			TokenType::Print => "print",
+			TokenType::Return => "return",
+			TokenType::Super => "super",
+			TokenType::This => "this",
+			TokenType::True => "true",
+			TokenType::Let => "let",
+			TokenType::Const => "const",
+			TokenType::Break => "break",
+			TokenType::Continue => "continue",
+			TokenType::Extends => "extends",
+			TokenType::Modulo => "%",
+		}
+	}
+}
+
 #[derive(Clone, Debug)]
 pub struct Token {
 	pub byte_offset: usize,
@@ -79,54 +142,7 @@ impl fmt::Display for Token {
 
 impl fmt::Display for TokenType {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-		match self {
-			TokenType::String(s) => write!(f, "{:?}", s),
-			TokenType::Identifier(i) => write!(f, "{}", i),
-			TokenType::Number(n) => write!(f, "{:?}", n),
-			TokenType::Char(c) => write!(f, "{:?}", c),
-			TokenType::LeftParen => write!(f, "("),
-			TokenType::RightParen => write!(f, ")"),
-			TokenType::LeftBrace => write!(f, "{{"),
-			TokenType::RightBrace => write!(f, "}}"),
-			TokenType::LeftSquareBracket => write!(f, "["),
-			TokenType::RightSquareBracket => write!(f, "]"),
-			TokenType::Comma => write!(f, ","),
-			TokenType::Dot => write!(f, "."),
-			TokenType::Minus => write!(f, "-"),
-			TokenType::Plus => write!(f, "+"),
-			TokenType::Colon => write!(f, ":"),
-			TokenType::Semicolon => write!(f, ";"),
-			TokenType::Slash => write!(f, "/"),
-			TokenType::Star => write!(f, "*"),
-			TokenType::Bang => write!(f, "!"),
-			TokenType::BangEqual => write!(f, "!="),
-			TokenType::Equal => write!(f, "="),
-			TokenType::EqualEqual => write!(f, "=="),
-			TokenType::Greater => write!(f, ">"),
-			TokenType::GreaterEqual => write!(f, ">="),
-			TokenType::Less => write!(f, "<"),
-			TokenType::LessEqual => write!(f, "<="),
-			TokenType::And => write!(f, "and"),
-			TokenType::Class => write!(f, "class"),
-			TokenType::Else => write!(f, "else"),
-			TokenType::False => write!(f, "false"),
-			TokenType::Fun => write!(f, "fun"),
-			TokenType::For => write!(f, "for"),
-			TokenType::If => write!(f, "if"),
-			TokenType::Nil => write!(f, "nil"),
-			TokenType::Or => write!(f, "or"),
-			TokenType::Print => write!(f, "print"),
-			TokenType::Return => write!(f, "("),
-			TokenType::Super => write!(f, "("),
-			TokenType::This => write!(f, "this"),
-			TokenType::True => write!(f, "true"),
-			TokenType::Let => write!(f, "let"),
-			TokenType::Const => write!(f, "const"),
-			TokenType::Break => write!(f, "break"),
-			TokenType::Continue => write!(f, "continue"),
-			TokenType::Extends => write!(f, "extends"),
-			TokenType::Modulo => write!(f, "%"),
-		}
+		write!(f, "{}", self.repr())
 	}
 }
 
