@@ -172,7 +172,6 @@ pub fn function_declaration(
 	}
 }
 
-#[inline(always)]
 fn finish_call(tokens: ParserIter, calee: Expr) -> Result<Expr, ParseError> {
 	let mut arguments = Vec::new();
 

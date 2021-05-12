@@ -19,7 +19,6 @@ pub fn print_statement(
 	Ok(InterpreterStmtValue::Noop)
 }
 
-#[inline(always)]
 pub fn declaration_statement(
 	v: &DeclarationValue,
 	env: &ResolverEnvironment,
@@ -39,7 +38,6 @@ pub fn declaration_statement(
 	Ok(InterpreterStmtValue::Noop)
 }
 
-#[inline(always)]
 pub fn if_statement(
 	v: &IfValue,
 	env: &ResolverEnvironment,
@@ -57,7 +55,6 @@ pub fn if_statement(
 	Ok(InterpreterStmtValue::Noop)
 }
 
-#[inline(always)]
 pub fn for_statement(
 	v: &ForValue,
 	env: &ResolverEnvironment,

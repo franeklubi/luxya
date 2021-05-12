@@ -4,6 +4,8 @@ use crate::{ast::expr::*, env::*, token::*};
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 
+// inlining because it's used only once, but i wanted to take it
+// out of the context, to make it less cluttery
 #[inline(always)]
 pub fn literal_expression(
 	v: &LiteralValue,
@@ -257,7 +259,6 @@ pub fn binary_experssion(
 	}
 }
 
-#[inline(always)]
 fn find_method(
 	key: &str,
 	class: &InterpreterValue,
@@ -294,6 +295,8 @@ fn get_dot(
 	v: &GetValue,
 	env: &InterpreterEnvironment,
 ) -> Result<InterpreterValue, RuntimeError> {
+	// auxiliary function used only once down below, that's why inlining is
+	// completely justified 🥺
 	#[inline(always)]
 	fn get_property(
 		key: &str,

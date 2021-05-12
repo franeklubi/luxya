@@ -23,7 +23,6 @@ pub fn print_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 	Ok(Some(stmt))
 }
 
-#[inline(always)]
 pub fn expression_statement(
 	tokens: ParserIter,
 ) -> Result<Option<Stmt>, ParseError> {
@@ -41,7 +40,6 @@ pub fn expression_statement(
 	Ok(Some(stmt))
 }
 
-#[inline(always)]
 pub fn if_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 	let condition = expression(tokens)?;
 
@@ -74,7 +72,6 @@ pub fn if_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 	}
 }
 
-#[inline(always)]
 pub fn block_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 	let mut statements = Vec::new();
 
@@ -178,7 +175,6 @@ pub fn for_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 	Ok(Some(for_body))
 }
 
-#[inline(always)]
 pub fn return_statement(
 	tokens: ParserIter,
 	keyword: Token,
@@ -217,7 +213,6 @@ pub fn continue_statement(
 	Ok(Some(Stmt::Continue(ContinueValue { keyword })))
 }
 
-#[inline(always)]
 pub fn class_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 	let name =
 		expect!(tokens, TokenType::Identifier(_), "Expected class name")?;

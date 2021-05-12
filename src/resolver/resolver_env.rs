@@ -3,7 +3,7 @@ use crate::{
 	ast::expr::Expr,
 	env::*,
 	interpreter::{
-		helpers::{assume_identifier, no_identifier},
+		helpers::assume_identifier,
 		types::{InterpreterValue, RuntimeError},
 	},
 	token::Token,
@@ -138,7 +138,10 @@ impl ResolverEnvironment {
 
 			Ok(())
 		} else {
-			Err(no_identifier(resolvable_token, name))
+			Err(RuntimeError {
+				token: resolvable_token.clone(),
+				message: format!("Identifier {} not defined", name),
+			})
 		}
 	}
 }

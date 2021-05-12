@@ -25,12 +25,10 @@ pub fn parse(tokens: Vec<Token>) -> (Vec<Stmt>, Vec<ParseError>) {
 }
 
 pub fn declaration(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
-	#[inline(always)]
-	fn value_declaration(
-		tokens: ParserIter,
-		matched: TokenType,
-	) -> Result<Option<Stmt>, ParseError> {
-		let token =
+	if let Some(token) =
+		match_then_consume!(tokens, TokenType::Let | TokenType::Const)
+	{
+		let name =
 			expect!(tokens, TokenType::Identifier(_), "Expected identifier",)?;
 
 		let initializer =
@@ -43,16 +41,10 @@ pub fn declaration(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 		expect_semicolon(tokens)?;
 
 		Ok(Some(Stmt::Declaration(DeclarationValue {
-			name: token,
+			name,
 			initializer,
-			mutable: TokenType::Let == matched,
+			mutable: TokenType::Let == token.token_type,
 		})))
-	}
-
-	if let Some(token) =
-		match_then_consume!(tokens, TokenType::Let | TokenType::Const)
-	{
-		value_declaration(tokens, token.token_type)
 	} else {
 		statement(tokens)
 	}

@@ -36,14 +36,6 @@ pub fn guard_function(
 }
 
 #[inline(always)]
-pub fn no_identifier(token: &Token, name: &str) -> RuntimeError {
-	RuntimeError {
-		token: token.clone(),
-		message: format!("Identifier {} not defined", name),
-	}
-}
-
-#[inline(always)]
 pub fn confirm_arity(
 	target: usize,
 	value: usize,
@@ -145,7 +137,6 @@ pub fn unwrap_list<'a>(
 	}
 }
 
-#[inline(always)]
 pub fn extract_subscription_index(
 	accessor: &GetAccessor,
 	blame: &Token,

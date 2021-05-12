@@ -43,7 +43,6 @@ where
 	Ok(InterpreterStmtValue::Noop)
 }
 
-#[inline(always)]
 pub fn declaration_statement<E>(
 	expr_evaluator: fn(&Expr, &E) -> Result<InterpreterValue, RuntimeError>,
 	v: &DeclarationValue,

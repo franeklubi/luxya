@@ -20,7 +20,6 @@ pub fn identifier_expression(
 	Ok(InterpreterValue::Nil)
 }
 
-#[inline(always)]
 pub fn assignment_expression(
 	expr: &Expr,
 	v: &AssignmentValue,
@@ -91,7 +90,6 @@ pub fn binary_expression(
 	Ok(InterpreterValue::Nil)
 }
 
-#[inline(always)]
 pub fn call_expression(
 	v: &CallValue,
 	env: &ResolverEnvironment,
@@ -125,7 +123,6 @@ pub fn get_expression(
 	Ok(InterpreterValue::Nil)
 }
 
-#[inline(always)]
 pub fn set_expression(
 	v: &SetValue,
 	env: &ResolverEnvironment,
@@ -155,7 +152,6 @@ pub fn this_expression(
 	Ok(InterpreterValue::Nil)
 }
 
-#[inline(always)]
 pub fn super_expression(
 	expr: &Expr,
 	v: &SuperValue,
