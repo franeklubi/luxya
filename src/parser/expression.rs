@@ -1,11 +1,11 @@
 use super::{statements::*, types::*};
 use crate::{
 	ast::{expr::*, stmt::*},
-	bbe,
-	mtc,
-	mtcexpect,
-	mtcexpectone,
-	pm,
+	build_binary_expr,
+	expect,
+	expect_one,
+	match_then_consume,
+	peek_matches,
 	token::*,
 };
 
@@ -19,7 +19,7 @@ pub fn expression(tokens: ParserIter) -> Result<Expr, ParseError> {
 fn assignment(tokens: ParserIter) -> Result<Expr, ParseError> {
 	let expr = logic_or(tokens)?;
 
-	if let Some(equals) = mtc!(tokens, TokenType::Equal) {
+	if let Some(equals) = match_then_consume!(tokens, TokenType::Equal) {
 		match expr {
 			Expr::Identifier(v) => Ok(Expr::Assignment(AssignmentValue {
 				name: v.name,
@@ -46,15 +46,15 @@ fn assignment(tokens: ParserIter) -> Result<Expr, ParseError> {
 }
 
 fn logic_or(tokens: ParserIter) -> Result<Expr, ParseError> {
-	bbe!(tokens, logic_and, TokenType::Or)
+	build_binary_expr!(tokens, logic_and, TokenType::Or)
 }
 
 fn logic_and(tokens: ParserIter) -> Result<Expr, ParseError> {
-	bbe!(tokens, equality, TokenType::And)
+	build_binary_expr!(tokens, equality, TokenType::And)
 }
 
 fn equality(tokens: ParserIter) -> Result<Expr, ParseError> {
-	bbe!(
+	build_binary_expr!(
 		tokens,
 		comparison,
 		TokenType::BangEqual | TokenType::EqualEqual,
@@ -62,7 +62,7 @@ fn equality(tokens: ParserIter) -> Result<Expr, ParseError> {
 }
 
 fn comparison(tokens: ParserIter) -> Result<Expr, ParseError> {
-	bbe!(
+	build_binary_expr!(
 		tokens,
 		term,
 		TokenType::Greater
@@ -73,7 +73,7 @@ fn comparison(tokens: ParserIter) -> Result<Expr, ParseError> {
 }
 
 fn term(tokens: ParserIter) -> Result<Expr, ParseError> {
-	bbe!(
+	build_binary_expr!(
 		tokens,
 		factor,
 		TokenType::Minus | TokenType::Plus | TokenType::Modulo,
@@ -81,7 +81,7 @@ fn term(tokens: ParserIter) -> Result<Expr, ParseError> {
 }
 
 fn factor(tokens: ParserIter) -> Result<Expr, ParseError> {
-	bbe!(tokens, unary, TokenType::Slash | TokenType::Star)
+	build_binary_expr!(tokens, unary, TokenType::Slash | TokenType::Star)
 }
 
 fn unary(tokens: ParserIter) -> Result<Expr, ParseError> {
@@ -109,16 +109,12 @@ pub fn function_declaration(
 	// TODO: optimize function parsing
 
 	// methods don't have the `fun` keyword
-	if method || pm!(tokens, TokenType::Fun) {
+	if method || peek_matches!(tokens, TokenType::Fun) {
 		// expect the `fun` keyword if normal function, an identifier otherwise
 		let keyword = if method {
-			mtcexpect!(
-				tokens,
-				TokenType::Identifier(_),
-				"Expected method name",
-			)?
+			expect!(tokens, TokenType::Identifier(_), "Expected method name",)?
 		} else {
-			mtcexpectone!(tokens, TokenType::Fun)?
+			expect_one!(tokens, TokenType::Fun)?
 		};
 
 		// if we're parsing a method, we actually already have
@@ -126,32 +122,32 @@ pub fn function_declaration(
 		let name = if method {
 			Some(keyword.clone())
 		} else {
-			mtc!(tokens, TokenType::Identifier(_))
+			match_then_consume!(tokens, TokenType::Identifier(_))
 		};
 
 		// intro to parameter parsing
-		mtcexpectone!(tokens, TokenType::LeftParen)?;
+		expect_one!(tokens, TokenType::LeftParen)?;
 
 		let mut params = Vec::new();
 
 		// parse parameters
-		while !pm!(tokens, TokenType::RightParen) {
-			params.push(mtcexpect!(
+		while !peek_matches!(tokens, TokenType::RightParen) {
+			params.push(expect!(
 				tokens,
 				TokenType::Identifier(_),
 				"Expected parameter name"
 			)?);
 
-			if mtc!(tokens, TokenType::Comma).is_none() {
+			if match_then_consume!(tokens, TokenType::Comma).is_none() {
 				break;
 			}
 		}
 
-		mtcexpectone!(tokens, TokenType::RightParen)?;
+		expect_one!(tokens, TokenType::RightParen)?;
 		// outro of parameter parsing
 
 		// parse the body
-		mtcexpectone!(tokens, TokenType::LeftBrace)?;
+		expect_one!(tokens, TokenType::LeftBrace)?;
 
 		let body = block_statement(tokens)?;
 
@@ -180,10 +176,10 @@ pub fn function_declaration(
 fn finish_call(tokens: ParserIter, calee: Expr) -> Result<Expr, ParseError> {
 	let mut arguments = Vec::new();
 
-	while !pm!(tokens, TokenType::RightParen) {
+	while !peek_matches!(tokens, TokenType::RightParen) {
 		arguments.push(expression(tokens)?);
 
-		if mtc!(tokens, TokenType::Comma).is_none() {
+		if match_then_consume!(tokens, TokenType::Comma).is_none() {
 			break;
 		}
 	}
@@ -191,7 +187,7 @@ fn finish_call(tokens: ParserIter, calee: Expr) -> Result<Expr, ParseError> {
 	Ok(Expr::Call(CallValue {
 		arguments,
 		calee: Box::new(calee),
-		closing_paren: mtcexpectone!(tokens, TokenType::RightParen)?,
+		closing_paren: expect_one!(tokens, TokenType::RightParen)?,
 	}))
 }
 
@@ -216,7 +212,7 @@ fn finish_get(tokens: ParserIter, getee: Expr) -> Result<Expr, ParseError> {
 
 			let eval = expression(tokens)?;
 
-			mtcexpectone!(tokens, TokenType::RightParen)?;
+			expect_one!(tokens, TokenType::RightParen)?;
 
 			Ok(Expr::Get(GetValue {
 				getee: Box::new(getee),
@@ -261,7 +257,7 @@ fn finish_sub(tokens: ParserIter, getee: Expr) -> Result<Expr, ParseError> {
 		}
 	}?;
 
-	mtcexpectone!(tokens, TokenType::RightSquareBracket)?;
+	expect_one!(tokens, TokenType::RightSquareBracket)?;
 
 	Ok(accessor)
 }
@@ -269,7 +265,7 @@ fn finish_sub(tokens: ParserIter, getee: Expr) -> Result<Expr, ParseError> {
 fn call(tokens: ParserIter) -> Result<Expr, ParseError> {
 	let mut expr = primary(tokens)?;
 
-	while let Some(consumed) = mtc!(
+	while let Some(consumed) = match_then_consume!(
 		tokens,
 		TokenType::LeftParen | TokenType::Dot | TokenType::LeftSquareBracket
 	) {
@@ -325,7 +321,7 @@ fn primary(tokens: ParserIter) -> Result<Expr, ParseError> {
 		}) => {
 			let expr = expression(tokens)?;
 
-			mtcexpectone!(tokens, TokenType::RightParen)?;
+			expect_one!(tokens, TokenType::RightParen)?;
 
 			Ok(Expr::Grouping(GroupingValue {
 				expression: Box::new(expr),
@@ -359,7 +355,7 @@ fn primary(tokens: ParserIter) -> Result<Expr, ParseError> {
 					Ok(SuperAccessor::Call(arguments))
 				}
 				Some(TokenType::Dot) => {
-					let name = mtcexpect!(
+					let name = expect!(
 						tokens,
 						TokenType::Identifier(_),
 						"Expected a superclass method name",
@@ -388,15 +384,15 @@ fn primary(tokens: ParserIter) -> Result<Expr, ParseError> {
 		}) => {
 			let mut values = Vec::new();
 
-			while !pm!(tokens, TokenType::RightSquareBracket) {
+			while !peek_matches!(tokens, TokenType::RightSquareBracket) {
 				values.push(expression(tokens)?);
 
-				if mtc!(tokens, TokenType::Comma).is_none() {
+				if match_then_consume!(tokens, TokenType::Comma).is_none() {
 					break;
 				}
 			}
 
-			mtcexpectone!(tokens, TokenType::RightSquareBracket)?;
+			expect_one!(tokens, TokenType::RightSquareBracket)?;
 
 			Ok(Expr::Literal(LiteralValue::List(Rc::new(values))))
 		}
@@ -413,8 +409,8 @@ fn primary(tokens: ParserIter) -> Result<Expr, ParseError> {
 		}) => {
 			let mut properties: Vec<Property> = Vec::new();
 
-			while !pm!(tokens, TokenType::RightBrace) {
-				let key_token = mtcexpect!(
+			while !peek_matches!(tokens, TokenType::RightBrace) {
+				let key_token = expect!(
 					tokens,
 					TokenType::Identifier(_) | TokenType::String(_),
 					"Expected property name",
@@ -425,7 +421,9 @@ fn primary(tokens: ParserIter) -> Result<Expr, ParseError> {
 					_ => unreachable!("Hi!! Welcome to my kitchen"),
 				};
 
-				let value = if mtc!(tokens, TokenType::Colon).is_some() {
+				let value = if match_then_consume!(tokens, TokenType::Colon)
+					.is_some()
+				{
 					expression(tokens)?
 				} else if let TokenType::Identifier(_) = key_token.token_type {
 					Expr::Identifier(IdentifierValue {
@@ -446,12 +444,12 @@ fn primary(tokens: ParserIter) -> Result<Expr, ParseError> {
 					value,
 				});
 
-				if mtc!(tokens, TokenType::Comma).is_none() {
+				if match_then_consume!(tokens, TokenType::Comma).is_none() {
 					break;
 				}
 			}
 
-			mtcexpectone!(tokens, TokenType::RightBrace)?;
+			expect_one!(tokens, TokenType::RightBrace)?;
 
 			Ok(Expr::Object(ObjectValue {
 				blame: token.unwrap(),

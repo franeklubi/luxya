@@ -1,11 +1,11 @@
 use super::{expression::*, helpers::*, parse::*, types::*};
 use crate::{
 	ast::{expr::*, stmt::*},
-	mtc,
-	mtc_stmt,
-	mtcexpect,
-	mtcexpectone,
-	pm,
+	expect,
+	expect_one,
+	match_then_consume,
+	match_then_consume_stmt,
+	peek_matches,
 	token::*,
 };
 
@@ -45,12 +45,20 @@ pub fn expression_statement(
 pub fn if_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 	let condition = expression(tokens)?;
 
-	let then = mtc_stmt!(tokens, TokenType::LeftBrace, "Expected then block")?
-		.map(Box::new);
+	let then = match_then_consume_stmt!(
+		tokens,
+		TokenType::LeftBrace,
+		"Expected then block"
+	)?
+	.map(Box::new);
 
-	let otherwise = if mtc!(tokens, TokenType::Else).is_some() {
-		mtc_stmt!(tokens, TokenType::LeftBrace | TokenType::If, "Expected")?
-			.map(Box::new)
+	let otherwise = if match_then_consume!(tokens, TokenType::Else).is_some() {
+		match_then_consume_stmt!(
+			tokens,
+			TokenType::LeftBrace | TokenType::If,
+			"Expected"
+		)?
+		.map(Box::new)
 	} else {
 		None
 	};
@@ -70,13 +78,13 @@ pub fn if_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 pub fn block_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 	let mut statements = Vec::new();
 
-	while !pm!(tokens, TokenType::RightBrace) {
+	while !peek_matches!(tokens, TokenType::RightBrace) {
 		if let Some(d) = declaration(tokens)? {
 			statements.push(d);
 		}
 	}
 
-	mtcexpectone!(tokens, TokenType::RightBrace)?;
+	expect_one!(tokens, TokenType::RightBrace)?;
 
 	// as though it may not seem as an optimization, it really is a useful
 	// heuristic to return an empty statement rather than block
@@ -93,7 +101,7 @@ pub fn block_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 
 pub fn for_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 	// parse declaration
-	if !pm!(
+	if !peek_matches!(
 		tokens,
 		TokenType::Semicolon | TokenType::Let | TokenType::Const
 	) {
@@ -105,27 +113,29 @@ pub fn for_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 	}
 
 	// parse initializer
-	let initializer = if pm!(tokens, TokenType::Let | TokenType::Const) {
-		declaration(tokens)?
-	} else {
-		tokens.next();
+	let initializer =
+		if peek_matches!(tokens, TokenType::Let | TokenType::Const) {
+			declaration(tokens)?
+		} else {
+			tokens.next();
 
-		None
-	};
+			None
+		};
 
 	// parse condition
-	let condition = if mtc!(tokens, TokenType::Semicolon).is_some() {
-		None
-	} else {
-		let expr = expression(tokens)?;
+	let condition =
+		if match_then_consume!(tokens, TokenType::Semicolon).is_some() {
+			None
+		} else {
+			let expr = expression(tokens)?;
 
-		mtcexpectone!(tokens, TokenType::Semicolon)?;
+			expect_one!(tokens, TokenType::Semicolon)?;
 
-		Some(expr)
-	};
+			Some(expr)
+		};
 
 	// parse closer (the increment or whatever)
-	let closer = if pm!(tokens, TokenType::LeftBrace) {
+	let closer = if peek_matches!(tokens, TokenType::LeftBrace) {
 		None
 	} else {
 		Some(expression(tokens)?)
@@ -134,8 +144,11 @@ pub fn for_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 
 	// parse for's body. If the body is None, then we may as well
 	// short-circuit it there, and return Ok(None)
-	let body_stmt =
-		mtc_stmt!(tokens, TokenType::LeftBrace, "Expected for's body")?;
+	let body_stmt = match_then_consume_stmt!(
+		tokens,
+		TokenType::LeftBrace,
+		"Expected for's body"
+	)?;
 
 	let body = if let Some(body) = body_stmt {
 		body
@@ -170,7 +183,7 @@ pub fn return_statement(
 	tokens: ParserIter,
 	keyword: Token,
 ) -> Result<Option<Stmt>, ParseError> {
-	let expression = if !pm!(tokens, TokenType::Semicolon) {
+	let expression = if !peek_matches!(tokens, TokenType::Semicolon) {
 		Some(expression(tokens)?)
 	} else {
 		None
@@ -207,14 +220,13 @@ pub fn continue_statement(
 #[inline(always)]
 pub fn class_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 	let name =
-		mtcexpect!(tokens, TokenType::Identifier(_), "Expected class name")?;
+		expect!(tokens, TokenType::Identifier(_), "Expected class name")?;
 
-	let superclass = if mtc!(tokens, TokenType::Extends).is_some() {
-		let superclass_name = mtcexpect!(
-			tokens,
-			TokenType::Identifier(_),
-			"Expected identifier",
-		)?;
+	let superclass = if match_then_consume!(tokens, TokenType::Extends)
+		.is_some()
+	{
+		let superclass_name =
+			expect!(tokens, TokenType::Identifier(_), "Expected identifier",)?;
 
 		Some(Expr::Identifier(IdentifierValue {
 			name: superclass_name,
@@ -224,15 +236,15 @@ pub fn class_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 		None
 	};
 
-	mtcexpectone!(tokens, TokenType::LeftBrace)?;
+	expect_one!(tokens, TokenType::LeftBrace)?;
 
 	let mut methods = Vec::new();
 
-	while !pm!(tokens, TokenType::RightBrace) {
+	while !peek_matches!(tokens, TokenType::RightBrace) {
 		methods.push(function_declaration(tokens, true)?);
 	}
 
-	mtcexpectone!(tokens, TokenType::RightBrace)?;
+	expect_one!(tokens, TokenType::RightBrace)?;
 
 	Ok(Some(Stmt::Class(ClassValue {
 		name,

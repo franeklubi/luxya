@@ -1,10 +1,10 @@
 use super::types::*;
-use crate::{mtcexpectone, token::*};
+use crate::{expect_one, token::*};
 
 
 #[inline(always)]
 pub fn expect_semicolon(tokens: ParserIter) -> Result<Token, ParseError> {
-	mtcexpectone!(tokens, TokenType::Semicolon)
+	expect_one!(tokens, TokenType::Semicolon)
 }
 
 // call only if the token that the parser choked on is not ';'
@@ -33,7 +33,7 @@ pub fn synchronize(tokens: ParserIter) {
 }
 
 #[macro_export]
-macro_rules! pm {
+macro_rules! peek_matches {
 	($tokens:expr, $( $expected:pat )|+ $(,)?) => {{
 		matches!(
 			$tokens.peek(),
@@ -43,7 +43,7 @@ macro_rules! pm {
 }
 
 #[macro_export]
-macro_rules! mtc {
+macro_rules! match_then_consume {
 	($tokens:expr, $( $expected:pat )|+ $(,)?) => {{
 		match $tokens.peek().map(|t| &t.token_type) {
 			Some($( $expected )|+) => $tokens.next(),
@@ -53,9 +53,12 @@ macro_rules! mtc {
 }
 
 #[macro_export]
-macro_rules! mtcexpect {
+macro_rules! expect {
 	($tokens:ident, $( $expected:pat )|+, $message:expr $(,)?) => {{
-		mtc!($tokens, $( $expected )|+).ok_or_else(|| ParseError {
+		match_then_consume!(
+			$tokens,
+			$( $expected )|+,
+		).ok_or_else(|| ParseError {
 			message: $message.into(),
 			token: $tokens.peek().cloned(),
 		})
@@ -63,7 +66,7 @@ macro_rules! mtcexpect {
 }
 
 #[macro_export]
-macro_rules! mtcexpectone {
+macro_rules! expect_one {
 	($tokens:ident, $expected:expr $(,)?) => {{
 		// we can't use peek_matches, because we need to generate an error
 		// based on the expected token type
@@ -81,11 +84,14 @@ macro_rules! mtcexpectone {
 }
 
 #[macro_export]
-macro_rules! bbe {
+macro_rules! build_binary_expr {
 	($tokens:ident, $lower_precedence:expr, $( $expected:pat )|+ $(,)?) => {{
 		let mut expr = $lower_precedence($tokens)?;
 
-		while let Some(operator) = mtc!($tokens, $( $expected )|+) {
+		while let Some(operator) = match_then_consume!(
+			$tokens,
+			$( $expected )|+,
+		) {
 			let right = $lower_precedence($tokens)?;
 
 			expr = Expr::Binary(BinaryValue {
@@ -100,9 +106,9 @@ macro_rules! bbe {
 }
 
 #[macro_export]
-macro_rules! mtc_stmt {
+macro_rules! match_then_consume_stmt {
 	($tokens:ident, $( $starts_with:pat )|+, $message:expr $(,)?) => {{
-		if pm!($tokens, $( $starts_with )|+) {
+		if peek_matches!($tokens, $( $starts_with )|+) {
 			statement($tokens)
 		} else {
 			Err(ParseError {

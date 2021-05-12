@@ -1,5 +1,5 @@
 use super::{expression::expression, helpers::*, statements::*, types::*};
-use crate::{ast::stmt::*, mtc, mtcexpect, token::*};
+use crate::{ast::stmt::*, expect, match_then_consume, token::*};
 
 
 pub fn parse(tokens: Vec<Token>) -> (Vec<Stmt>, Vec<ParseError>) {
@@ -30,17 +30,15 @@ pub fn declaration(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 		tokens: ParserIter,
 		matched: TokenType,
 	) -> Result<Option<Stmt>, ParseError> {
-		let token = mtcexpect!(
-			tokens,
-			TokenType::Identifier(_),
-			"Expected identifier",
-		)?;
+		let token =
+			expect!(tokens, TokenType::Identifier(_), "Expected identifier",)?;
 
-		let initializer = if mtc!(tokens, TokenType::Equal).is_some() {
-			Some(expression(tokens)?)
-		} else {
-			None
-		};
+		let initializer =
+			if match_then_consume!(tokens, TokenType::Equal).is_some() {
+				Some(expression(tokens)?)
+			} else {
+				None
+			};
 
 		expect_semicolon(tokens)?;
 
@@ -51,7 +49,9 @@ pub fn declaration(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 		})))
 	}
 
-	if let Some(token) = mtc!(tokens, TokenType::Let | TokenType::Const) {
+	if let Some(token) =
+		match_then_consume!(tokens, TokenType::Let | TokenType::Const)
+	{
 		value_declaration(tokens, token.token_type)
 	} else {
 		statement(tokens)
@@ -61,7 +61,7 @@ pub fn declaration(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 /// Statement can not fail and produce None for a statement, because it wouldn't
 /// be significant (e.g. lone `;`)
 pub fn statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
-	let consumed_token = mtc!(
+	let consumed_token = match_then_consume!(
 		tokens,
 		TokenType::If
 			| TokenType::For
