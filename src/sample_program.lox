@@ -17,15 +17,17 @@ test_fun(
 
 
 print "";
-print "should print false";
+print "should print false, then true then false";
 print !true;
+print false or true;
+print false and true;
 
 print "";
 
 let x = 0;
 
 for ; x < 4; x = x + 1 {
-}
+};
 
 print "should print 0";
 print x;

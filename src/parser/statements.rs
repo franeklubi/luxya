@@ -2,8 +2,10 @@ use super::{expression::*, helpers::*, parse::*, types::*};
 use crate::{
 	ast::{expr::*, stmt::*},
 	mtc,
+	mtc_stmt,
 	mtcexpect,
 	mtcexpectone,
+	pm,
 	token::*,
 };
 
@@ -43,10 +45,11 @@ pub fn expression_statement(
 pub fn if_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 	let condition = expression(tokens)?;
 
-	let then = statement_from(tokens, &[TokenType::LeftBrace])?.map(Box::new);
+	let then = mtc_stmt!(tokens, TokenType::LeftBrace, "Expected then block")?
+		.map(Box::new);
 
 	let otherwise = if mtc!(tokens, TokenType::Else).is_some() {
-		statement_from(tokens, &[TokenType::LeftBrace, TokenType::If])?
+		mtc_stmt!(tokens, TokenType::LeftBrace | TokenType::If, "Expected")?
 			.map(Box::new)
 	} else {
 		None
@@ -67,7 +70,7 @@ pub fn if_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 pub fn block_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 	let mut statements = Vec::new();
 
-	while !peek_matches(tokens, &[TokenType::RightBrace]) {
+	while !pm!(tokens, TokenType::RightBrace) {
 		if let Some(d) = declaration(tokens)? {
 			statements.push(d);
 		}
@@ -89,10 +92,11 @@ pub fn block_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 }
 
 pub fn for_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
-	let expected = &[TokenType::Semicolon, TokenType::Let, TokenType::Const];
-
 	// parse declaration
-	if !peek_matches(tokens, expected) {
+	if !pm!(
+		tokens,
+		TokenType::Semicolon | TokenType::Let | TokenType::Const
+	) {
 		return Err(ParseError {
 			message: "Expected `let`, `const`, or `;` to omit declaration"
 				.to_owned(),
@@ -101,14 +105,13 @@ pub fn for_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 	}
 
 	// parse initializer
-	let initializer =
-		if peek_matches(tokens, &[TokenType::Let, TokenType::Const]) {
-			declaration(tokens)?
-		} else {
-			tokens.next();
+	let initializer = if pm!(tokens, TokenType::Let | TokenType::Const) {
+		declaration(tokens)?
+	} else {
+		tokens.next();
 
-			None
-		};
+		None
+	};
 
 	// parse condition
 	let condition = if mtc!(tokens, TokenType::Semicolon).is_some() {
@@ -122,7 +125,7 @@ pub fn for_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 	};
 
 	// parse closer (the increment or whatever)
-	let closer = if peek_matches(tokens, &[TokenType::LeftBrace]) {
+	let closer = if pm!(tokens, TokenType::LeftBrace) {
 		None
 	} else {
 		Some(expression(tokens)?)
@@ -131,7 +134,8 @@ pub fn for_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 
 	// parse for's body. If the body is None, then we may as well
 	// short-circuit it there, and return Ok(None)
-	let body_stmt = statement_from(tokens, &[TokenType::LeftBrace])?;
+	let body_stmt =
+		mtc_stmt!(tokens, TokenType::LeftBrace, "Expected for's body")?;
 
 	let body = if let Some(body) = body_stmt {
 		body
@@ -166,7 +170,7 @@ pub fn return_statement(
 	tokens: ParserIter,
 	keyword: Token,
 ) -> Result<Option<Stmt>, ParseError> {
-	let expression = if !peek_matches(tokens, &[TokenType::Semicolon]) {
+	let expression = if !pm!(tokens, TokenType::Semicolon) {
 		Some(expression(tokens)?)
 	} else {
 		None
@@ -224,7 +228,7 @@ pub fn class_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 
 	let mut methods = Vec::new();
 
-	while !peek_matches(tokens, &[TokenType::RightBrace]) {
+	while !pm!(tokens, TokenType::RightBrace) {
 		methods.push(function_declaration(tokens, true)?);
 	}
 
