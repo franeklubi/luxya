@@ -34,27 +34,27 @@ pub fn synchronize(tokens: ParserIter) {
 
 #[macro_export]
 macro_rules! peek_matches {
-	($tokens:expr, $( $expected:pat )|+ $(,)?) => {{
+	($tokens:expr, $( $expected:pat )|+ $(,)?) => {
 		matches!(
 			$tokens.peek(),
 			Some(Token { token_type: $( $expected )|+, .. }),
 		)
-	}};
+	};
 }
 
 #[macro_export]
 macro_rules! match_then_consume {
-	($tokens:expr, $( $expected:pat )|+ $(,)?) => {{
+	($tokens:expr, $( $expected:pat )|+ $(,)?) => {
 		match $tokens.peek().map(|t| &t.token_type) {
 			Some($( $expected )|+) => $tokens.next(),
 			_ => None,
 		}
-	}};
+	};
 }
 
 #[macro_export]
 macro_rules! expect {
-	($tokens:ident, $( $expected:pat )|+, $message:expr $(,)?) => {{
+	($tokens:ident, $( $expected:pat )|+, $message:expr $(,)?) => {
 		match_then_consume!(
 			$tokens,
 			$( $expected )|+,
@@ -62,12 +62,12 @@ macro_rules! expect {
 			message: $message.into(),
 			token: $tokens.peek().cloned(),
 		})
-	}};
+	};
 }
 
 #[macro_export]
 macro_rules! expect_one {
-	($tokens:ident, $expected:expr $(,)?) => {{
+	($tokens:ident, $expected:expr $(,)?) => {
 		// we can't use peek_matches, because we need to generate an error
 		// based on the expected token type
 		match $tokens.peek() {
@@ -80,7 +80,7 @@ macro_rules! expect_one {
 				token: $tokens.peek().cloned(),
 			}),
 		}
-	}};
+	};
 }
 
 #[macro_export]
@@ -107,7 +107,7 @@ macro_rules! build_binary_expr {
 
 #[macro_export]
 macro_rules! match_then_consume_stmt {
-	($tokens:ident, $( $starts_with:pat )|+, $message:expr $(,)?) => {{
+	($tokens:ident, $( $starts_with:pat )|+, $message:expr $(,)?) => {
 		if peek_matches!($tokens, $( $starts_with )|+) {
 			statement($tokens)
 		} else {
@@ -116,5 +116,5 @@ macro_rules! match_then_consume_stmt {
 				token: $tokens.peek().cloned(),
 			})
 		}
-	}};
+	};
 }
