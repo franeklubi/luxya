@@ -16,7 +16,7 @@ test_fun(
 );
 
 {
-	print asdfsdaflkj;
+	print "asdfsdaflkj";
 }
 
 

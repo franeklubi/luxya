@@ -217,19 +217,21 @@ pub fn class_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 	let name =
 		expect!(tokens, TokenType::Identifier(_), "Expected class name")?;
 
-	let superclass = if match_then_consume!(tokens, TokenType::Extends)
-		.is_some()
-	{
-		let superclass_name =
-			expect!(tokens, TokenType::Identifier(_), "Expected identifier",)?;
+	let superclass =
+		if match_then_consume!(tokens, TokenType::Extends).is_some() {
+			let superclass_name = expect!(
+				tokens,
+				TokenType::Identifier(_),
+				"Expected superclass name",
+			)?;
 
-		Some(Expr::Identifier(IdentifierValue {
-			name: superclass_name,
-			env_distance: Default::default(),
-		}))
-	} else {
-		None
-	};
+			Some(Expr::Identifier(IdentifierValue {
+				name: superclass_name,
+				env_distance: Default::default(),
+			}))
+		} else {
+			None
+		};
 
 	expect_one!(tokens, TokenType::LeftBrace)?;
 
