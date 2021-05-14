@@ -1,7 +1,8 @@
 use super::helpers::get_line;
 use crate::token::Location;
 
-// use std::fmt;
+use std::{fmt, io::Write};
+use termcolor::{Color, ColorChoice, ColorSpec, StandardStream, WriteColor};
 
 
 pub trait DescribableError {
@@ -48,11 +49,36 @@ where
 		trimmed_content = trimmed_content
 	);
 
-	// Error message output TODO: red colour
-	println!(
+	// Setting terminal colours
+	let mut stdout = StandardStream::stdout(ColorChoice::Always);
+
+	let set_err = stdout.set_color(
+		ColorSpec::new()
+			.set_fg(Some(Color::Rgb(239, 41, 41)))
+			.set_bold(true),
+	);
+	handle_result(set_err);
+
+	// Error output
+	let write_err = writeln!(
+		&mut stdout,
 		"\t{offset}{marker} {description}",
 		offset = " ".repeat(line_prefix.len() + trimmed_offset),
 		marker = "^".repeat(location.byte_length),
 		description = error.description()
 	);
+	handle_result(write_err);
+
+	let set_err =
+		stdout.set_color(ColorSpec::new().set_fg(None).set_bold(false));
+	handle_result(set_err);
+}
+
+fn handle_result<OK, ERR>(res: Result<OK, ERR>)
+where
+	ERR: fmt::Display,
+{
+	if let Err(err) = res {
+		println!("{}", err);
+	}
 }
