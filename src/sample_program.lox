@@ -15,6 +15,10 @@ test_fun(
 	"siema",
 );
 
+{
+	print asdfsdaflkj;
+}
+
 
 print "";
 print "should print false, then true then false";

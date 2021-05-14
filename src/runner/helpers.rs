@@ -23,6 +23,7 @@ pub fn get_line(source: &str, byte_offset: usize) -> Line {
 	Line {
 		content: source[line_start_offset..line_end_offset].to_string(),
 		number: lines,
-		offset: byte_offset - line_start_offset + 1,
+		offset: (byte_offset - line_start_offset + 1)
+			.min(line_end_offset - line_start_offset),
 	}
 }

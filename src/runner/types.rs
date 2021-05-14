@@ -21,8 +21,14 @@ pub struct Line {
 	pub content: String,
 }
 
+impl Line {
+	pub fn prefix(&self) -> String {
+		format!("[{}:{}]", self.number, self.offset)
+	}
+}
+
 impl fmt::Display for Line {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-		write!(f, "[{}:{}]: {}", self.number, self.offset, self.content)
+		write!(f, "{}: {}", self.prefix(), self.content)
 	}
 }

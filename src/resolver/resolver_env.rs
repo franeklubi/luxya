@@ -140,7 +140,7 @@ impl ResolverEnvironment {
 		} else {
 			Err(RuntimeError {
 				token: resolvable_token.clone(),
-				message: format!("Identifier {} not defined", name),
+				message: format!("Identifier `{}` not defined", name),
 			})
 		}
 	}

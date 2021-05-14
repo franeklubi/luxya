@@ -497,8 +497,10 @@ pub fn super_expression(
 		.read(
 			env_distance - 1,
 			&Token {
-				byte_offset: 0,
-				byte_length: 0,
+				location: Location {
+					byte_offset: 0,
+					byte_length: 0,
+				},
 				token_type: TokenType::This,
 			},
 		)?

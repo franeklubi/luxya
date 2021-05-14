@@ -288,7 +288,7 @@ fn primary(tokens: ParserIter) -> Result<Expr, ParseError> {
 	} else {
 		return Err(ParseError {
 			token: None,
-			message: "Expected expression".into(),
+			message: "Unexpected EOF".into(),
 		});
 	};
 
@@ -433,6 +433,9 @@ fn primary(tokens: ParserIter) -> Result<Expr, ParseError> {
 			}))
 		}
 
-		_ => unreachable!("Primary expression"),
+		_ => Err(ParseError {
+			token: Some(token),
+			message: "Expected expression".into(),
+		}),
 	}
 }

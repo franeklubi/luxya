@@ -1,5 +1,5 @@
 use super::interpreter_env::*;
-use crate::{ast::expr::*, token::*};
+use crate::{ast::expr::*, runner::DescribableError, token::*};
 
 use std::{cell::RefCell, collections::HashMap, fmt, rc::Rc};
 
@@ -9,6 +9,16 @@ const MAX_LIST_VALUES_PRINT: usize = 100;
 pub struct RuntimeError {
 	pub message: String,
 	pub token: Token,
+}
+
+impl DescribableError for RuntimeError {
+	fn location(&self) -> Location {
+		self.token.location
+	}
+
+	fn description(&self) -> &str {
+		&self.message
+	}
 }
 
 #[derive(Clone, PartialEq)]

@@ -1,4 +1,4 @@
-use super::{helpers::*, types::*};
+use super::{errors, types::*};
 use crate::{interpreter, parser, resolver, scanner};
 
 use std::{
@@ -36,8 +36,9 @@ pub fn run_prompt() -> Result<(), io::Error> {
 		// the user doesn't have to 😇
 		buffer += ";";
 
+		// TODO: merge envs when doing REPL
 		if run(buffer) {
-			eprintln!("Errors occurred, statement not merged.")
+			eprintln!("Errors occurred")
 		}
 	}
 
@@ -46,62 +47,37 @@ pub fn run_prompt() -> Result<(), io::Error> {
 
 // TODO: maybe change the signature to return parsed tree of vars and functions
 // so that we can merge that with the last tree in the REPL mode - we want
-// things to be persistent dont we?
+// things to be persistent dont we? (COMBAK: when implementing a better repl)
 //
-// bool indicates if any error(s) occurred, but maybe it should return errors?
-// errors would have to be handled outside and not printed outright
+// bool indicates if any error(s) occurred
 fn run(source: String) -> bool {
-	// scanning
-	let (tokens, scan_errors) = scanner::scan(&source);
+	// Scanning
+	let (tokens, errors) = scanner::scan(&source);
 
-	if !scan_errors.is_empty() {
-		println!("\nSCAN ERRORS:");
-
-		scan_errors.iter().enumerate().for_each(|(index, error)| {
-			println!("{}: {}", index, error.message);
-		});
+	if !errors.is_empty() {
+		errors::report_errors(&source, "Scan", &errors);
 
 		return true;
 	}
 
-	// parsing
-	let (statements, parse_errors) = parser::parse(tokens);
+	// Parsing
+	let (statements, errors) = parser::parse(tokens);
 
-	if !parse_errors.is_empty() {
-		println!("\nPARSE ERRORS:");
-
-		parse_errors.iter().enumerate().for_each(|(index, error)| {
-			println!(
-				"{}: {} at {}",
-				index,
-				error.message,
-				get_line(
-					&source,
-					error.token.clone().map_or(0, |t| t.byte_offset)
-				)
-			);
-		});
-
-		println!();
+	if !errors.is_empty() {
+		errors::report_errors(&source, "Parse", &errors);
 
 		return true;
 	}
 
-	// interpreting 😇
-	if let Err(e) = resolver::resolve(&statements) {
-		println!(
-			"\nResolve error {}\n\t{}\n",
-			get_line(&source, e.token.byte_offset),
-			e.message
-		);
+	// Resolving
+	if let Err(error) = resolver::resolve(&statements) {
+		errors::report_errors(&source, "Resolve", &[error]);
 
 		true
-	} else if let Err(e) = interpreter::interpret(&statements) {
-		println!(
-			"\nRuntime error {}\n\t{}\n",
-			get_line(&source, e.token.byte_offset),
-			e.message
-		);
+
+	// Interpreting 😇
+	} else if let Err(error) = interpreter::interpret(&statements) {
+		errors::report_errors(&source, "Runtime", &[error]);
 
 		true
 	} else {

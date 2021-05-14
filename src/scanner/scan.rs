@@ -1,5 +1,5 @@
 use super::{helpers::*, types::*};
-use crate::token::{self, TokenType};
+use crate::token::{self, Location, TokenType};
 
 
 fn resolve_identifier(identifier: &str) -> TokenType {
@@ -173,8 +173,10 @@ fn scan_token(
 
 		return Ok(Some(token::Token {
 			token_type,
-			byte_offset: i,
-			byte_length: token_len,
+			location: Location {
+				byte_offset: i,
+				byte_length: token_len,
+			},
 		}));
 	}
 

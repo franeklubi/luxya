@@ -121,11 +121,16 @@ impl TokenType {
 	}
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct Token {
+	pub location: Location,
+	pub token_type: TokenType,
+}
+
+#[derive(Clone, Copy)]
+pub struct Location {
 	pub byte_offset: usize,
 	pub byte_length: usize,
-	pub token_type: TokenType,
 }
 
 impl fmt::Display for Token {
@@ -134,8 +139,8 @@ impl fmt::Display for Token {
 			f,
 			"{}\tfrom: {};\tto: {};",
 			self.token_type,
-			self.byte_offset,
-			self.byte_offset + self.byte_length,
+			self.location.byte_offset,
+			self.location.byte_offset + self.location.byte_length,
 		)
 	}
 }

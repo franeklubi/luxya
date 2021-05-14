@@ -1,4 +1,4 @@
-use crate::{ast::expr::*, token::*};
+use crate::{ast::expr::*, runner::DescribableError, token::*};
 
 use std::{iter, rc::Rc, vec};
 
@@ -7,6 +7,23 @@ pub type ParserIter<'a> = &'a mut iter::Peekable<vec::IntoIter<Token>>;
 pub struct ParseError {
 	pub token: Option<Token>,
 	pub message: String,
+}
+
+impl DescribableError for ParseError {
+	fn location(&self) -> Location {
+		if let Some(token) = &self.token {
+			token.location
+		} else {
+			Location {
+				byte_offset: usize::MAX,
+				byte_length: 1,
+			}
+		}
+	}
+
+	fn description(&self) -> &str {
+		&self.message
+	}
 }
 
 impl Expr {

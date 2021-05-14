@@ -246,7 +246,6 @@ pub fn class_statement(
 	let mut constructor = None;
 
 	for method in &v.methods {
-		// TODO: unwrap using unwrapping macro like assume_expr(Function)
 		let fv = if let Expr::Function(v) = method {
 			v
 		} else {
