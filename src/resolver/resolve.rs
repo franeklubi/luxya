@@ -5,7 +5,7 @@ use crate::{
 	interpreter::{
 		native_functions::NATIVE_FUNCTION_NAMES,
 		statements as interpreter_stmts,
-		types::{InterpreterStmtValue, InterpreterValue, RuntimeError},
+		types::{InterpreterValue, RuntimeError, StmtResult},
 	},
 	unwrap_scope_mut,
 };
@@ -22,28 +22,42 @@ pub fn resolve(statements: &[Stmt]) -> Result<(), RuntimeError> {
 		});
 	}
 
-	// TODO: CHECK IF RETURN AND ETC - THE SAME AS IN INTERPRETER
-	resolve_statements(statements, &scope)?;
-
-	Ok(())
+	match resolve_statements(statements, &scope)? {
+		StmtResult::Noop => Ok(()),
+		StmtResult::Break(token) => Err(RuntimeError {
+			message: "Cannot use `break` outside of a loop".into(),
+			token,
+		}),
+		StmtResult::Continue(token) => Err(RuntimeError {
+			message: "Cannot use `continue` outside of a loop".into(),
+			token,
+		}),
+		StmtResult::Return { keyword, .. } => Err(RuntimeError {
+			message: "Cannot use `return` outside of a function".into(),
+			token: keyword,
+		}),
+	}
 }
 
 pub fn resolve_statements(
 	statements: &[Stmt],
 	env: &ResolverEnvironment,
-) -> Result<InterpreterStmtValue<InterpreterValue>, RuntimeError> {
+) -> Result<StmtResult<InterpreterValue>, RuntimeError> {
 	for stmt in statements {
-		// TODO: ONLY LET NOOP PASS THROUGH HERE
-		resolve_statement(&stmt, env)?;
+		let res = resolve_statement(&stmt, env)?;
+
+		if !matches!(res, StmtResult::Noop) {
+			return Ok(res);
+		}
 	}
 
-	Ok(InterpreterStmtValue::Noop)
+	Ok(StmtResult::Noop)
 }
 
 pub fn resolve_statement(
 	stmt: &Stmt,
 	env: &ResolverEnvironment,
-) -> Result<InterpreterStmtValue<InterpreterValue>, RuntimeError> {
+) -> Result<StmtResult<InterpreterValue>, RuntimeError> {
 	match stmt {
 		Stmt::Block(v) => {
 			interpreter_stmts::block_statement(resolve_statements, v, env)

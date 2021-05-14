@@ -19,19 +19,19 @@ pub fn assume_identifier(t: &Token) -> &str {
 }
 
 pub fn guard_function(
-	ibv: InterpreterStmtValue<InterpreterValue>,
+	ibv: StmtResult<InterpreterValue>,
 ) -> Result<InterpreterValue, RuntimeError> {
 	match ibv {
-		InterpreterStmtValue::Break(token) => Err(RuntimeError {
+		StmtResult::Break(token) => Err(RuntimeError {
 			message: "Cannot use `break` outside of a loop".into(),
 			token,
 		}),
-		InterpreterStmtValue::Continue(token) => Err(RuntimeError {
+		StmtResult::Continue(token) => Err(RuntimeError {
 			message: "Cannot use `continue` outside of a loop".into(),
 			token,
 		}),
-		InterpreterStmtValue::Return { value, .. } => Ok(value),
-		InterpreterStmtValue::Noop => Ok(InterpreterValue::Nil),
+		StmtResult::Return { value, .. } => Ok(value),
+		StmtResult::Noop => Ok(InterpreterValue::Nil),
 	}
 }
 

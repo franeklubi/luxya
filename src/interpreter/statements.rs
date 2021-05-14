@@ -17,13 +17,13 @@ pub fn expression_statement<E, T>(
 	expr_evaluator: fn(&Expr, &E) -> Result<T, RuntimeError>,
 	v: &ExpressionValue,
 	env: &E,
-) -> Result<InterpreterStmtValue<T>, RuntimeError>
+) -> Result<StmtResult<T>, RuntimeError>
 where
 	E: EnvironmentWrapper<T>,
 {
 	expr_evaluator(&v.expression, env)?;
 
-	Ok(InterpreterStmtValue::Noop)
+	Ok(StmtResult::Noop)
 }
 
 #[inline(always)]
@@ -31,7 +31,7 @@ pub fn print_statement<E, T>(
 	expr_evaluator: fn(&Expr, &E) -> Result<T, RuntimeError>,
 	v: &PrintValue,
 	env: &E,
-) -> Result<InterpreterStmtValue<T>, RuntimeError>
+) -> Result<StmtResult<T>, RuntimeError>
 where
 	T: std::fmt::Display,
 	E: EnvironmentWrapper<T>,
@@ -40,14 +40,14 @@ where
 
 	println!("{}", evaluated);
 
-	Ok(InterpreterStmtValue::Noop)
+	Ok(StmtResult::Noop)
 }
 
 pub fn declaration_statement<E>(
 	expr_evaluator: fn(&Expr, &E) -> Result<InterpreterValue, RuntimeError>,
 	v: &DeclarationValue,
 	env: &E,
-) -> Result<InterpreterStmtValue<InterpreterValue>, RuntimeError>
+) -> Result<StmtResult<InterpreterValue>, RuntimeError>
 where
 	E: EnvironmentWrapper<InterpreterValue>,
 {
@@ -66,18 +66,15 @@ where
 		},
 	);
 
-	Ok(InterpreterStmtValue::Noop)
+	Ok(StmtResult::Noop)
 }
 
 #[inline(always)]
 pub fn block_statement<E, T>(
-	stmts_evaluator: fn(
-		&[Stmt],
-		&E,
-	) -> Result<InterpreterStmtValue<T>, RuntimeError>,
+	stmts_evaluator: fn(&[Stmt], &E) -> Result<StmtResult<T>, RuntimeError>,
 	v: &BlockValue,
 	env: &E,
-) -> Result<InterpreterStmtValue<T>, RuntimeError>
+) -> Result<StmtResult<T>, RuntimeError>
 where
 	E: EnvironmentWrapper<T>,
 {
@@ -92,13 +89,10 @@ pub fn if_statement<E>(
 	stmt_evaluator: fn(
 		&Stmt,
 		&E,
-	) -> Result<
-		InterpreterStmtValue<InterpreterValue>,
-		RuntimeError,
-	>,
+	) -> Result<StmtResult<InterpreterValue>, RuntimeError>,
 	v: &IfValue,
 	env: &E,
-) -> Result<InterpreterStmtValue<InterpreterValue>, RuntimeError>
+) -> Result<StmtResult<InterpreterValue>, RuntimeError>
 where
 	E: EnvironmentWrapper<InterpreterValue>,
 {
@@ -106,24 +100,21 @@ where
 		if let Some(then) = &v.then {
 			stmt_evaluator(then, env)
 		} else {
-			Ok(InterpreterStmtValue::Noop)
+			Ok(StmtResult::Noop)
 		}
 	} else if let Some(otherwise) = &v.otherwise {
 		stmt_evaluator(otherwise, env)
 	} else {
-		Ok(InterpreterStmtValue::Noop)
+		Ok(StmtResult::Noop)
 	}
 }
 
 pub fn for_statement<E, T>(
 	expr_evaluator: fn(&Expr, &E) -> Result<InterpreterValue, RuntimeError>,
-	stmt_evaluator: fn(
-		&Stmt,
-		&E,
-	) -> Result<InterpreterStmtValue<T>, RuntimeError>,
+	stmt_evaluator: fn(&Stmt, &E) -> Result<StmtResult<T>, RuntimeError>,
 	v: &ForValue,
 	env: &E,
-) -> Result<InterpreterStmtValue<T>, RuntimeError>
+) -> Result<StmtResult<T>, RuntimeError>
 where
 	E: EnvironmentWrapper<T>,
 {
@@ -134,16 +125,16 @@ where
 			let e = stmt_evaluator(&v.body, env)?;
 
 			match e {
-				InterpreterStmtValue::Break(_) => break,
-				InterpreterStmtValue::Continue(_) => {
+				StmtResult::Break(_) => break,
+				StmtResult::Continue(_) => {
 					if let Some(c) = &v.closer {
 						stmt_evaluator(c, env)?;
 					}
 
 					continue;
 				}
-				InterpreterStmtValue::Noop => (),
-				InterpreterStmtValue::Return { .. } => {
+				StmtResult::Noop => (),
+				StmtResult::Return { .. } => {
 					return Ok(e);
 				}
 			}
@@ -157,16 +148,16 @@ where
 			let e = stmt_evaluator(&v.body, env)?;
 
 			match e {
-				InterpreterStmtValue::Break(_) => break,
-				InterpreterStmtValue::Continue(_) => {
+				StmtResult::Break(_) => break,
+				StmtResult::Continue(_) => {
 					if let Some(c) = &v.closer {
 						stmt_evaluator(c, env)?;
 					}
 
 					continue;
 				}
-				InterpreterStmtValue::Noop => (),
-				InterpreterStmtValue::Return { .. } => {
+				StmtResult::Noop => (),
+				StmtResult::Return { .. } => {
 					return Ok(e);
 				}
 			}
@@ -177,7 +168,7 @@ where
 		}
 	}
 
-	Ok(InterpreterStmtValue::Noop)
+	Ok(StmtResult::Noop)
 }
 
 #[inline(always)]
@@ -185,11 +176,11 @@ pub fn return_statement<E>(
 	expr_evaluator: fn(&Expr, &E) -> Result<InterpreterValue, RuntimeError>,
 	v: &ReturnValue,
 	env: &E,
-) -> Result<InterpreterStmtValue<InterpreterValue>, RuntimeError>
+) -> Result<StmtResult<InterpreterValue>, RuntimeError>
 where
 	E: EnvironmentWrapper<InterpreterValue>,
 {
-	Ok(InterpreterStmtValue::Return {
+	Ok(StmtResult::Return {
 		value: v
 			.expression
 			.as_ref()
@@ -201,21 +192,21 @@ where
 #[inline(always)]
 pub fn break_statement<T>(
 	v: &BreakValue,
-) -> Result<InterpreterStmtValue<T>, RuntimeError> {
-	Ok(InterpreterStmtValue::Break(v.keyword.clone()))
+) -> Result<StmtResult<T>, RuntimeError> {
+	Ok(StmtResult::Break(v.keyword.clone()))
 }
 
 #[inline(always)]
 pub fn continue_statement<T>(
 	v: &ContinueValue,
-) -> Result<InterpreterStmtValue<T>, RuntimeError> {
-	Ok(InterpreterStmtValue::Continue(v.keyword.clone()))
+) -> Result<StmtResult<T>, RuntimeError> {
+	Ok(StmtResult::Continue(v.keyword.clone()))
 }
 
 pub fn class_statement(
 	v: &ClassValue,
 	env: &InterpreterEnvironment,
-) -> Result<InterpreterStmtValue<InterpreterValue>, RuntimeError> {
+) -> Result<StmtResult<InterpreterValue>, RuntimeError> {
 	let name = assume_identifier(&v.name);
 
 	let (superclass, super_env) = if let Some(expr) = &v.superclass {
@@ -288,5 +279,5 @@ pub fn class_statement(
 		},
 	);
 
-	Ok(InterpreterStmtValue::Noop)
+	Ok(StmtResult::Noop)
 }

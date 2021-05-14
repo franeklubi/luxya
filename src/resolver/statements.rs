@@ -4,7 +4,7 @@ use crate::{
 	env::*,
 	interpreter::{
 		helpers::assume_identifier,
-		types::{InterpreterStmtValue, InterpreterValue, RuntimeError},
+		types::{InterpreterValue, RuntimeError, StmtResult},
 	},
 };
 
@@ -13,16 +13,16 @@ use crate::{
 pub fn print_statement(
 	v: &PrintValue,
 	env: &ResolverEnvironment,
-) -> Result<InterpreterStmtValue<InterpreterValue>, RuntimeError> {
+) -> Result<StmtResult<InterpreterValue>, RuntimeError> {
 	resolve::resolve_expression(&v.expression, env)?;
 
-	Ok(InterpreterStmtValue::Noop)
+	Ok(StmtResult::Noop)
 }
 
 pub fn declaration_statement(
 	v: &DeclarationValue,
 	env: &ResolverEnvironment,
-) -> Result<InterpreterStmtValue<InterpreterValue>, RuntimeError> {
+) -> Result<StmtResult<InterpreterValue>, RuntimeError> {
 	if let Some(i) = &v.initializer {
 		resolve::resolve_expression(i, env)?;
 	}
@@ -35,13 +35,13 @@ pub fn declaration_statement(
 		},
 	);
 
-	Ok(InterpreterStmtValue::Noop)
+	Ok(StmtResult::Noop)
 }
 
 pub fn if_statement(
 	v: &IfValue,
 	env: &ResolverEnvironment,
-) -> Result<InterpreterStmtValue<InterpreterValue>, RuntimeError> {
+) -> Result<StmtResult<InterpreterValue>, RuntimeError> {
 	resolve::resolve_expression(&v.condition, env)?;
 
 	if let Some(then) = &v.then {
@@ -52,13 +52,13 @@ pub fn if_statement(
 		resolve::resolve_statement(otherwise, env)?;
 	}
 
-	Ok(InterpreterStmtValue::Noop)
+	Ok(StmtResult::Noop)
 }
 
 pub fn for_statement(
 	v: &ForValue,
 	env: &ResolverEnvironment,
-) -> Result<InterpreterStmtValue<InterpreterValue>, RuntimeError> {
+) -> Result<StmtResult<InterpreterValue>, RuntimeError> {
 	resolve::resolve_statement(&v.body, env)?;
 
 	if let Some(condition) = &v.condition {
@@ -69,13 +69,13 @@ pub fn for_statement(
 		resolve::resolve_statement(closer, env)?;
 	}
 
-	Ok(InterpreterStmtValue::Noop)
+	Ok(StmtResult::Noop)
 }
 
 pub fn class_statement(
 	v: &ClassValue,
 	env: &ResolverEnvironment,
-) -> Result<InterpreterStmtValue<InterpreterValue>, RuntimeError> {
+) -> Result<StmtResult<InterpreterValue>, RuntimeError> {
 	let iden = assume_identifier(&v.name);
 
 	env.declare(
@@ -134,5 +134,5 @@ pub fn class_statement(
 		resolve::resolve_expression(method, &class_env)?;
 	}
 
-	Ok(InterpreterStmtValue::Noop)
+	Ok(StmtResult::Noop)
 }

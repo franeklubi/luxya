@@ -128,7 +128,7 @@ impl InterpreterValue {
 	}
 }
 
-pub enum InterpreterStmtValue<T> {
+pub enum StmtResult<T> {
 	Return { keyword: Token, value: T },
 	Break(Token),
 	Continue(Token),

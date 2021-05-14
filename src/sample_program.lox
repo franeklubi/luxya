@@ -131,3 +131,11 @@ print "should print 'chuj'";
 const ahahash = "chuj";
 
 print ahahash;
+
+for let x = 0; x < 10; x = x + 1 {
+	if x > 5 {
+		continue;
+	}
+
+	print x;
+}

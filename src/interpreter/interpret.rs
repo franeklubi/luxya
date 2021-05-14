@@ -17,16 +17,16 @@ pub fn interpret(statements: &[Stmt]) -> Result<(), RuntimeError> {
 	declare_native_functions(&env);
 
 	match eval_statements(statements, &env)? {
-		InterpreterStmtValue::Noop => Ok(()),
-		InterpreterStmtValue::Break(token) => Err(RuntimeError {
+		StmtResult::Noop => Ok(()),
+		StmtResult::Break(token) => Err(RuntimeError {
 			message: "Cannot use `break` outside of a loop".into(),
 			token,
 		}),
-		InterpreterStmtValue::Continue(token) => Err(RuntimeError {
+		StmtResult::Continue(token) => Err(RuntimeError {
 			message: "Cannot use `continue` outside of a loop".into(),
 			token,
 		}),
-		InterpreterStmtValue::Return { keyword, .. } => Err(RuntimeError {
+		StmtResult::Return { keyword, .. } => Err(RuntimeError {
 			message: "Cannot use `return` outside of a function".into(),
 			token: keyword,
 		}),
@@ -36,22 +36,22 @@ pub fn interpret(statements: &[Stmt]) -> Result<(), RuntimeError> {
 pub fn eval_statements(
 	statements: &[Stmt],
 	env: &InterpreterEnvironment,
-) -> Result<InterpreterStmtValue<InterpreterValue>, RuntimeError> {
+) -> Result<StmtResult<InterpreterValue>, RuntimeError> {
 	for stmt in statements {
-		let e = eval_statement(&stmt, env)?;
+		let res = eval_statement(&stmt, env)?;
 
-		if !matches!(e, InterpreterStmtValue::Noop) {
-			return Ok(e);
+		if !matches!(res, StmtResult::Noop) {
+			return Ok(res);
 		}
 	}
 
-	Ok(InterpreterStmtValue::Noop)
+	Ok(StmtResult::Noop)
 }
 
 fn eval_statement(
 	stmt: &Stmt,
 	env: &InterpreterEnvironment,
-) -> Result<InterpreterStmtValue<InterpreterValue>, RuntimeError> {
+) -> Result<StmtResult<InterpreterValue>, RuntimeError> {
 	match stmt {
 		Stmt::Expression(v) => expression_statement(eval_expression, v, env),
 		Stmt::Print(v) => print_statement(eval_expression, v, env),
