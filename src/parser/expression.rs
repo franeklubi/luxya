@@ -106,8 +106,6 @@ pub fn function_declaration(
 	tokens: ParserIter,
 	method: bool,
 ) -> Result<Expr, ParseError> {
-	// TODO: optimize function parsing
-
 	// methods don't have the `fun` keyword
 	if method || peek_matches!(tokens, TokenType::Fun) {
 		// expect the `fun` keyword if normal function, an identifier otherwise
@@ -284,40 +282,31 @@ fn call(tokens: ParserIter) -> Result<Expr, ParseError> {
 	Ok(expr)
 }
 
-// TODO: unwrap unsafe or idk dude. amend this
 fn primary(tokens: ParserIter) -> Result<Expr, ParseError> {
-	let token = tokens.next();
+	let token = if let Some(token) = tokens.next() {
+		token
+	} else {
+		return Err(ParseError {
+			token: None,
+			message: "Expected expression".into(),
+		});
+	};
 
-	match token {
-		Some(Token {
-			token_type: TokenType::False,
-			..
-		}) => Ok(Expr::Literal(LiteralValue::False)),
+	match token.token_type {
+		TokenType::False => Ok(Expr::Literal(LiteralValue::False)),
+		TokenType::True => Ok(Expr::Literal(LiteralValue::True)),
+		TokenType::Nil => Ok(Expr::Literal(LiteralValue::Nil)),
+		TokenType::String(s) => Ok(Expr::Literal(LiteralValue::String(s))),
+		TokenType::Char(c) => Ok(Expr::Literal(LiteralValue::Char(c))),
+		TokenType::Number(n) => Ok(Expr::Literal(LiteralValue::Number(n))),
 
-		Some(Token {
-			token_type: TokenType::True,
-			..
-		}) => Ok(Expr::Literal(LiteralValue::True)),
+		TokenType::Identifier(_) => Ok(Expr::Identifier(IdentifierValue {
+			name: token,
+			env_distance: Cell::new(0),
+		})),
 
-		Some(Token {
-			token_type: TokenType::Nil,
-			..
-		}) => Ok(Expr::Literal(LiteralValue::Nil)),
-
-		Some(Token {
-			token_type: TokenType::String(s),
-			..
-		}) => Ok(Expr::Literal(LiteralValue::String(s))),
-
-		Some(Token {
-			token_type: TokenType::Number(n),
-			..
-		}) => Ok(Expr::Literal(LiteralValue::Number(n))),
-
-		Some(Token {
-			token_type: TokenType::LeftParen,
-			..
-		}) => {
+		// Grouping
+		TokenType::LeftParen => {
 			let expr = expression(tokens)?;
 
 			expect_one!(tokens, TokenType::RightParen)?;
@@ -327,18 +316,14 @@ fn primary(tokens: ParserIter) -> Result<Expr, ParseError> {
 			}))
 		}
 
-		Some(Token {
-			token_type: TokenType::This,
-			..
-		}) => Ok(Expr::This(ThisValue {
-			blame: token.unwrap(),
+		// This
+		TokenType::This => Ok(Expr::This(ThisValue {
+			blame: token,
 			env_distance: Cell::new(0),
 		})),
 
-		Some(Token {
-			token_type: TokenType::Super,
-			..
-		}) => {
+		// Super
+		TokenType::Super => {
 			let dummy_expr = Expr::Literal(LiteralValue::Nil);
 
 			let accessor = match tokens.next().map(|next| next.token_type) {
@@ -351,7 +336,7 @@ fn primary(tokens: ParserIter) -> Result<Expr, ParseError> {
 						unreachable!("Call is not a call? Weird 😳")
 					};
 
-					Ok(SuperAccessor::Call(arguments))
+					SuperAccessor::Call(arguments)
 				}
 				Some(TokenType::Dot) => {
 					let name = expect!(
@@ -360,27 +345,27 @@ fn primary(tokens: ParserIter) -> Result<Expr, ParseError> {
 						"Expected a superclass method name",
 					)?;
 
-					Ok(SuperAccessor::Method(name))
+					SuperAccessor::Method(name)
 				}
-				_ => Err(ParseError {
-					token: token.clone(),
-					message: "Expected `.` or `(...args)` (constructor call) \
-					          after `super`"
-						.into(),
-				}),
-			}?;
+				_ => {
+					return Err(ParseError {
+						token: Some(token),
+						message: "Expected `.` or `(...args)` (constructor \
+						          call) after `super`"
+							.into(),
+					})
+				}
+			};
 
 			Ok(Expr::Super(SuperValue {
-				blame: token.unwrap(),
+				blame: token,
 				accessor,
 				env_distance: Cell::new(0),
 			}))
 		}
 
-		Some(Token {
-			token_type: TokenType::LeftSquareBracket,
-			..
-		}) => {
+		// Block
+		TokenType::LeftSquareBracket => {
 			let mut values = Vec::new();
 
 			while !peek_matches!(tokens, TokenType::RightSquareBracket) {
@@ -396,16 +381,8 @@ fn primary(tokens: ParserIter) -> Result<Expr, ParseError> {
 			Ok(Expr::Literal(LiteralValue::List(Rc::new(values))))
 		}
 
-		Some(Token {
-			token_type: TokenType::Char(c),
-			..
-		}) => Ok(Expr::Literal(LiteralValue::Char(c))),
-
-		// parse objects
-		Some(Token {
-			token_type: TokenType::LeftBrace,
-			..
-		}) => {
+		// Objects
+		TokenType::LeftBrace => {
 			let mut properties: Vec<Property> = Vec::new();
 
 			while !peek_matches!(tokens, TokenType::RightBrace) {
@@ -451,22 +428,11 @@ fn primary(tokens: ParserIter) -> Result<Expr, ParseError> {
 			expect_one!(tokens, TokenType::RightBrace)?;
 
 			Ok(Expr::Object(ObjectValue {
-				blame: token.unwrap(),
+				blame: token,
 				properties,
 			}))
 		}
 
-		Some(Token {
-			token_type: TokenType::Identifier(_),
-			..
-		}) => Ok(Expr::Identifier(IdentifierValue {
-			name: token.unwrap(),
-			env_distance: Cell::new(0),
-		})),
-
-		_ => Err(ParseError {
-			token,
-			message: "Expected expression".into(),
-		}),
+		_ => unreachable!("Primary expression"),
 	}
 }

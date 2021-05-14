@@ -8,7 +8,7 @@ pub fn expect_semicolon(tokens: ParserIter) -> Result<Token, ParseError> {
 }
 
 // call only if the token that the parser choked on is not ';'
-// TODO: rethink/rewrite this
+// TODO: add sync context (like parsing methods or global sync etc.)
 pub fn synchronize(tokens: ParserIter) {
 	while let Some(token) = tokens.peek() {
 		match token.token_type {
