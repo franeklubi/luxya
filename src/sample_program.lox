@@ -9,6 +9,10 @@ fun test_fun(
 	print b;
 }
 
+fun test_fun(a, b) {
+	print "chuj!";
+}
+
 print "should print 'heja', then 'siema'";
 test_fun(
 	"heja",

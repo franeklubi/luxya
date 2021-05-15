@@ -107,6 +107,21 @@ impl EnvironmentWrapper<InterpreterValue> for ResolverEnvironment {
 }
 
 impl ResolverEnvironment {
+	pub fn exists(&self, name: &str) -> bool {
+		unwrap_scope!(self).get(name).is_some()
+			|| unwrap_enclosing!(self)
+				.as_ref()
+				.map_or(false, |enclosing| enclosing.exists(name))
+
+		// if unwrap_scope!(self).get(name).is_some() {
+		// 	true
+		// } else if let Some(enclosing) = unwrap_enclosing!(self) {
+		// 	enclosing.exists(identifier)
+		// } else {
+		// 	false
+		// }
+	}
+
 	pub fn resolve_nest_level(
 		&self,
 		resolvable_node: &Expr,

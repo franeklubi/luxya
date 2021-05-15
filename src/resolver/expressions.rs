@@ -44,6 +44,16 @@ pub fn function_expression(
 	if let Some(name) = &v.name {
 		let iden = assume_identifier(name);
 
+		if env.exists(iden) {
+			return Err(RuntimeError {
+				message: format!(
+					"A value with name `{}` is already in the scope",
+					iden,
+				),
+				token: name.clone(),
+			});
+		}
+
 		env.declare(
 			iden.to_owned(),
 			DeclaredValue {

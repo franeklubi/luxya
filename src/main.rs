@@ -4,8 +4,6 @@ use std::{env, process};
 fn main() {
 	let args: Vec<String> = env::args().collect();
 
-	// TODO: rebuild this whole section
-
 	if args.len() > 1 {
 		for arg in args.iter().skip(1) {
 			match jlox::run_file(&arg) {
