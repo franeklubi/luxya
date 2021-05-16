@@ -143,3 +143,31 @@ for let x = 0; x < 10; x = x + 1 {
 
 	print x;
 }
+
+if (true) {
+	print "pierwszy";
+} else if false {
+	print "drugi";
+} else if false {
+	print "trzeci";
+} else {
+	print "czwarty";
+};
+
+const map = {};
+
+map.("arbitrary key") = "value!";
+
+print has(map, "arbitrary key");	// true
+
+print has(map, "arbitrary key");	// false
+
+const some_value = 1;
+
+const object = {
+	name: "luxya ✨",
+	"arbitrary key": "value!",
+	some_value,
+};
+
+print object;	// { name: luxya ✨, arbitrary key: value!, some_value: 1 }

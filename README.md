@@ -8,14 +8,43 @@ To download precompiled binaries for GNU/Linux, Windows, or MacOS visit the [rel
 
 
 ---
-* [Major Lox-luxya differences](#major-lox-luxya-differences)
+* [Lox-luxya differences](#lox-luxya-differences)
 * [Usage](#usage)
 * [Compilation and development](#compilation-and-development)
 ---
 
 
-## Major Lox-luxya differences
-chuj!
+## Lox-luxya differences
+[Additions](./doc/additions_examples.md):
+- **lists!**; [read more](./doc/additions_examples.md#lists)
+- square bracket accessor (`[expression]`); [read more](./doc/additions_examples.md#square-bracket-accessor)
+- grouping accessor (`.(expression)`); [read more](./doc/additions_examples.md#grouping-accessor)
+- full object notation; [read more](./doc/additions_examples.md#objects)
+- the modulo (`%`) operator
+
+Syntax differences:
+- function declarations are expressions, rather than statements, so you can create anonymous (but not strictly) functions you wan't to use in-place: `function_name(10, a, fun () { print "callback" })`
+- introduced `let` instead of `var`, and `const` for immutable declarations
+- `if`'s, `else`'s, and `for`'s body has to be a block
+- `if`s condition doesn't need to be a grouping (basically you can do: `if true { ... }`)
+- although there is no type coercion, any value that's not strictly `true` will be treated as `not true` when placed in `if`'s or `for`'s condition
+- `for`'s initialization consists of three, **not** grouped fields (e.g.: `for let i = 0; i < 10; i = i + 1 { ... }`)
+- there are no `while` loops, but you can achieve the same behaviour with `for` (`while true { ... }` is the same as `for ; true; { ... }`)
+- you can state an infinite loop by omitting every field: `for ;; {}`
+- `init` (Lox's constructor method) is named `constructor`
+- you cannot call an instance's `constructor` directly (`constructor`s are only callable by using `Classname()` or `super()`)
+- to call a superclass's constructor you need to call the `super` keyword, as you would a function
+- inheritance is done with the `extends` keyword, replacing the `<` syntax
+
+Backend differences:
+- numbers are `IEEE 754-2008` compliant (rust's f64 underneath)
+- no type coercion, no truthy nor falsy values
+- no visitor pattern
+- reference counting because there's no garbage collector to leverage
+- shadowing of named values is permitted
+
+Native functions:
+- asdf
 
 
 ## Usage
