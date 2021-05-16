@@ -46,7 +46,7 @@ pub fn if_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 	let then = match_then_consume_stmt!(
 		tokens,
 		TokenType::LeftBrace,
-		"Expected then block"
+		"Expected a block expression for `then` branch"
 	)?
 	.map(Box::new);
 

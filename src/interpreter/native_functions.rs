@@ -5,10 +5,14 @@ use super::{
 };
 use crate::{env::*, token::*};
 
-use std::{cell::RefCell, rc::Rc};
+use std::{
+	cell::RefCell,
+	io::{self, Write},
+	rc::Rc,
+};
 
 
-pub const NATIVE_FUNCTION_NAMES: [&str; 13] = [
+pub const NATIVE_FUNCTION_NAMES: [&str; 15] = [
 	"str",
 	"typeof",
 	"number",
@@ -22,6 +26,8 @@ pub const NATIVE_FUNCTION_NAMES: [&str; 13] = [
 	"floor",
 	"ceil",
 	"has",
+	"unset",
+	"read",
 ];
 
 struct FunctionDefinition<'a> {
@@ -295,6 +301,63 @@ fn native_has(
 	}
 }
 
+fn native_unset(
+	keyword: &Token,
+	_env: &InterpreterEnvironment,
+	args: &[InterpreterValue],
+) -> Result<InterpreterValue, RuntimeError> {
+	let map = &args[0];
+	let key = &args[1];
+
+	match (map, key) {
+		(
+			InterpreterValue::Instance { properties, .. },
+			InterpreterValue::String(s),
+		) => {
+			let mut borrowed_props = properties.borrow_mut();
+
+			Ok(borrowed_props.remove(&**s).unwrap_or(InterpreterValue::Nil))
+		}
+		_ => Err(RuntimeError {
+			message: format!(
+				"Cannot use unset with {} and {}",
+				map.human_type(),
+				key.human_type()
+			),
+			token: keyword.clone(),
+		}),
+	}
+}
+
+fn native_read(
+	keyword: &Token,
+	_env: &InterpreterEnvironment,
+	args: &[InterpreterValue],
+) -> Result<InterpreterValue, RuntimeError> {
+	let to_print = if args[0] == InterpreterValue::Nil {
+		"".to_owned()
+	} else {
+		args[0].to_string()
+	};
+
+	print!("{}", to_print);
+
+	io::stdout().flush().map_err(|e| RuntimeError {
+		message: e.to_string(),
+		token: keyword.clone(),
+	})?;
+
+	let mut buffer = String::new();
+	io::stdin()
+		.read_line(&mut buffer)
+		.map_err(|e| RuntimeError {
+			message: e.to_string(),
+			token: keyword.clone(),
+		})?;
+
+	Ok(InterpreterValue::String(buffer.into()))
+}
+
 fn declarator(env: &InterpreterEnvironment, funs: &[FunctionDefinition]) {
 	funs.iter().for_each(|fd| {
 		env.declare(
@@ -381,6 +444,16 @@ pub fn declare_native_functions(env: &InterpreterEnvironment) {
 				name: NATIVE_FUNCTION_NAMES[12],
 				arity: 2,
 				fun: native_has,
+			},
+			FunctionDefinition {
+				name: NATIVE_FUNCTION_NAMES[13],
+				arity: 2,
+				fun: native_unset,
+			},
+			FunctionDefinition {
+				name: NATIVE_FUNCTION_NAMES[14],
+				arity: 1,
+				fun: native_read,
 			},
 		],
 	);
