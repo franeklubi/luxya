@@ -23,6 +23,7 @@ Explanation of syntax used in this section:
 * [ceil](#ceil)
 * [has](#has)
 * [unset](#unset)
+* [read](#read)
 ---
 
 
@@ -133,3 +134,9 @@ In case of a string it tests if the first argument contains a string representat
 Signature: `unset(object, string) -> any`
 
 `unset` removes an entry from an object under a provided key and returns the removed value. If there wasn't any value under the provided key, it returns `nil`.
+
+
+## read
+Signature: `read(string | nil) -> string`
+
+`read` prints the provided string (or prints nothing if `nil` is provided) and waits for the user input, returning it

@@ -334,7 +334,11 @@ fn native_read(
 	_env: &InterpreterEnvironment,
 	args: &[InterpreterValue],
 ) -> Result<InterpreterValue, RuntimeError> {
-	let to_print = &args[0];
+	let to_print = if args[0] == InterpreterValue::Nil {
+		"".to_owned()
+	} else {
+		args[0].to_string()
+	};
 
 	print!("{}", to_print);
 
