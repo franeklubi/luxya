@@ -9,6 +9,10 @@ To download precompiled binaries for GNU/Linux, Windows, or MacOS visit the [rel
 
 ---
 * [Lox-luxya differences](#lox-luxya-differences)
+	* [Additions](#additions)
+	* [Syntax](#syntax-differences)
+	* [Backend](#backend-differences)
+	* [Native functions](#native-functions)
 * [Usage](#usage)
 * [Compilation and development](#compilation-and-development)
 ---
