@@ -162,3 +162,32 @@ print has(map, "arbitrary key");	// true
 
 unset(map, "arbitrary key");
 print has(map, "arbitrary key");	// false
+
+print typeof(true);
+print typeof("luxya ✨");
+print typeof(2136);
+
+const letters = chars("luxya 🤢");
+
+letters[6] = '✨';
+
+print from_chars(letters);	// luxya ✨
+
+print number("1234");
+print number('a');
+
+const name = "luxya ✨";
+
+print chars(name);	// [ l, u, x, y, a,  , ✨ ];
+
+print extend([1], [2, 3, 4]);
+
+const nan = 0 / 0;
+
+print floor(nan);
+
+const obj = {
+	chuj: 2,
+};
+
+print unset(obj, "asdf");

@@ -15,14 +15,15 @@ To download precompiled binaries for GNU/Linux, Windows, or MacOS visit the [rel
 
 
 ## Lox-luxya differences
-[Additions](./doc/additions.md):
+### [Additions](./doc/additions.md):
 - **lists!**; [read more](./doc/additions.md#lists)
 - square bracket accessor (`[expression]`); [read more](./doc/additions.md#square-bracket-accessor)
 - grouping accessor (`.(expression)`); [read more](./doc/additions.md#grouping-accessor)
 - full object notation; [read more](./doc/additions.md#objects)
+- chars; [read more](./doc/additions.md#chars)
 - the modulo (`%`) operator
 
-Syntax differences:
+### Syntax differences:
 - function declarations are expressions, rather than statements, so you can create anonymous (but not strictly) functions you wan't to use in-place: `function_name(10, a, fun () { print "callback" })`
 - introduced `let` instead of `var`, and `const` for immutable declarations
 - `if`'s, `else`'s, and `for`'s body has to be a block
@@ -35,16 +36,17 @@ Syntax differences:
 - you cannot call an instance's `constructor` directly (`constructor`s are only callable by using `Classname()` or `super()`)
 - to call a superclass's constructor you need to call the `super` keyword, as you would a function
 - inheritance is done with the `extends` keyword, replacing the `<` syntax
+- chars, which you can read more about [here](./doc/additions.md#chars)
 
-Backend differences:
+### Backend differences:
 - numbers are `IEEE 754-2008` compliant (rust's f64 underneath)
 - no type coercion, no truthy nor falsy values
 - no visitor pattern
 - reference counting because there's no garbage collector to leverage
 - shadowing of named values is permitted
 
-Native functions:
-- asdf
+### Native functions:
+You can find full list of native functions [here](./doc/native_functions.md)
 
 
 ## Usage

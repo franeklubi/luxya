@@ -3,6 +3,7 @@
 
 ---
 * [Lists](#lists)
+* [Chars](#chars)
 * [Square bracket accessor](#square-bracket-accessor)
 * [Object notation](#object-notation)
 * [Grouping accessor](#grouping-accessor)
@@ -16,6 +17,25 @@ const list = [1, 2, 3, "hi!"];
 
 print list;	// [ 1, 2, 3, hi! ]
 ```
+
+
+## Chars
+Basically, a char type.
+
+Syntax:
+```lux
+const a_char = 'a';
+```
+
+It's sole purpose is to help with string modification:
+```lux
+const letters = chars("luxya 🤢");
+
+letters[6] = '✨';
+
+print from_chars(letters);	// luxya ✨
+```
+Read more about [`chars` here](./native_functions.md#chars), [here](#square-bracker-accessor), and about [`from_chars` here](./native_functions.md#from_chars).
 
 
 ## Square bracket accessor
