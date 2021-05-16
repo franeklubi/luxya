@@ -5,10 +5,14 @@ use super::{
 };
 use crate::{env::*, token::*};
 
-use std::{cell::RefCell, rc::Rc};
+use std::{
+	cell::RefCell,
+	io::{self, Write},
+	rc::Rc,
+};
 
 
-pub const NATIVE_FUNCTION_NAMES: [&str; 14] = [
+pub const NATIVE_FUNCTION_NAMES: [&str; 15] = [
 	"str",
 	"typeof",
 	"number",
@@ -23,6 +27,7 @@ pub const NATIVE_FUNCTION_NAMES: [&str; 14] = [
 	"ceil",
 	"has",
 	"unset",
+	"read",
 ];
 
 struct FunctionDefinition<'a> {
@@ -324,6 +329,31 @@ fn native_unset(
 	}
 }
 
+fn native_read(
+	keyword: &Token,
+	_env: &InterpreterEnvironment,
+	args: &[InterpreterValue],
+) -> Result<InterpreterValue, RuntimeError> {
+	let to_print = &args[0];
+
+	print!("{}", to_print);
+
+	io::stdout().flush().map_err(|e| RuntimeError {
+		message: e.to_string(),
+		token: keyword.clone(),
+	})?;
+
+	let mut buffer = String::new();
+	io::stdin()
+		.read_line(&mut buffer)
+		.map_err(|e| RuntimeError {
+			message: e.to_string(),
+			token: keyword.clone(),
+		})?;
+
+	Ok(InterpreterValue::String(buffer.into()))
+}
+
 fn declarator(env: &InterpreterEnvironment, funs: &[FunctionDefinition]) {
 	funs.iter().for_each(|fd| {
 		env.declare(
@@ -415,6 +445,11 @@ pub fn declare_native_functions(env: &InterpreterEnvironment) {
 				name: NATIVE_FUNCTION_NAMES[13],
 				arity: 2,
 				fun: native_unset,
+			},
+			FunctionDefinition {
+				name: NATIVE_FUNCTION_NAMES[14],
+				arity: 1,
+				fun: native_read,
 			},
 		],
 	);
