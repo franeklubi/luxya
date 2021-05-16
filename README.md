@@ -1,6 +1,6 @@
 # luxya ✨
 
-Luxya is a [Lox](https://github.com/munificent/craftinginterpreters)-based programming language *written in Rust©™*.
+Luxya is a [Lox](https://github.com/munificent/craftinginterpreters)-based programming language with a tree-walking interpreter *written in Rust©™*.
 
 ![luxya logo](./assets/luxya_logo.png)
 
