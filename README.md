@@ -15,11 +15,11 @@ To download precompiled binaries for GNU/Linux, Windows, or MacOS visit the [rel
 
 
 ## Lox-luxya differences
-[Additions](./doc/additions_examples.md):
-- **lists!**; [read more](./doc/additions_examples.md#lists)
-- square bracket accessor (`[expression]`); [read more](./doc/additions_examples.md#square-bracket-accessor)
-- grouping accessor (`.(expression)`); [read more](./doc/additions_examples.md#grouping-accessor)
-- full object notation; [read more](./doc/additions_examples.md#objects)
+[Additions](./doc/additions.md):
+- **lists!**; [read more](./doc/additions.md#lists)
+- square bracket accessor (`[expression]`); [read more](./doc/additions.md#square-bracket-accessor)
+- grouping accessor (`.(expression)`); [read more](./doc/additions.md#grouping-accessor)
+- full object notation; [read more](./doc/additions.md#objects)
 - the modulo (`%`) operator
 
 Syntax differences:

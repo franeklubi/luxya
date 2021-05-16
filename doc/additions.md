@@ -89,7 +89,7 @@ object.(key) = "value!";
 print object.(key);	// value!
 ```
 
-By combining this accessor with [`has`](./native_functions.md#has) and [`unset`](./native_functions.md#unset) functions, you can treat objects like a hashmap;
+By combining this accessor with [`has`](./native_functions.md#has) and [`unset`](./native_functions.md#unset) functions, you can treat objects like a hashmap.
 
 ```lux
 const map = {};
@@ -98,6 +98,6 @@ map.("arbitrary key") = "value!";
 
 print has(map, "arbitrary key");	// true
 
-print unset(map, "arbitrary key");
+unset(map, "arbitrary key");
 print has(map, "arbitrary key");	// false
 ```

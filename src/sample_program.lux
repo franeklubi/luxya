@@ -160,14 +160,5 @@ map.("arbitrary key") = "value!";
 
 print has(map, "arbitrary key");	// true
 
+unset(map, "arbitrary key");
 print has(map, "arbitrary key");	// false
-
-const some_value = 1;
-
-const object = {
-	name: "luxya ✨",
-	"arbitrary key": "value!",
-	some_value,
-};
-
-print object;	// { name: luxya ✨, arbitrary key: value!, some_value: 1 }

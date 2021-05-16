@@ -8,7 +8,7 @@ use crate::{env::*, token::*};
 use std::{cell::RefCell, rc::Rc};
 
 
-pub const NATIVE_FUNCTION_NAMES: [&str; 13] = [
+pub const NATIVE_FUNCTION_NAMES: [&str; 14] = [
 	"str",
 	"typeof",
 	"number",
@@ -22,6 +22,7 @@ pub const NATIVE_FUNCTION_NAMES: [&str; 13] = [
 	"floor",
 	"ceil",
 	"has",
+	"unset",
 ];
 
 struct FunctionDefinition<'a> {
@@ -295,6 +296,34 @@ fn native_has(
 	}
 }
 
+fn native_unset(
+	keyword: &Token,
+	_env: &InterpreterEnvironment,
+	args: &[InterpreterValue],
+) -> Result<InterpreterValue, RuntimeError> {
+	let map = &args[0];
+	let key = &args[1];
+
+	match (map, key) {
+		(
+			InterpreterValue::Instance { properties, .. },
+			InterpreterValue::String(s),
+		) => {
+			let mut borrowed_props = properties.borrow_mut();
+
+			Ok(borrowed_props.remove(&**s).unwrap_or(InterpreterValue::Nil))
+		}
+		_ => Err(RuntimeError {
+			message: format!(
+				"Cannot use unset with {} and {}",
+				map.human_type(),
+				key.human_type()
+			),
+			token: keyword.clone(),
+		}),
+	}
+}
+
 fn declarator(env: &InterpreterEnvironment, funs: &[FunctionDefinition]) {
 	funs.iter().for_each(|fd| {
 		env.declare(
@@ -381,6 +410,11 @@ pub fn declare_native_functions(env: &InterpreterEnvironment) {
 				name: NATIVE_FUNCTION_NAMES[12],
 				arity: 2,
 				fun: native_has,
+			},
+			FunctionDefinition {
+				name: NATIVE_FUNCTION_NAMES[13],
+				arity: 2,
+				fun: native_unset,
 			},
 		],
 	);
