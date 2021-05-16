@@ -35,7 +35,7 @@ letters[6] = '✨';
 
 print from_chars(letters);	// luxya ✨
 ```
-Read more about [`chars` here](./native_functions.md#chars), [here](#square-bracker-accessor), and about [`from_chars` here](./native_functions.md#from_chars).
+Read more about [`chars` here](./native_functions.md#chars), [here](#square-bracket-accessor), and about [`from_chars` here](./native_functions.md#from_chars).
 
 
 ## Square bracket accessor
