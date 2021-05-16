@@ -2,6 +2,8 @@
 
 Luxya is a [Lox](https://github.com/munificent/craftinginterpreters)-based programming language *written in Rust©™*.
 
+![luxya logo](./assets/luxya_logo.png)
+
 To download precompiled binaries for GNU/Linux, Windows, or MacOS visit the [releases](https://github.com/franeklubi/luxya/releases) page!
 
 
