@@ -7,7 +7,6 @@ sample_program_path=./src/sample_program.lux
 generate_ast_path=./tools/generate_ast.py
 
 release:
-	make -s generate_ast_check
 	make -s clippy
 	clear
 	cargo build --release
