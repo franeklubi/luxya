@@ -14,6 +14,7 @@ To download precompiled binaries for GNU/Linux and Windows visit the [releases](
 	* [Backend](#backend-differences)
 	* [Native functions](#native-functions)
 * [Usage](#usage)
+* [Examples](#examples)
 * [Compilation and development](#compilation-and-development)
 ---
 
@@ -28,7 +29,7 @@ To download precompiled binaries for GNU/Linux and Windows visit the [releases](
 - the modulo (`%`) operator
 
 ### Syntax differences:
-- function declarations are expressions, rather than statements, so you can create anonymous (but not strictly) functions you wan't to use in-place: `function_name(10, a, fun () { print "callback" })`
+- function declarations are expressions, rather than statements, so you can create anonymous (but not strictly) functions you want to use in-place: `function_name(10, a, fun () { print "callback" })`
 - introduced `let` instead of `var`, and `const` for immutable declarations
 - `if`'s, `else`'s, and `for`'s body has to be a block
 - `if`s condition doesn't need to be a grouping (basically you can do: `if true { ... }`)
@@ -62,6 +63,48 @@ $ luxya <source>
 To run in REPL mode (which is not yet finished):
 ```sh
 $ luxya
+```
+
+
+## Examples
+```lux
+for let i = 0; i < 10; i = i + 1 {
+	print i;
+}
+```
+```lux
+fun shout(text) {
+	print text + "!";
+}
+
+shout("hi");
+```
+```lux
+class Language {
+	constructor(name) {
+		this.name = name;
+	}
+
+	say_language() {
+		print this.name;
+	}
+}
+
+class Luxya extends Language {
+	constructor() {
+		super("luxya");
+	}
+
+	say_language() {
+		print "✨✨✨";
+		super.say_language();
+		print "✨✨✨";
+	}
+}
+
+const luxya = Luxya();
+
+luxya.say_language();
 ```
 
 
