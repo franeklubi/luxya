@@ -64,8 +64,10 @@ jobs:
       - name: Release build
         run: make release
         
-      - name: Download a Build Artifact
-        uses: actions/download-artifact@v2.0.9
+      - name: Upload a Build Artifact
+        uses: actions/upload-artifact@v2.2.3
         with:
+          # Artifact name
           name: luxya_GNU_Linux
+          # A file, directory or wildcard pattern that describes what to upload
           path: target/release/luxya
