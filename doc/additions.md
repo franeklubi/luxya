@@ -27,15 +27,15 @@ Syntax:
 const a_char = 'a';
 ```
 
-It's sole purpose is to help with string modification:
+It's sole purpose is to aid in string modification:
 ```lux
-const letters = chars("luxya 🤢");
+const letters = expand("luxya 🤢");
 
 letters[6] = '✨';
 
 print from_chars(letters);	// luxya ✨
 ```
-Read more about [`chars` here](./native_functions.md#chars), [here](#square-bracket-accessor), and about [`from_chars` here](./native_functions.md#from_chars).
+Read more about [`expand` here](./native_functions.md#expand), [here](#square-bracket-accessor), and about [`from_chars` here](./native_functions.md#from_chars).
 
 
 ## Square bracket accessor
@@ -61,11 +61,11 @@ print emoji[0];	// â
 ```
 `â` is not what we expected, but that's the desired behaviour. Luxya deals with accessing chars by using their byte representation, so that you can expect an O(1) operation on every access.
 
-But what if we want to access the emoji as a char? We use the [`chars`](./native_functions.md#chars) function!
+But what if we want to access the emoji as a char? We use the [`expand`](./native_functions.md#expand) function!
 ```lux
 const name = "luxya ✨";
 
-const expanded = chars(name);
+const expanded = expand(name);
 
 print expanded;	// [ l, u, x, y, a,  , ✨ ]
 
@@ -109,7 +109,7 @@ object.(key) = "value!";
 print object.(key);	// value!
 ```
 
-By combining this accessor with [`has`](./native_functions.md#has) and [`unset`](./native_functions.md#unset) functions, you can treat objects like a hashmap.
+By combining this accessor with [`expand`](./native_functions.md#expand), [`has`](./native_functions.md#has) and [`unset`](./native_functions.md#unset) functions, you can use objects as hashmaps.
 
 ```lux
 const map = {};

@@ -13,7 +13,7 @@ Explanation of syntax used in this section:
 * [typeof](#typeof)
 * [number](#number)
 * [len](#len)
-* [chars](#chars)
+* [expand](#expand)
 * [push](#push)
 * [extend](#extend)
 * [from_chars](#from_chars)
@@ -62,18 +62,25 @@ Signature: `len(string | list[any]) -> number`
 `len` returns the length of a string (in bytes) or a list
 
 
-## chars
-Signature: `chars(string) -> list[char]`
+## expand
+Signature: `expand(string | object) -> list[char | string]`
 
-`chars` returns a list of chars in a string
+`expand` returns a list of chars in a string, or keys in an object
 
 ```lux
 const name = "luxya ✨";
 
-print chars(name);	// [ l, u, x, y, a,  , ✨ ];
+print expand(name);	// [ l, u, x, y, a,  , ✨ ];
+
+const object = {
+	name,
+	key: "value",
+};
+
+print expand(object);	// [ name, key ];
 ```
 
-You can find example usages of `chars` [here](./additions.md#chars) and [here](./additions.md#square-bracket-accessor).
+You can find example usages of `expand` [here](./additions.md#chars) and [here](./additions.md#square-bracket-accessor).
 
 
 ## from_chars
