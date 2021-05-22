@@ -53,7 +53,7 @@ fn scan_token(
 			':' => TokenType::Colon,
 			'*' => TokenType::Star,
 			'!' => {
-				if matches!(chars.peek(), Some((_, '='))) {
+				if let Some((_, '=')) = chars.peek() {
 					chars.next();
 
 					token_len += 1;
@@ -64,7 +64,7 @@ fn scan_token(
 				}
 			}
 			'=' => {
-				if matches!(chars.peek(), Some((_, '='))) {
+				if let Some((_, '=')) = chars.peek() {
 					chars.next();
 
 					token_len += 1;
@@ -75,7 +75,7 @@ fn scan_token(
 				}
 			}
 			'<' => {
-				if matches!(chars.peek(), Some((_, '='))) {
+				if let Some((_, '=')) = chars.peek() {
 					chars.next();
 
 					token_len += 1;
@@ -86,7 +86,7 @@ fn scan_token(
 				}
 			}
 			'>' => {
-				if matches!(chars.peek(), Some((_, '='))) {
+				if let Some((_, '=')) = chars.peek() {
 					chars.next();
 
 					token_len += 1;
@@ -97,7 +97,7 @@ fn scan_token(
 				}
 			}
 			'/' => {
-				if matches!(chars.peek(), Some((_, '/'))) {
+				if let Some((_, '/')) = chars.peek() {
 					// comment goes until the end of the line
 					chars.take_while(|(_, c)| *c != '\n').for_each(drop);
 
