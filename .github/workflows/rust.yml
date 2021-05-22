@@ -1,0 +1,33 @@
+name: Rust
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions-rs/toolchain@v1
+      with:
+        toolchain: nightly
+    - name: Run clippy
+      run: make clippy
+    - name: GNU/Linux build
+      run: make release
+#     - name: Run tests
+#       run: cargo test --verbose
+    - name: Cache
+      uses: actions/cache@v2.1.5
+      with:
+        # A list of files, directories, and wildcard patterns to cache and restore
+        path: target/release/luxya
+        # An explicit key for restoring and saving the cache
+        key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
