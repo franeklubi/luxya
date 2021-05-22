@@ -71,3 +71,36 @@ jobs:
           name: luxya_GNU_Linux
           # A file, directory or wildcard pattern that describes what to upload
           path: target/release/luxya
+
+  Windows_build:
+    needs: clippy
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Cache
+        uses: actions/cache@v2.1.5
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+
+      - name: Release build
+        run: make release
+
+      - name: Upload a Build Artifact
+        uses: actions/upload-artifact@v2.2.3
+        with:
+          # Artifact name
+          name: luxya_Windows
+          # A file, directory or wildcard pattern that describes what to upload
+          path: target/release/luxya.exe
