@@ -9,10 +9,10 @@ generate_ast_path=./tools/generate_ast.py
 main:
 	make -s clippy
 	clear
-	cargo build --release
+	cargo build --release --verbose
 
 release:
-	cargo build --release
+	cargo build --release --verbose
 
 clippy:
 	clear
