@@ -19,6 +19,8 @@ jobs:
       with:
         toolchain: nightly
     - name: Run clippy
+      env:
+        TERM: "xterm"
       run: make clippy
     - name: GNU/Linux build
       run: make release
