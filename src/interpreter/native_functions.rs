@@ -124,7 +124,7 @@ fn native_expand(
 			Ok(InterpreterValue::List(Rc::new(RefCell::new(keys))))
 		}
 		_ => Err(RuntimeError {
-			message: format!("Can't extract chars out of {}", val.human_type()),
+			message: format!("Can't use expand on {}", val.human_type()),
 			token: keyword.clone(),
 		}),
 	}
