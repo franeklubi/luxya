@@ -17,7 +17,7 @@ pub const NATIVE_FUNCTION_NAMES: [&str; 15] = [
 	"typeof",
 	"number",
 	"len",
-	"chars",
+	"expand",
 	"push",
 	"extend",
 	"from_chars",
@@ -102,7 +102,7 @@ fn native_len(
 	}
 }
 
-fn native_chars(
+fn native_expand(
 	keyword: &Token,
 	_env: &InterpreterEnvironment,
 	args: &[InterpreterValue],
@@ -113,6 +113,16 @@ fn native_chars(
 		InterpreterValue::String(s) => Ok(InterpreterValue::List(Rc::new(
 			RefCell::new(s.chars().map(InterpreterValue::Char).collect()),
 		))),
+		InterpreterValue::Instance { properties, .. } => {
+			let keys = properties
+				.borrow()
+				.keys()
+				.cloned()
+				.map(|k| InterpreterValue::String(k.into()))
+				.collect();
+
+			Ok(InterpreterValue::List(Rc::new(RefCell::new(keys))))
+		}
 		_ => Err(RuntimeError {
 			message: format!("Can't extract chars out of {}", val.human_type()),
 			token: keyword.clone(),
@@ -403,7 +413,7 @@ pub fn declare_native_functions(env: &InterpreterEnvironment) {
 			FunctionDefinition {
 				name: NATIVE_FUNCTION_NAMES[4],
 				arity: 1,
-				fun: native_chars,
+				fun: native_expand,
 			},
 			FunctionDefinition {
 				name: NATIVE_FUNCTION_NAMES[5],
