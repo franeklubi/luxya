@@ -63,3 +63,9 @@ jobs:
 
       - name: Release build
         run: make release
+        
+      - name: Download a Build Artifact
+        uses: actions/download-artifact@v2.0.9
+        with:
+          name: luxya_GNU_Linux
+          path: target/release/luxya
