@@ -19,10 +19,11 @@ jobs:
       with:
         toolchain: nightly
     - name: Run clippy
-      run: rustup component add clippy --toolchain nightly-x86_64-unknown-linux-gnu
+      run:
+        rustup component add clippy --toolchain nightly-x86_64-unknown-linux-gnu
+        make clippy
       env:
         TERM: "xterm"
-      run: make clippy
     - name: GNU/Linux build
       run: make release
 #     - name: Run tests
