@@ -10,28 +10,45 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
+  clippy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v2
+      
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          
+      - name: Run clippy
+        env:
+          TERM: "xterm"
+        run: |
+          rustup component add clippy --toolchain nightly-x86_64-unknown-linux-gnu
+          make clippy
+
+
+  GNU/Linux build:
+    needs: clippy
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions-rs/toolchain@v1
-      with:
-        toolchain: nightly
-    - name: Run clippy
-      run: |
-        rustup component add clippy --toolchain nightly-x86_64-unknown-linux-gnu
-        make clippy
-      env:
-        TERM: "xterm"
-    - name: GNU/Linux build
-      run: make release
-#     - name: Run tests
-#       run: cargo test --verbose
-    - name: Cache
-      uses: actions/cache@v2.1.5
-      with:
-        # A list of files, directories, and wildcard patterns to cache and restore
-        path: target/release/luxya
-        # An explicit key for restoring and saving the cache
-        key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
+      - uses: actions/checkout@v2
+
+      - name: Cache
+        uses: actions/cache@v2.1.5
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+
+      - name: Release build
+        run: make release
