@@ -28,7 +28,7 @@ jobs:
           make clippy
 
 
-  GNU/Linux build:
+  GNU_Linux build:
     needs: clippy
     runs-on: ubuntu-latest
 
