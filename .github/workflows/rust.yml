@@ -12,10 +12,10 @@ env:
 jobs:
   clippy:
     runs-on: ubuntu-latest
-    
+
     steps:
       - uses: actions/checkout@v2
-      
+
       - name: Cache
         uses: actions/cache@v2.1.5
         with:
@@ -26,11 +26,11 @@ jobs:
             ~/.cargo/git/db/
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-      
+
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: nightly
-          
+
       - name: Run clippy
         env:
           TERM: "xterm"
@@ -63,7 +63,10 @@ jobs:
 
       - name: Release build
         run: make release
-        
+
+      - name: Strip binary
+        run: strip --strip-all target/release/luxya
+
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v2.2.3
         with:
@@ -96,6 +99,9 @@ jobs:
 
       - name: Release build
         run: make release
+
+      - name: Strip binary
+        run: strip --strip-all target/release/luxya
 
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v2.2.3
