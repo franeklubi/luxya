@@ -100,9 +100,6 @@ jobs:
       - name: Release build
         run: make release
 
-      - name: Strip binary
-        run: strip --strip-all target\release\luxya
-
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v2.2.3
         with:
