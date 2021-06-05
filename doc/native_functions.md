@@ -122,7 +122,7 @@ Signature: `floor(number) -> number`
 ## ceil
 Signature: `ceil(number) -> number`
 
-`floor` ceils a number, lol
+`ceil` ceils a number, lol
 
 
 ## has
