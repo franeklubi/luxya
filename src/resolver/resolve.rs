@@ -87,8 +87,8 @@ pub fn statement(
 		Stmt::Expression(v) => {
 			interpreter_stmts::expression_statement(expression, v, env)
 		}
-		Stmt::Break(v) => interpreter_stmts::break_statement(v),
-		Stmt::Continue(v) => interpreter_stmts::continue_statement(v),
+		Stmt::Break(v) => Ok(interpreter_stmts::break_statement(v)),
+		Stmt::Continue(v) => Ok(interpreter_stmts::continue_statement(v)),
 		Stmt::Return(v) => {
 			interpreter_stmts::return_statement(expression, v, env)
 		}

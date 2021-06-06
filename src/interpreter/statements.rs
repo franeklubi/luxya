@@ -203,17 +203,13 @@ where
 }
 
 #[inline]
-pub fn break_statement<T>(
-	v: &BreakValue,
-) -> Result<StmtResult<T>, RuntimeError> {
-	Ok(StmtResult::Break(v.keyword.clone()))
+pub fn break_statement<T>(v: &BreakValue) -> StmtResult<T> {
+	StmtResult::Break(v.keyword.clone())
 }
 
 #[inline]
-pub fn continue_statement<T>(
-	v: &ContinueValue,
-) -> Result<StmtResult<T>, RuntimeError> {
-	Ok(StmtResult::Continue(v.keyword.clone()))
+pub fn continue_statement<T>(v: &ContinueValue) -> StmtResult<T> {
+	StmtResult::Continue(v.keyword.clone())
 }
 
 pub fn class_statement(

@@ -166,7 +166,7 @@ pub fn execute_call(
 pub fn function_expression(
 	v: &FunctionValue,
 	env: &InterpreterEnvironment,
-) -> Result<InterpreterValue, RuntimeError> {
+) -> InterpreterValue {
 	let fun = construct_lox_defined_function(v, env);
 
 	if let Some(t) = &v.name {
@@ -181,7 +181,7 @@ pub fn function_expression(
 		);
 	}
 
-	Ok(fun)
+	fun
 }
 
 pub fn unary_expression(

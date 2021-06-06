@@ -84,8 +84,8 @@ fn eval_statement(
 		Stmt::If(v) => if_statement(eval_expression, eval_statement, v, env),
 		Stmt::For(v) => for_statement(eval_expression, eval_statement, v, env),
 		Stmt::Return(v) => return_statement(eval_expression, v, env),
-		Stmt::Break(v) => break_statement(v),
-		Stmt::Continue(v) => continue_statement(v),
+		Stmt::Break(v) => Ok(break_statement(v)),
+		Stmt::Continue(v) => Ok(continue_statement(v)),
 		Stmt::Class(v) => class_statement(v, env),
 	}
 }
@@ -102,7 +102,7 @@ pub fn eval_expression(
 		Expr::Identifier(v) => identifier_expression(v, env),
 		Expr::Assignment(v) => assignment_expression(eval_expression, v, env),
 		Expr::Call(v) => call_expression(v, env),
-		Expr::Function(v) => function_expression(v, env),
+		Expr::Function(v) => Ok(function_expression(v, env)),
 		Expr::Get(v) => get_expression(v, env),
 		Expr::Set(v) => set_expression(v, env),
 		Expr::This(v) => this_expression(v, env),
