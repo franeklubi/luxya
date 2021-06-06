@@ -3,7 +3,7 @@ use super::{
 	interpreter_env::InterpreterEnvironment,
 	types::*,
 };
-use crate::{env::*, token::*};
+use crate::{env::*, token::*, try_exact_convert};
 
 use std::{
 	cell::RefCell,
@@ -87,13 +87,24 @@ fn native_len(
 	args: &[InterpreterValue],
 ) -> Result<InterpreterValue, RuntimeError> {
 	match &args[0] {
-		InterpreterValue::String(s) => {
-			Ok(InterpreterValue::Number(s.len() as f64))
-		}
+		InterpreterValue::String(s) => try_exact_convert!(s.len(), usize, f64)
+			.map_err(|_| RuntimeError {
+				message: format!("Cannot conver from {}_usize to f64", s.len(),),
+				token: keyword.clone(),
+			})
+			.map(InterpreterValue::Number),
 		InterpreterValue::List(l) => {
 			let l_borrow = l.borrow();
 
-			Ok(InterpreterValue::Number(l_borrow.len() as f64))
+			try_exact_convert!(l_borrow.len(), usize, f64)
+				.map_err(|_| RuntimeError {
+					message: format!(
+						"Cannot conver from {}_usize to f64",
+						l_borrow.len(),
+					),
+					token: keyword.clone(),
+				})
+				.map(InterpreterValue::Number)
 		}
 		_ => Err(RuntimeError {
 			message: format!("Can't get length of {}", &args[0].human_type()),

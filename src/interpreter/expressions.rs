@@ -365,9 +365,9 @@ fn get_subscription(
 				extract_subscription_index(&v.key, &v.blame, s.len(), env)?;
 
 			unsafe {
-				Ok(InterpreterValue::Char(
-					*s.as_bytes().get_unchecked(index) as char
-				))
+				Ok(InterpreterValue::Char(char::from(
+					*s.as_bytes().get_unchecked(index),
+				)))
 			}
 		}
 		InterpreterValue::List(l) => {

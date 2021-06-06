@@ -8,6 +8,22 @@ use crate::{
 use std::{cell::RefMut, rc::Rc};
 
 
+#[macro_export]
+macro_rules! try_exact_convert {
+	($from:expr, $from_t:ty, $to_t:ty) => {{
+		#[allow(clippy::as_conversions)]
+		let converted = $from as $to_t;
+
+		#[allow(clippy::float_cmp, clippy::as_conversions)]
+		if converted as $from_t != $from {
+			Err("Cannot convert")
+		} else {
+			Ok(converted)
+		}
+	}};
+}
+
+
 // A shorthand way to extract identifier's name
 pub fn assume_identifier(t: &Token) -> &str {
 	match &t.token_type {
@@ -163,14 +179,15 @@ pub fn extract_subscription_index(
 		_ => unreachable!("Wrong accessor in subscription"),
 	}?;
 
-	if extracted_n.fract() != 0.0 || extracted_n < 0.0 {
-		return Err(RuntimeError {
-			message: format!("Cannot access element on index {}", extracted_n),
+	let index = try_exact_convert!(extracted_n, f64, usize).map_err(|_| {
+		RuntimeError {
+			message: format!(
+				"Cannot access element on erroneous index {}",
+				extracted_n
+			),
 			token: blame.clone(),
-		});
-	}
-
-	let index = extracted_n as usize;
+		}
+	})?;
 
 	if index >= max_len {
 		Err(RuntimeError {
@@ -178,6 +195,6 @@ pub fn extract_subscription_index(
 			token: blame.clone(),
 		})
 	} else {
-		Ok(extracted_n as usize)
+		Ok(index)
 	}
 }
