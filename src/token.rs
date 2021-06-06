@@ -2,6 +2,7 @@ use std::{fmt, mem, rc::Rc};
 
 
 #[derive(Clone, Debug)]
+#[allow(clippy::module_name_repetitions)]
 pub enum TokenType {
 	// Single-character tokens
 	LeftParen,

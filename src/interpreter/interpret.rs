@@ -1,7 +1,7 @@
 use super::{
+	env::*,
 	expressions::*,
-	interpreter_env::*,
-	native_functions::declare_native_functions,
+	native_functions,
 	statements::*,
 	types::*,
 };
@@ -14,7 +14,7 @@ use crate::{
 pub fn interpret(statements: &[Stmt]) -> Result<(), RuntimeError> {
 	let env = InterpreterEnvironment::new();
 
-	declare_native_functions(&env);
+	native_functions::declare(&env);
 
 	match eval_statements(statements, &env)? {
 		StmtResult::Noop => Ok(()),

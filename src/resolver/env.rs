@@ -93,15 +93,15 @@ impl EnvironmentWrapper<InterpreterValue> for ResolverEnvironment {
 	) -> Result<InterpreterValue, RuntimeError> {
 		let entry = self.read(steps, identifier)?;
 
-		if !entry.mutable {
+		if entry.mutable {
+			Ok(InterpreterValue::Nil)
+		} else {
 			let name = assume_identifier(identifier);
 
 			Err(RuntimeError {
 				message: format!("Cannot reassign a const `{}`", name),
 				token: identifier.clone(),
 			})
-		} else {
-			Ok(InterpreterValue::Nil)
 		}
 	}
 }

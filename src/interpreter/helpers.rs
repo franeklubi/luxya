@@ -1,4 +1,4 @@
-use super::{interpret::eval_expression, interpreter_env::*, types::*};
+use super::{env::*, interpret::eval_expression, types::*};
 use crate::{
 	ast::expr::{FunctionValue, GetAccessor},
 	env::*,
@@ -15,10 +15,10 @@ macro_rules! try_exact_convert {
 		let converted = $from as $to_t;
 
 		#[allow(clippy::float_cmp, clippy::as_conversions)]
-		if converted as $from_t != $from {
-			Err("Cannot convert")
-		} else {
+		if converted as $from_t == $from {
 			Ok(converted)
+		} else {
+			Err("Cannot convert")
 		}
 	}};
 }
@@ -57,7 +57,9 @@ pub fn confirm_arity(
 	value: usize,
 	blame: &Token,
 ) -> Result<(), RuntimeError> {
-	if target != value {
+	if target == value {
+		Ok(())
+	} else {
 		Err(RuntimeError {
 			message: format!(
 				"{} arguments",
@@ -69,8 +71,6 @@ pub fn confirm_arity(
 			),
 			token: blame.clone(),
 		})
-	} else {
-		Ok(())
 	}
 }
 

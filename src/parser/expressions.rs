@@ -87,7 +87,7 @@ fn factor(tokens: ParserIter) -> Result<Expr, ParseError> {
 fn unary(tokens: ParserIter) -> Result<Expr, ParseError> {
 	if matches!(
 		tokens.peek().map(|t| &t.token_type),
-		Some(TokenType::Bang) | Some(TokenType::Minus)
+		Some(TokenType::Bang | TokenType::Minus)
 	) {
 		let operator = tokens.next().unwrap();
 

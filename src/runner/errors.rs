@@ -11,7 +11,7 @@ pub trait DescribableError {
 }
 
 
-pub fn report_errors<T>(source: &str, category: &str, errors: &[T])
+pub fn report<T>(source: &str, category: &str, errors: &[T])
 where
 	T: DescribableError,
 {

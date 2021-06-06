@@ -7,7 +7,7 @@ use std::{
 };
 
 
-pub fn run_file(path: &str) -> Result<(), RunError> {
+pub fn file(path: &str) -> Result<(), RunError> {
 	let mut f = fs::File::open(path)?;
 
 	let mut buffer = String::new();
@@ -20,7 +20,7 @@ pub fn run_file(path: &str) -> Result<(), RunError> {
 	Ok(())
 }
 
-pub fn run_prompt() -> Result<(), io::Error> {
+pub fn repl() -> Result<(), io::Error> {
 	loop {
 		print!(">>> ");
 		io::stdout().flush()?;
@@ -55,7 +55,7 @@ fn run(source: String) -> bool {
 	let (tokens, errors) = scanner::scan(&source);
 
 	if !errors.is_empty() {
-		errors::report_errors(&source, "Scan", &errors);
+		errors::report(&source, "Scan", &errors);
 
 		return true;
 	}
@@ -64,20 +64,20 @@ fn run(source: String) -> bool {
 	let (statements, errors) = parser::parse(tokens);
 
 	if !errors.is_empty() {
-		errors::report_errors(&source, "Parse", &errors);
+		errors::report(&source, "Parse", &errors);
 
 		return true;
 	}
 
 	// Resolving
 	if let Err(error) = resolver::resolve(&statements) {
-		errors::report_errors(&source, "Resolve", &[error]);
+		errors::report(&source, "Resolve", &[error]);
 
 		true
 
 	// Interpreting 😇
 	} else if let Err(error) = interpreter::interpret(&statements) {
-		errors::report_errors(&source, "Runtime", &[error]);
+		errors::report(&source, "Runtime", &[error]);
 
 		true
 	} else {

@@ -1,4 +1,4 @@
-use super::interpreter_env::*;
+use super::env::*;
 use crate::{ast::expr::*, runner::DescribableError, token::*};
 
 use std::{cell::RefCell, collections::HashMap, fmt, rc::Rc};

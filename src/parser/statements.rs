@@ -179,10 +179,10 @@ pub fn return_statement(
 	tokens: ParserIter,
 	keyword: Token,
 ) -> Result<Option<Stmt>, ParseError> {
-	let expression = if !peek_matches!(tokens, TokenType::Semicolon) {
-		Some(expression(tokens)?)
-	} else {
+	let expression = if peek_matches!(tokens, TokenType::Semicolon) {
 		None
+	} else {
+		Some(expression(tokens)?)
 	};
 
 	expect_semicolon(tokens)?;

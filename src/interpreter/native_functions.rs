@@ -1,8 +1,4 @@
-use super::{
-	helpers::unwrap_list,
-	interpreter_env::InterpreterEnvironment,
-	types::*,
-};
+use super::{env::InterpreterEnvironment, helpers::unwrap_list, types::*};
 use crate::{env::*, token::*, try_exact_convert};
 
 use std::{
@@ -397,7 +393,7 @@ fn declarator(env: &InterpreterEnvironment, funs: &[FunctionDefinition]) {
 	})
 }
 
-pub fn declare_native_functions(env: &InterpreterEnvironment) {
+pub fn declare(env: &InterpreterEnvironment) {
 	declarator(
 		env,
 		&[

@@ -1,7 +1,7 @@
 use super::{
+	env::InterpreterEnvironment,
 	helpers::*,
 	interpret::eval_expression,
-	interpreter_env::InterpreterEnvironment,
 	types::*,
 };
 use crate::{

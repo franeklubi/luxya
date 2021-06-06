@@ -102,9 +102,9 @@ fn scan_token(
 					chars.take_while(|(_, c)| *c != '\n').for_each(drop);
 
 					continue;
-				} else {
-					TokenType::Slash
 				}
+
+				TokenType::Slash
 			}
 			'"' => {
 				let res = consume_while_peek(chars, |c| *c != '"');

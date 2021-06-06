@@ -1,8 +1,7 @@
 #![feature(option_result_unwrap_unchecked)]
 #![warn(
 	clippy::all,
-	// clippy::restriction,
-	// clippy::pedantic,
+	clippy::pedantic,
 	// clippy::nursery,
 	// clippy::cargo
 )]
