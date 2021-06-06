@@ -31,15 +31,13 @@ impl PartialEq for InterpreterEnvironment {
 
 impl EnvironmentWrapper<InterpreterValue> for InterpreterEnvironment {
 	fn new() -> Self {
-		InterpreterEnvironment(Rc::new(RefCell::new(EnvironmentBase::new(
-			None,
-		))))
+		Self(Rc::new(RefCell::new(EnvironmentBase::new(None))))
 	}
 
 	fn fork(&self) -> Self {
-		InterpreterEnvironment(Rc::new(RefCell::new(EnvironmentBase::new(
-			Some(self.clone()),
-		))))
+		Self(Rc::new(RefCell::new(EnvironmentBase::new(Some(
+			self.clone(),
+		)))))
 	}
 
 	fn read(

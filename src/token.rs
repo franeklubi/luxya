@@ -70,7 +70,7 @@ impl TokenType {
 		}
 	}
 
-	pub fn human_type(&self) -> &str {
+	pub const fn human_type(&self) -> &str {
 		match self {
 			TokenType::String(_) => "string",
 			TokenType::Identifier(_) => "identifier",

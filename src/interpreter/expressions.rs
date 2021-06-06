@@ -46,7 +46,7 @@ pub fn literal_expression(
 	env: &InterpreterEnvironment,
 ) -> Result<InterpreterValue, RuntimeError> {
 	match v {
-		LiteralValue::String(s) => Ok(InterpreterValue::String(Rc::clone(&s))),
+		LiteralValue::String(s) => Ok(InterpreterValue::String(Rc::clone(s))),
 		LiteralValue::Number(n) => Ok(InterpreterValue::Number(*n)),
 		LiteralValue::True => Ok(InterpreterValue::True),
 		LiteralValue::False => Ok(InterpreterValue::False),
@@ -370,18 +370,12 @@ fn get_dot(
 
 	match &v.key {
 		GetAccessor::DotName(iden) => {
-			get_property(iden, &borrowed_props, &class, &getee, &v.blame)
+			get_property(iden, &borrowed_props, class, &getee, &v.blame)
 		}
 		GetAccessor::DotEval(expr) => {
 			let key = eval_expression(expr, env)?.to_string();
 
-			get_property(
-				&key.as_str(),
-				&borrowed_props,
-				&class,
-				&getee,
-				&v.blame,
-			)
+			get_property(key.as_str(), &borrowed_props, class, &getee, &v.blame)
 		}
 		_ => unreachable!("Wrong accessor in dot"),
 	}
@@ -564,7 +558,7 @@ pub fn super_expression(
 
 			let constructor = bind_function(&constructor, instance);
 
-			execute_call(&constructor, &args, &v.blame, env)
+			execute_call(&constructor, args, &v.blame, env)
 		}
 	}
 }

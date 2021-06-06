@@ -11,7 +11,7 @@ pub enum RunError {
 
 impl From<io::Error> for RunError {
 	fn from(e: io::Error) -> Self {
-		RunError::Io(e)
+		Self::Io(e)
 	}
 }
 

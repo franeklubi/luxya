@@ -66,7 +66,7 @@ pub fn statements(
 	env: &ResolverEnvironment,
 ) -> Result<StmtResult<InterpreterValue>, RuntimeError> {
 	for stmt in statements {
-		let res = statement(&stmt, env)?;
+		let res = statement(stmt, env)?;
 
 		if !matches!(res, StmtResult::Noop) {
 			return Ok(res);

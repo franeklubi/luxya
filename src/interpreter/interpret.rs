@@ -62,7 +62,7 @@ pub fn eval_statements(
 	env: &InterpreterEnvironment,
 ) -> Result<StmtResult<InterpreterValue>, RuntimeError> {
 	for stmt in statements {
-		let res = eval_statement(&stmt, env)?;
+		let res = eval_statement(stmt, env)?;
 
 		if !matches!(res, StmtResult::Noop) {
 			return Ok(res);

@@ -31,11 +31,11 @@ pub struct ResolverEnvironment(
 // I'll always supply Nil here
 impl EnvironmentWrapper<InterpreterValue> for ResolverEnvironment {
 	fn new() -> Self {
-		ResolverEnvironment(Rc::new(RefCell::new(EnvironmentBase::new(None))))
+		Self(Rc::new(RefCell::new(EnvironmentBase::new(None))))
 	}
 
 	fn fork(&self) -> Self {
-		ResolverEnvironment(Rc::new(RefCell::new(EnvironmentBase::new(Some(
+		Self(Rc::new(RefCell::new(EnvironmentBase::new(Some(
 			self.clone(),
 		)))))
 	}

@@ -61,10 +61,10 @@ pub fn repl() -> Result<(), io::Error> {
 // bool indicates if any error(s) occurred
 fn run(source: &str) -> bool {
 	// Scanning
-	let (tokens, errors) = scanner::scan(&source);
+	let (tokens, errors) = scanner::scan(source);
 
 	if !errors.is_empty() {
-		errors::report(&source, "Scan", &errors);
+		errors::report(source, "Scan", &errors);
 
 		return true;
 	}
@@ -73,20 +73,20 @@ fn run(source: &str) -> bool {
 	let (statements, errors) = parser::parse(tokens);
 
 	if !errors.is_empty() {
-		errors::report(&source, "Parse", &errors);
+		errors::report(source, "Parse", &errors);
 
 		return true;
 	}
 
 	// Resolving
 	if let Err(error) = resolver::resolve(&statements) {
-		errors::report(&source, "Resolve", &[error]);
+		errors::report(source, "Resolve", &[error]);
 
 		true
 
 	// Interpreting 😇
 	} else if let Err(error) = interpreter::interpret(&statements) {
-		errors::report(&source, "Runtime", &[error]);
+		errors::report(source, "Runtime", &[error]);
 
 		true
 	} else {

@@ -70,7 +70,7 @@ where
 		.initializer
 		.as_ref()
 		.map_or(Ok(InterpreterValue::Nil), |initializer| {
-			expr_evaluator(&initializer, env)
+			expr_evaluator(initializer, env)
 		})?;
 
 	env.declare(

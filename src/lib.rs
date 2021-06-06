@@ -1,10 +1,5 @@
 #![feature(option_result_unwrap_unchecked)]
-#![warn(
-	clippy::all,
-	clippy::pedantic,
-	// clippy::nursery,
-	// clippy::cargo
-)]
+#![warn(clippy::all, clippy::pedantic, clippy::nursery)]
 
 mod ast;
 mod env;

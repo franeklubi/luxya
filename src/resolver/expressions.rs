@@ -203,7 +203,7 @@ pub fn object_expression(
 	env: &ResolverEnvironment,
 ) -> Result<InterpreterValue, RuntimeError> {
 	for value in v.properties.iter().map(|p| &p.value) {
-		resolve::expression(&value, env)?;
+		resolve::expression(value, env)?;
 	}
 
 	Ok(InterpreterValue::Nil)

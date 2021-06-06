@@ -155,7 +155,7 @@ fn native_push(
 	_env: &InterpreterEnvironment,
 	args: &[InterpreterValue],
 ) -> Result<InterpreterValue, RuntimeError> {
-	let mut l_borrow = unwrap_list(&args[0], &keyword, 0, None)?;
+	let mut l_borrow = unwrap_list(&args[0], keyword, 0, None)?;
 
 	l_borrow.push(args[1].clone());
 
