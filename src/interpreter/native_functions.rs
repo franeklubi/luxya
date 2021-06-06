@@ -1,5 +1,18 @@
-use super::{env::InterpreterEnvironment, helpers::unwrap_list, types::*};
-use crate::{env::*, token::*, try_exact_convert};
+use super::{
+	env::InterpreterEnvironment,
+	helpers::unwrap_list,
+	types::{
+		InterpreterFunction,
+		InterpreterValue,
+		NativeFunctionSignature,
+		RuntimeError,
+	},
+};
+use crate::{
+	env::{DeclaredValue, EnvironmentWrapper},
+	token::Token,
+	try_exact_convert,
+};
 
 use std::{
 	cell::RefCell,
@@ -400,12 +413,12 @@ pub fn declare(env: &InterpreterEnvironment) {
 			FunctionDefinition {
 				name: NATIVE_FUNCTION_NAMES[0],
 				arity: 1,
-				fun: |_k, _e, args| Ok(native_str(_k, _e, args)),
+				fun: |keyword, env, args| Ok(native_str(keyword, env, args)),
 			},
 			FunctionDefinition {
 				name: NATIVE_FUNCTION_NAMES[1],
 				arity: 1,
-				fun: |_k, _e, args| Ok(native_typeof(_k, _e, args)),
+				fun: |keyword, env, args| Ok(native_typeof(keyword, env, args)),
 			},
 			FunctionDefinition {
 				name: NATIVE_FUNCTION_NAMES[2],

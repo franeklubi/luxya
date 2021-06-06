@@ -1,8 +1,12 @@
-use super::{env::*, interpret::eval_expression, types::*};
+use super::{
+	env::InterpreterEnvironment,
+	interpret::eval_expression,
+	types::{InterpreterFunction, InterpreterValue, RuntimeError, StmtResult},
+};
 use crate::{
 	ast::expr::{FunctionValue, GetAccessor},
-	env::*,
-	token::*,
+	env::{DeclaredValue, EnvironmentWrapper},
+	token::{Token, TokenType},
 };
 
 use std::{cell::RefMut, rc::Rc};
@@ -51,7 +55,7 @@ pub fn guard_function(
 	}
 }
 
-#[inline(always)]
+#[inline]
 pub fn confirm_arity(
 	target: usize,
 	value: usize,
@@ -74,7 +78,7 @@ pub fn confirm_arity(
 	}
 }
 
-#[inline(always)]
+#[inline]
 pub fn map_arguments(
 	parameters: &[Token],
 	arguments: &[InterpreterValue],
@@ -93,7 +97,7 @@ pub fn map_arguments(
 	})
 }
 
-#[inline(always)]
+#[inline]
 pub fn construct_lox_defined_function(
 	fv: &FunctionValue,
 	env: &InterpreterEnvironment,
@@ -134,7 +138,7 @@ pub fn bind_function(
 	}
 }
 
-#[inline(always)]
+#[inline]
 pub fn unwrap_list<'a>(
 	value: &'a InterpreterValue,
 	blame: &Token,

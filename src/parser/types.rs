@@ -1,4 +1,8 @@
-use crate::{ast::expr::*, runner::DescribableError, token::*};
+use crate::{
+	ast::expr::Expr,
+	runner::DescribableError,
+	token::{Location, Token},
+};
 
 use std::{iter, rc::Rc, vec};
 
@@ -11,14 +15,13 @@ pub struct ParseError {
 
 impl DescribableError for ParseError {
 	fn location(&self) -> Location {
-		if let Some(token) = &self.token {
-			token.location
-		} else {
+		self.token.as_ref().map_or(
 			Location {
 				byte_offset: usize::MAX,
 				byte_length: 1,
-			}
-		}
+			},
+			|token| token.location,
+		)
 	}
 
 	fn description(&self) -> &str {

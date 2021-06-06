@@ -1,7 +1,28 @@
-use super::{env::*, expressions::*, statements::*};
+use super::{
+	env::ResolverEnvironment,
+	expressions::{
+		assignment_expression,
+		binary_expression,
+		call_expression,
+		function_expression,
+		get_expression,
+		identifier_expression,
+		object_expression,
+		set_expression,
+		super_expression,
+		this_expression,
+	},
+	statements::{
+		class_statement,
+		declaration_statement,
+		for_statement,
+		if_statement,
+		print_statement,
+	},
+};
 use crate::{
-	ast::{expr::*, stmt::*},
-	env::*,
+	ast::{expr::Expr, stmt::Stmt},
+	env::EnvironmentWrapper,
 	interpreter::{
 		native_functions::NATIVE_FUNCTION_NAMES,
 		statements as interpreter_stmts,
@@ -18,9 +39,9 @@ pub fn resolve(stmts: &[Stmt]) -> Result<(), RuntimeError> {
 	{
 		let scope_map = unwrap_scope_mut!(scope);
 
-		NATIVE_FUNCTION_NAMES.iter().for_each(|k| {
-			scope_map.insert(k.to_string(), true);
-		});
+		for k in &NATIVE_FUNCTION_NAMES {
+			scope_map.insert((*k).to_string(), true);
+		}
 	}
 
 	match statements(stmts, &scope)? {

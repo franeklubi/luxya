@@ -1,13 +1,37 @@
 use super::{
-	env::*,
-	expressions::*,
+	env::InterpreterEnvironment,
+	expressions::{
+		assignment_expression,
+		binary_experssion,
+		call_expression,
+		function_expression,
+		get_expression,
+		identifier_expression,
+		literal_expression,
+		object_expression,
+		set_expression,
+		super_expression,
+		this_expression,
+		unary_expression,
+	},
 	native_functions,
-	statements::*,
-	types::*,
+	statements::{
+		block_statement,
+		break_statement,
+		class_statement,
+		continue_statement,
+		declaration_statement,
+		expression_statement,
+		for_statement,
+		if_statement,
+		print_statement,
+		return_statement,
+	},
+	types::{InterpreterValue, RuntimeError, StmtResult},
 };
 use crate::{
-	ast::{expr::*, stmt::*},
-	env::*,
+	ast::{expr::Expr, stmt::Stmt},
+	env::EnvironmentWrapper,
 };
 
 

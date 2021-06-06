@@ -1,7 +1,10 @@
-use super::{env::*, resolve};
+use super::{env::ResolverEnvironment, resolve};
 use crate::{
-	ast::{expr::*, stmt::*},
-	env::*,
+	ast::{
+		expr::Expr,
+		stmt::{ClassValue, DeclarationValue, ForValue, IfValue, PrintValue},
+	},
+	env::{DeclaredValue, EnvironmentWrapper},
 	interpreter::{
 		helpers::assume_identifier,
 		types::{InterpreterValue, RuntimeError, StmtResult},
@@ -9,7 +12,7 @@ use crate::{
 };
 
 
-#[inline(always)]
+#[inline]
 pub fn print_statement(
 	v: &PrintValue,
 	env: &ResolverEnvironment,

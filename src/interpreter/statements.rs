@@ -1,18 +1,33 @@
 use super::{
 	env::InterpreterEnvironment,
-	helpers::*,
+	helpers::{assume_identifier, construct_lox_defined_function},
 	interpret::eval_expression,
-	types::*,
+	types::{InterpreterValue, RuntimeError, StmtResult},
 };
 use crate::{
-	ast::{expr::*, stmt::*},
-	env::*,
+	ast::{
+		expr::Expr,
+		stmt::{
+			BlockValue,
+			BreakValue,
+			ClassValue,
+			ContinueValue,
+			DeclarationValue,
+			ExpressionValue,
+			ForValue,
+			IfValue,
+			PrintValue,
+			ReturnValue,
+			Stmt,
+		},
+	},
+	env::{DeclaredValue, EnvironmentWrapper},
 };
 
 use std::{collections::HashMap, rc::Rc};
 
 
-#[inline(always)]
+#[inline]
 pub fn expression_statement<E, T>(
 	expr_evaluator: fn(&Expr, &E) -> Result<T, RuntimeError>,
 	v: &ExpressionValue,
@@ -26,7 +41,7 @@ where
 	Ok(StmtResult::Noop)
 }
 
-#[inline(always)]
+#[inline]
 pub fn print_statement<E, T>(
 	expr_evaluator: fn(&Expr, &E) -> Result<T, RuntimeError>,
 	v: &PrintValue,
@@ -69,7 +84,7 @@ where
 	Ok(StmtResult::Noop)
 }
 
-#[inline(always)]
+#[inline]
 pub fn block_statement<E, T>(
 	stmts_evaluator: fn(&[Stmt], &E) -> Result<StmtResult<T>, RuntimeError>,
 	v: &BlockValue,
@@ -83,7 +98,7 @@ where
 	stmts_evaluator(&v.statements, &new_scope)
 }
 
-#[inline(always)]
+#[inline]
 pub fn if_statement<E>(
 	expr_evaluator: fn(&Expr, &E) -> Result<InterpreterValue, RuntimeError>,
 	stmt_evaluator: fn(
@@ -97,11 +112,9 @@ where
 	E: EnvironmentWrapper<InterpreterValue>,
 {
 	if expr_evaluator(&v.condition, env)? == InterpreterValue::True {
-		if let Some(then) = &v.then {
-			stmt_evaluator(then, env)
-		} else {
-			Ok(StmtResult::Noop)
-		}
+		v.then
+			.as_ref()
+			.map_or(Ok(StmtResult::Noop), |then| stmt_evaluator(then, env))
 	} else if let Some(otherwise) = &v.otherwise {
 		stmt_evaluator(otherwise, env)
 	} else {
@@ -171,7 +184,7 @@ where
 	Ok(StmtResult::Noop)
 }
 
-#[inline(always)]
+#[inline]
 pub fn return_statement<E>(
 	expr_evaluator: fn(&Expr, &E) -> Result<InterpreterValue, RuntimeError>,
 	v: &ReturnValue,
@@ -189,14 +202,14 @@ where
 	})
 }
 
-#[inline(always)]
+#[inline]
 pub fn break_statement<T>(
 	v: &BreakValue,
 ) -> Result<StmtResult<T>, RuntimeError> {
 	Ok(StmtResult::Break(v.keyword.clone()))
 }
 
-#[inline(always)]
+#[inline]
 pub fn continue_statement<T>(
 	v: &ContinueValue,
 ) -> Result<StmtResult<T>, RuntimeError> {

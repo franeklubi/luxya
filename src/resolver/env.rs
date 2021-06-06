@@ -1,7 +1,7 @@
 use super::helpers::assume_resolvable_expr;
 use crate::{
 	ast::expr::Expr,
-	env::*,
+	env::{DeclaredValue, EnvironmentBase, EnvironmentWrapper},
 	interpreter::{
 		helpers::assume_identifier,
 		types::{InterpreterValue, RuntimeError},

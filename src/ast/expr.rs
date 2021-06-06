@@ -1,4 +1,4 @@
-use crate::{ast::stmt::*, parser::types::Property, token::Token};
+use crate::{ast::stmt::Stmt, parser::types::Property, token::Token};
 use std::{cell::Cell, rc::Rc};
 
 #[derive(Clone)]

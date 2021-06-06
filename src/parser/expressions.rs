@@ -1,12 +1,35 @@
-use super::{statements::*, types::*};
+use super::{
+	statements::block_statement,
+	types::{ParseError, ParserIter, Property},
+};
 use crate::{
-	ast::{expr::*, stmt::*},
+	ast::{
+		expr::{
+			AssignmentValue,
+			BinaryValue,
+			CallValue,
+			Expr,
+			FunctionValue,
+			GetAccessor,
+			GetValue,
+			GroupingValue,
+			IdentifierValue,
+			LiteralValue,
+			ObjectValue,
+			SetValue,
+			SuperAccessor,
+			SuperValue,
+			ThisValue,
+			UnaryValue,
+		},
+		stmt::Stmt,
+	},
 	build_binary_expr,
 	expect,
 	expect_one,
 	match_then_consume,
 	peek_matches,
-	token::*,
+	token::{Token, TokenType},
 };
 
 use std::{cell::Cell, rc::Rc};
@@ -232,33 +255,31 @@ fn finish_sub(tokens: ParserIter, getee: Expr) -> Result<Expr, ParseError> {
 	let peek = tokens.peek();
 	let peek_type = peek.as_ref().map(|p| p.token_type.clone());
 
-	let accessor = match peek_type {
-		Some(TokenType::Number(n)) => {
-			// unwrap_unchecked because we just matched peek 😇
-			//
-			// Consuming the next token here, because I want to advance the
-			// iterator
-			let blame = unsafe { tokens.next().unwrap_unchecked() };
+	let accessor = if let Some(TokenType::Number(n)) = peek_type {
+		// unwrap_unchecked because we just matched peek 😇
+		//
+		// Consuming the next token here, because I want to advance the
+		// iterator
+		let blame = unsafe { tokens.next().unwrap_unchecked() };
 
-			Ok(Expr::Get(GetValue {
-				getee: Box::new(getee),
-				key: GetAccessor::SubscriptionNumber(n),
-				blame,
-			}))
-		}
-		_ => {
-			// unwrapping what we already matched
-			let blame = unsafe { peek.unwrap_unchecked().clone() };
+		Expr::Get(GetValue {
+			getee: Box::new(getee),
+			key: GetAccessor::SubscriptionNumber(n),
+			blame,
+		})
+	} else {
+		// unwrapping what we already matched
+		let blame = unsafe { peek.unwrap_unchecked().clone() };
 
-			let eval = expression(tokens)?;
+		let eval = expression(tokens)?;
 
-			Ok(Expr::Get(GetValue {
-				getee: Box::new(getee),
-				key: GetAccessor::SubscriptionEval(Box::new(eval)),
-				blame,
-			}))
-		}
-	}?;
+		Expr::Get(GetValue {
+			getee: Box::new(getee),
+			key: GetAccessor::SubscriptionEval(Box::new(eval)),
+			blame,
+		})
+	};
+
 
 	expect_one!(tokens, TokenType::RightSquareBracket)?;
 
@@ -328,120 +349,128 @@ fn primary(tokens: ParserIter) -> Result<Expr, ParseError> {
 			env_distance: Cell::new(0),
 		})),
 
-		// Super
-		TokenType::Super => {
-			let dummy_expr = Expr::Literal(LiteralValue::Nil);
-
-			let accessor = match tokens.next().map(|next| next.token_type) {
-				Some(TokenType::LeftParen) => {
-					let call_expr = finish_call(tokens, dummy_expr)?;
-
-					let arguments = if let Expr::Call(cv) = call_expr {
-						cv.arguments
-					} else {
-						unreachable!("Call is not a call? Weird 😳")
-					};
-
-					SuperAccessor::Call(arguments)
-				}
-				Some(TokenType::Dot) => {
-					let name = expect!(
-						tokens,
-						TokenType::Identifier(_),
-						"Expected a superclass method name",
-					)?;
-
-					SuperAccessor::Method(name)
-				}
-				_ => {
-					return Err(ParseError {
-						token: Some(token),
-						message: "Expected `.` or `(...args)` (constructor \
-						          call) after `super`"
-							.into(),
-					})
-				}
-			};
-
-			Ok(Expr::Super(SuperValue {
-				blame: token,
-				accessor,
-				env_distance: Cell::new(0),
-			}))
-		}
-
-		// Block
-		TokenType::LeftSquareBracket => {
-			let mut values = Vec::new();
-
-			while !peek_matches!(tokens, TokenType::RightSquareBracket) {
-				values.push(expression(tokens)?);
-
-				if match_then_consume!(tokens, TokenType::Comma).is_none() {
-					break;
-				}
-			}
-
-			expect_one!(tokens, TokenType::RightSquareBracket)?;
-
-			Ok(Expr::Literal(LiteralValue::List(Rc::new(values))))
-		}
+		// Lists
+		TokenType::LeftSquareBracket => parse_list(tokens),
 
 		// Objects
-		TokenType::LeftBrace => {
-			let mut properties: Vec<Property> = Vec::new();
+		TokenType::LeftBrace => parse_object(tokens, token),
 
-			while !peek_matches!(tokens, TokenType::RightBrace) {
-				let key_token = expect!(
-					tokens,
-					TokenType::Identifier(_) | TokenType::String(_),
-					"Expected property name",
-				)?;
-
-				let key = match &key_token.token_type {
-					TokenType::Identifier(s) | TokenType::String(s) => s,
-					_ => unreachable!("Hi!! Welcome to my kitchen"),
-				};
-
-				let value = if match_then_consume!(tokens, TokenType::Colon)
-					.is_some()
-				{
-					expression(tokens)?
-				} else if let TokenType::Identifier(_) = key_token.token_type {
-					Expr::Identifier(IdentifierValue {
-						name: key_token.clone(),
-						env_distance: Default::default(),
-					})
-				} else {
-					return Err(ParseError {
-						token: Some(key_token),
-						message: "Cannot use short property declaration with \
-						          string"
-							.into(),
-					});
-				};
-
-				properties.push(Property {
-					key: key.clone(),
-					value,
-				});
-
-				if match_then_consume!(tokens, TokenType::Comma).is_none() {
-					break;
-				}
-			}
-
-			expect_one!(tokens, TokenType::RightBrace)?;
-
-			Ok(Expr::Object(ObjectValue {
-				blame: token,
-				properties,
-			}))
-		}
+		// Super
+		TokenType::Super => parse_super(tokens, token),
 
 		_ => Err(ParseError {
 			token: Some(token),
 			message: "Expected expression".into(),
 		}),
 	}
+}
+
+// Singular-primary parsing functions down there 👇
+
+pub fn parse_object(
+	tokens: ParserIter,
+	blame: Token,
+) -> Result<Expr, ParseError> {
+	let mut properties: Vec<Property> = Vec::new();
+
+	while !peek_matches!(tokens, TokenType::RightBrace) {
+		let key_token = expect!(
+			tokens,
+			TokenType::Identifier(_) | TokenType::String(_),
+			"Expected property name",
+		)?;
+
+		let key = match &key_token.token_type {
+			TokenType::Identifier(s) | TokenType::String(s) => s,
+			_ => unreachable!("Hi!! Welcome to my kitchen"),
+		};
+
+		let value = if match_then_consume!(tokens, TokenType::Colon).is_some() {
+			expression(tokens)?
+		} else if let TokenType::Identifier(_) = key_token.token_type {
+			Expr::Identifier(IdentifierValue {
+				name: key_token.clone(),
+				env_distance: Cell::default(),
+			})
+		} else {
+			return Err(ParseError {
+				token: Some(key_token),
+				message: "Cannot use short property declaration with string"
+					.into(),
+			});
+		};
+
+		properties.push(Property {
+			key: key.clone(),
+			value,
+		});
+
+		if match_then_consume!(tokens, TokenType::Comma).is_none() {
+			break;
+		}
+	}
+
+	expect_one!(tokens, TokenType::RightBrace)?;
+
+	Ok(Expr::Object(ObjectValue { blame, properties }))
+}
+
+pub fn parse_super(
+	tokens: ParserIter,
+	blame: Token,
+) -> Result<Expr, ParseError> {
+	let dummy_expr = Expr::Literal(LiteralValue::Nil);
+
+	let accessor = match tokens.next().map(|next| next.token_type) {
+		Some(TokenType::LeftParen) => {
+			let call_expr = finish_call(tokens, dummy_expr)?;
+
+			let arguments = if let Expr::Call(cv) = call_expr {
+				cv.arguments
+			} else {
+				unreachable!("Call is not a call? Weird \u{1f633}")
+			};
+
+			SuperAccessor::Call(arguments)
+		}
+		Some(TokenType::Dot) => {
+			let name = expect!(
+				tokens,
+				TokenType::Identifier(_),
+				"Expected a superclass method name",
+			)?;
+
+			SuperAccessor::Method(name)
+		}
+		_ => {
+			return Err(ParseError {
+				token: Some(blame),
+				message: "Expected `.` or `(...args)` (constructor call) \
+				          after `super`"
+					.into(),
+			})
+		}
+	};
+
+	Ok(Expr::Super(SuperValue {
+		blame,
+		accessor,
+		env_distance: Cell::new(0),
+	}))
+}
+
+pub fn parse_list(tokens: ParserIter) -> Result<Expr, ParseError> {
+	let mut values = Vec::new();
+
+	while !peek_matches!(tokens, TokenType::RightSquareBracket) {
+		values.push(expression(tokens)?);
+
+		if match_then_consume!(tokens, TokenType::Comma).is_none() {
+			break;
+		}
+	}
+
+	expect_one!(tokens, TokenType::RightSquareBracket)?;
+
+	Ok(Expr::Literal(LiteralValue::List(Rc::new(values))))
 }

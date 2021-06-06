@@ -1,33 +1,30 @@
-use super::{helpers::*, types::*};
+use super::{
+	helpers::{consume_while_peek, expect_char, tokenize_identifier},
+	types::{ScanError, ScannerIter},
+};
 use crate::token::{self, Location, TokenType};
 
 
-fn resolve_identifier(identifier: &str) -> TokenType {
-	match identifier {
-		"and" => TokenType::And,
-		"class" => TokenType::Class,
-		"else" => TokenType::Else,
-		"false" => TokenType::False,
-		"for" => TokenType::For,
-		"fun" => TokenType::Fun,
-		"if" => TokenType::If,
-		"nil" => TokenType::Nil,
-		"or" => TokenType::Or,
-		"print" => TokenType::Print,
-		"return" => TokenType::Return,
-		"super" => TokenType::Super,
-		"this" => TokenType::This,
-		"true" => TokenType::True,
-		"let" => TokenType::Let,
-		"const" => TokenType::Const,
-		"break" => TokenType::Break,
-		"continue" => TokenType::Continue,
-		"extends" => TokenType::Extends,
-		_ => TokenType::Identifier(identifier.into()),
+pub fn scan(source: &str) -> (Vec<token::Token>, Vec<ScanError>) {
+	let mut tokens = vec![];
+	let mut errors = vec![];
+
+	let mut chars = source.char_indices().peekable();
+
+	while let Some(_peek) = chars.peek() {
+		// We should be at the beginning of the next lexeme
+		match scan_token(&mut chars, source) {
+			Ok(Some(token)) => tokens.push(token),
+			Ok(None) => break, // iterator is exhausted
+			Err(err) => errors.push(err),
+		}
 	}
+
+	(tokens, errors)
 }
 
-// consumes the next token's chars
+/// Consumes the next token's chars
+#[allow(clippy::too_many_lines)]
 fn scan_token(
 	chars: ScannerIter,
 	source: &str,
@@ -158,7 +155,7 @@ fn scan_token(
 
 				token_len = identifier_end - i;
 
-				resolve_identifier(&source[i..identifier_end])
+				tokenize_identifier(&source[i..identifier_end])
 			}
 			c if c.is_whitespace() => {
 				continue;
@@ -181,22 +178,4 @@ fn scan_token(
 	}
 
 	Ok(None)
-}
-
-pub fn scan(source: &str) -> (Vec<token::Token>, Vec<ScanError>) {
-	let mut tokens = vec![];
-	let mut errors = vec![];
-
-	let mut chars = source.char_indices().peekable();
-
-	while let Some(_peek) = chars.peek() {
-		// We should be at the beginning of the next lexeme
-		match scan_token(&mut chars, source) {
-			Ok(Some(token)) => tokens.push(token),
-			Ok(None) => break, // iterator is exhausted
-			Err(err) => errors.push(err),
-		}
-	}
-
-	(tokens, errors)
 }

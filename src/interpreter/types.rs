@@ -1,5 +1,9 @@
-use super::env::*;
-use crate::{ast::expr::*, runner::DescribableError, token::*};
+use super::env::InterpreterEnvironment;
+use crate::{
+	ast::expr::FunctionValue,
+	runner::DescribableError,
+	token::{Location, Token},
+};
 
 use std::{cell::RefCell, collections::HashMap, fmt, rc::Rc};
 
@@ -49,15 +53,14 @@ pub enum InterpreterValue {
 impl InterpreterValue {
 	pub fn human_type(&self) -> &str {
 		match self {
+			InterpreterValue::True | InterpreterValue::False => "boolean",
 			InterpreterValue::Instance { .. } => "class instance",
 			InterpreterValue::Function { .. } => "function",
 			InterpreterValue::Class { .. } => "class",
 			InterpreterValue::String(_) => "string",
 			InterpreterValue::Number(_) => "number",
-			InterpreterValue::False => "boolean",
 			InterpreterValue::List(_) => "list",
 			InterpreterValue::Char(_) => "char",
-			InterpreterValue::True => "boolean",
 			InterpreterValue::Nil => "nil",
 		}
 	}

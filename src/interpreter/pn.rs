@@ -1,4 +1,4 @@
-use crate::ast::expr::*;
+use crate::ast::expr::{Expr, LiteralValue};
 
 
 #[allow(dead_code)]
@@ -39,10 +39,10 @@ pub fn stringify_tree(expr: &Expr) -> String {
 fn pn_gen(name: &str, exprs: &[&Expr]) -> String {
 	let mut res = format!("({}", name);
 
-	exprs.iter().for_each(|expr| {
+	for expr in exprs.iter() {
 		res += " ";
 		res += &stringify_tree(expr);
-	});
+	}
 
 	res + ")"
 }

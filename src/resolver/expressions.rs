@@ -1,15 +1,29 @@
 use super::{env::ResolverEnvironment, resolve};
 use crate::{
-	ast::expr::*,
-	env::*,
+	ast::expr::{
+		AssignmentValue,
+		BinaryValue,
+		CallValue,
+		Expr,
+		FunctionValue,
+		GetAccessor,
+		GetValue,
+		IdentifierValue,
+		ObjectValue,
+		SetValue,
+		SuperAccessor,
+		SuperValue,
+		ThisValue,
+	},
+	env::{DeclaredValue, EnvironmentWrapper},
 	interpreter::{
-		helpers::*,
+		helpers::{assume_identifier, guard_function},
 		types::{InterpreterValue, RuntimeError},
 	},
 };
 
 
-#[inline(always)]
+#[inline]
 pub fn identifier_expression(
 	expr: &Expr,
 	v: &IdentifierValue,
@@ -89,7 +103,7 @@ pub fn function_expression(
 	}
 }
 
-#[inline(always)]
+#[inline]
 pub fn binary_expression(
 	v: &BinaryValue,
 	env: &ResolverEnvironment,
@@ -113,7 +127,7 @@ pub fn call_expression(
 	Ok(InterpreterValue::Nil)
 }
 
-#[inline(always)]
+#[inline]
 pub fn get_expression(
 	v: &GetValue,
 	env: &ResolverEnvironment,
@@ -147,7 +161,7 @@ pub fn set_expression(
 	Ok(InterpreterValue::Nil)
 }
 
-#[inline(always)]
+#[inline]
 pub fn this_expression(
 	expr: &Expr,
 	v: &ThisValue,
@@ -183,7 +197,7 @@ pub fn super_expression(
 	Ok(InterpreterValue::Nil)
 }
 
-#[inline(always)]
+#[inline]
 pub fn object_expression(
 	v: &ObjectValue,
 	env: &ResolverEnvironment,

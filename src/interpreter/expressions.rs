@@ -1,12 +1,46 @@
-use super::{env::*, helpers::*, interpret::*, types::*};
-use crate::{ast::expr::*, env::*, token::*};
+use super::{
+	env::InterpreterEnvironment,
+	helpers::{
+		assume_identifier,
+		bind_function,
+		confirm_arity,
+		construct_lox_defined_function,
+		extract_subscription_index,
+		guard_function,
+		map_arguments,
+		unwrap_list,
+	},
+	interpret::{eval_expression, eval_statements},
+	types::{InterpreterFunction, InterpreterValue, RuntimeError},
+};
+use crate::{
+	ast::expr::{
+		AssignmentValue,
+		BinaryValue,
+		CallValue,
+		Expr,
+		FunctionValue,
+		GetAccessor,
+		GetValue,
+		IdentifierValue,
+		LiteralValue,
+		ObjectValue,
+		SetValue,
+		SuperAccessor,
+		SuperValue,
+		ThisValue,
+		UnaryValue,
+	},
+	env::{DeclaredValue, EnvironmentWrapper},
+	token::{Location, Token, TokenType},
+};
 
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 
 // inlining because it's used only once, but i wanted to take it
 // out of the context, to make it less cluttery
-#[inline(always)]
+#[inline]
 pub fn literal_expression(
 	v: &LiteralValue,
 	env: &InterpreterEnvironment,
@@ -29,7 +63,7 @@ pub fn literal_expression(
 	}
 }
 
-#[inline(always)]
+#[inline]
 pub fn identifier_expression<E, T>(
 	v: &IdentifierValue,
 	env: &E,
@@ -40,7 +74,7 @@ where
 	Ok(env.read(v.env_distance.get(), &v.name)?.value)
 }
 
-#[inline(always)]
+#[inline]
 pub fn assignment_expression<E, T>(
 	expr_evaluator: fn(&Expr, &E) -> Result<T, RuntimeError>,
 	v: &AssignmentValue,
@@ -56,7 +90,7 @@ where
 	)
 }
 
-#[inline(always)]
+#[inline]
 pub fn call_expression(
 	v: &CallValue,
 	env: &InterpreterEnvironment,
@@ -128,7 +162,7 @@ pub fn execute_call(
 	}
 }
 
-#[inline(always)]
+#[inline]
 pub fn function_expression(
 	v: &FunctionValue,
 	env: &InterpreterEnvironment,
@@ -228,7 +262,7 @@ pub fn binary_experssion(
 					TokenType::LessEqual => Ok((n1 <= n2).into()),
 					TokenType::Modulo => Ok(InterpreterValue::Number(n1 % n2)),
 
-					_ => unreachable!("Scanner did a bad job 😎."),
+					_ => unreachable!("Scanner did a bad job \u{1f60e}."),
 				}
 			}
 			(InterpreterValue::String(s1), InterpreterValue::String(s2)) => {
@@ -273,7 +307,7 @@ fn find_method(
 	{
 		(methods, superclass)
 	} else {
-		unreachable!("Class is not a class? 🤔")
+		unreachable!("Class is not a class? \u{1f914}")
 	};
 
 	if let Some(method) = methods.get(key) {
@@ -297,7 +331,7 @@ fn get_dot(
 ) -> Result<InterpreterValue, RuntimeError> {
 	// auxiliary function used only once down below, that's why inlining is
 	// completely justified 🥺
-	#[inline(always)]
+	#[inline]
 	fn get_property(
 		key: &str,
 		properties: &HashMap<String, InterpreterValue>,
@@ -389,7 +423,7 @@ fn get_subscription(
 	}
 }
 
-#[inline(always)]
+#[inline]
 pub fn get_expression(
 	v: &GetValue,
 	env: &InterpreterEnvironment,
@@ -463,7 +497,7 @@ fn set_subscription(
 	Ok(value)
 }
 
-#[inline(always)]
+#[inline]
 pub fn set_expression(
 	v: &SetValue,
 	env: &InterpreterEnvironment,
@@ -475,7 +509,7 @@ pub fn set_expression(
 	}
 }
 
-#[inline(always)]
+#[inline]
 pub fn this_expression<E, T>(v: &ThisValue, env: &E) -> Result<T, RuntimeError>
 where
 	E: EnvironmentWrapper<T>,
@@ -518,7 +552,9 @@ pub fn super_expression(
 				{
 					constructor
 				} else {
-					unreachable!("Superclass should be a class like come on 🤦")
+					unreachable!(
+						"Superclass should be a class like come on \u{1f926}"
+					)
 				};
 
 			let constructor = constructor.ok_or_else(|| RuntimeError {
