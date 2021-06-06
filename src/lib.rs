@@ -16,3 +16,4 @@ mod scanner;
 mod token;
 
 pub use runner::*;
+pub use runner::{run_repl, run_file};
