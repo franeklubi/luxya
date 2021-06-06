@@ -1,4 +1,4 @@
-use super::{expression::*, helpers::*, parse::*, types::*};
+use super::{expressions::*, helpers::*, parse::*, types::*};
 use crate::{
 	ast::{expr::*, stmt::*},
 	expect,

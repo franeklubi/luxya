@@ -189,13 +189,15 @@ fn finish_call(tokens: ParserIter, calee: Expr) -> Result<Expr, ParseError> {
 }
 
 fn finish_get(tokens: ParserIter, getee: Expr) -> Result<Expr, ParseError> {
-	let consumed = tokens.next();
-	let consumed_token_type = consumed.as_ref().map(|c| c.token_type.clone());
+	let peek = tokens.peek();
+	let peek_token_type = peek.as_ref().map(|c| c.token_type.clone());
 
-	match consumed_token_type {
+	// Consuming the next token in following match arms
+	// (except for the error one), because I want to advance the iterator
+	match peek_token_type {
 		Some(TokenType::Identifier(i)) => {
-			// unwrap_unchecked because we just matched peek 😇
-			let blame = unsafe { consumed.unwrap_unchecked() };
+			// unwrap_unchecked because we just matched the type of peek 😇
+			let blame = unsafe { tokens.next().unwrap_unchecked() };
 
 			Ok(Expr::Get(GetValue {
 				getee: Box::new(getee),
@@ -205,7 +207,7 @@ fn finish_get(tokens: ParserIter, getee: Expr) -> Result<Expr, ParseError> {
 		}
 		Some(TokenType::LeftParen) => {
 			// same here, unwrapping what we already matched
-			let blame = unsafe { tokens.peek().unwrap_unchecked().clone() };
+			let blame = unsafe { tokens.next().unwrap_unchecked() };
 
 			let eval = expression(tokens)?;
 
@@ -218,7 +220,7 @@ fn finish_get(tokens: ParserIter, getee: Expr) -> Result<Expr, ParseError> {
 			}))
 		}
 		_ => Err(ParseError {
-			token: tokens.peek().cloned(),
+			token: peek.cloned(),
 			message: "Expected identifier or a parenthesized expression to \
 			          evaluate"
 				.into(),
@@ -227,11 +229,15 @@ fn finish_get(tokens: ParserIter, getee: Expr) -> Result<Expr, ParseError> {
 }
 
 fn finish_sub(tokens: ParserIter, getee: Expr) -> Result<Expr, ParseError> {
-	let peek_type = tokens.peek().as_ref().map(|p| p.token_type.clone());
+	let peek = tokens.peek();
+	let peek_type = peek.as_ref().map(|p| p.token_type.clone());
 
 	let accessor = match peek_type {
 		Some(TokenType::Number(n)) => {
 			// unwrap_unchecked because we just matched peek 😇
+			//
+			// Consuming the next token here, because I want to advance the
+			// iterator
 			let blame = unsafe { tokens.next().unwrap_unchecked() };
 
 			Ok(Expr::Get(GetValue {
@@ -241,8 +247,8 @@ fn finish_sub(tokens: ParserIter, getee: Expr) -> Result<Expr, ParseError> {
 			}))
 		}
 		_ => {
-			// same here, unwrapping what we already matched
-			let blame = unsafe { tokens.peek().unwrap_unchecked().clone() };
+			// unwrapping what we already matched
+			let blame = unsafe { peek.unwrap_unchecked().clone() };
 
 			let eval = expression(tokens)?;
 

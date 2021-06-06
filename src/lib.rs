@@ -1,4 +1,11 @@
 #![feature(option_result_unwrap_unchecked)]
+// #![warn(
+// 	clippy::all,
+// 	clippy::restriction,
+// 	clippy::pedantic,
+// 	clippy::nursery,
+// 	clippy::cargo,
+// )]
 
 mod ast;
 mod env;
