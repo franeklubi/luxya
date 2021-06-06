@@ -94,7 +94,7 @@ pub fn map_arguments(
 				value: arg.clone(),
 			},
 		);
-	})
+	});
 }
 
 #[inline]

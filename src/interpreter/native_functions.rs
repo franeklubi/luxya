@@ -389,21 +389,21 @@ fn native_read(
 }
 
 fn declarator(env: &InterpreterEnvironment, funs: &[FunctionDefinition]) {
-	funs.iter().for_each(|fd| {
+	for definition in funs {
 		env.declare(
-			fd.name.to_owned(),
+			definition.name.to_owned(),
 			DeclaredValue {
 				mutable: true,
 				value: InterpreterValue::Function {
 					fun: Rc::new(InterpreterFunction::Native {
-						arity: fd.arity,
-						fun: fd.fun,
+						arity: definition.arity,
+						fun: definition.fun,
 					}),
 					enclosing_env: env.clone(),
 				},
 			},
 		);
-	})
+	}
 }
 
 pub fn declare(env: &InterpreterEnvironment) {

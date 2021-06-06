@@ -124,7 +124,7 @@ pub fn execute_call(
 					let fun_env = &enclosing_env.fork();
 
 					if let Some(params) = &fv.params {
-						map_arguments(params, &arguments, fun_env)
+						map_arguments(params, &arguments, fun_env);
 					}
 
 					if let Some(statements) = &fv.body {

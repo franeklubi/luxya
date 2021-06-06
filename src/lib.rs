@@ -1,5 +1,11 @@
 #![feature(option_result_unwrap_unchecked)]
-#![warn(clippy::all, clippy::pedantic, clippy::nursery)]
+#![warn(
+	clippy::all,
+	clippy::pedantic,
+	clippy::nursery,
+	clippy::unnecessary_wraps,
+	clippy::semicolon_if_nothing_returned
+)]
 
 mod ast;
 mod env;

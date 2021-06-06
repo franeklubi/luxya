@@ -47,7 +47,7 @@ pub fn repl() -> Result<(), io::Error> {
 
 		// TODO: merge envs when doing REPL
 		if run(&buffer) {
-			eprintln!("Errors occurred")
+			eprintln!("Errors occurred");
 		}
 	}
 
