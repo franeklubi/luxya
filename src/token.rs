@@ -2,6 +2,7 @@ use std::{fmt, mem, rc::Rc};
 
 
 #[derive(Clone, Debug)]
+#[allow(clippy::module_name_repetitions)]
 pub enum TokenType {
 	// Single-character tokens
 	LeftParen,
@@ -69,7 +70,7 @@ impl TokenType {
 		}
 	}
 
-	pub fn human_type(&self) -> &str {
+	pub const fn human_type(&self) -> &str {
 		match self {
 			TokenType::String(_) => "string",
 			TokenType::Identifier(_) => "identifier",

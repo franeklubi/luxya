@@ -6,7 +6,7 @@ fn main() {
 
 	if args.len() > 1 {
 		for arg in args.iter().skip(1) {
-			match luxya::run_file(&arg) {
+			match luxya::run_file(arg) {
 				Err(luxya::RunError::Io(err)) => {
 					println!("{}", err);
 					process::exit(exitcode::IOERR);
@@ -18,7 +18,7 @@ fn main() {
 				_ => (),
 			}
 		}
-	} else if let Err(err) = luxya::run_prompt() {
+	} else if let Err(err) = luxya::run_repl() {
 		println!("{}", err);
 		process::exit(exitcode::OSERR);
 	}

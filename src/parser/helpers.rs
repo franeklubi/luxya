@@ -1,8 +1,11 @@
-use super::types::*;
-use crate::{expect_one, token::*};
+use super::types::{ParseError, ParserIter};
+use crate::{
+	expect_one,
+	token::{Token, TokenType},
+};
 
 
-#[inline(always)]
+#[inline]
 pub fn expect_semicolon(tokens: ParserIter) -> Result<Token, ParseError> {
 	expect_one!(tokens, TokenType::Semicolon)
 }

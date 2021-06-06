@@ -3,6 +3,17 @@ name = "luxya"
 version = "0.1.0"
 authors = ["franek <franeklubi@gmail.com>"]
 edition = "2018"
+description = "Programming language with a tree-walking interpreter"
+license-file = "LICENSE"
+repository = "https://github.com/franeklubi/luxya/"
+keywords = [
+	"programming-language",
+	"interpreter",
+	"programming-languages",
+	"interpreted-programming-language",
+	"tree-walk-interpreter",
+]
+categories = ["compilers"]
 
 [dependencies]
 exitcode = "1.1.2"

@@ -1,7 +1,10 @@
-use super::{resolve, resolver_env::*};
+use super::{env::ResolverEnvironment, resolve};
 use crate::{
-	ast::{expr::*, stmt::*},
-	env::*,
+	ast::{
+		expr::Expr,
+		stmt::{ClassValue, DeclarationValue, ForValue, IfValue, PrintValue},
+	},
+	env::{DeclaredValue, EnvironmentWrapper},
 	interpreter::{
 		helpers::assume_identifier,
 		types::{InterpreterValue, RuntimeError, StmtResult},
@@ -9,12 +12,12 @@ use crate::{
 };
 
 
-#[inline(always)]
+#[inline]
 pub fn print_statement(
 	v: &PrintValue,
 	env: &ResolverEnvironment,
 ) -> Result<StmtResult<InterpreterValue>, RuntimeError> {
-	resolve::resolve_expression(&v.expression, env)?;
+	resolve::expression(&v.expression, env)?;
 
 	Ok(StmtResult::Noop)
 }
@@ -24,7 +27,7 @@ pub fn declaration_statement(
 	env: &ResolverEnvironment,
 ) -> Result<StmtResult<InterpreterValue>, RuntimeError> {
 	if let Some(i) = &v.initializer {
-		resolve::resolve_expression(i, env)?;
+		resolve::expression(i, env)?;
 	}
 
 	env.declare(
@@ -42,14 +45,14 @@ pub fn if_statement(
 	v: &IfValue,
 	env: &ResolverEnvironment,
 ) -> Result<StmtResult<InterpreterValue>, RuntimeError> {
-	resolve::resolve_expression(&v.condition, env)?;
+	resolve::expression(&v.condition, env)?;
 
 	if let Some(then) = &v.then {
-		resolve::resolve_statement(then, env)?;
+		resolve::statement(then, env)?;
 	}
 
 	if let Some(otherwise) = &v.otherwise {
-		resolve::resolve_statement(otherwise, env)?;
+		resolve::statement(otherwise, env)?;
 	}
 
 	Ok(StmtResult::Noop)
@@ -59,14 +62,14 @@ pub fn for_statement(
 	v: &ForValue,
 	env: &ResolverEnvironment,
 ) -> Result<StmtResult<InterpreterValue>, RuntimeError> {
-	resolve::resolve_statement(&v.body, env)?;
+	resolve::statement(&v.body, env)?;
 
 	if let Some(condition) = &v.condition {
-		resolve::resolve_expression(condition, env)?;
+		resolve::expression(condition, env)?;
 	}
 
 	if let Some(closer) = &v.closer {
-		resolve::resolve_statement(closer, env)?;
+		resolve::statement(closer, env)?;
 	}
 
 	Ok(StmtResult::Noop)
@@ -102,7 +105,7 @@ pub fn class_statement(
 			});
 		}
 
-		resolve::resolve_expression(expr, env)?;
+		resolve::expression(expr, env)?;
 
 		let superclass_env = env.fork();
 
@@ -130,8 +133,8 @@ pub fn class_statement(
 	);
 
 	for method in &v.methods {
-		// resolve_expression wires the method to function_expression
-		resolve::resolve_expression(method, &class_env)?;
+		// expression wires the method to function_expression
+		resolve::expression(method, &class_env)?;
 	}
 
 	Ok(StmtResult::Noop)

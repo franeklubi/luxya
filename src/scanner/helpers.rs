@@ -1,4 +1,5 @@
 use super::types::{ConsumptionResult, ScanError, ScannerIter};
+use crate::token::TokenType;
 
 
 /// will consume chars while peek matches the predicate
@@ -7,7 +8,7 @@ use super::types::{ConsumptionResult, ScanError, ScannerIter};
 /// the next char would be
 /// (regardless of it being there or the iterator ending)
 ///
-/// sets hit_eof when the scanning has reached eof
+/// sets `hit_eof` when the scanning has reached eof
 pub fn consume_while_peek(
 	chars: ScannerIter,
 	predicate: impl Fn(&char) -> bool,
@@ -55,5 +56,30 @@ pub fn expect_char(
 			message: format!("Expected char after `{}`", after),
 			offset,
 		})
+	}
+}
+
+pub fn tokenize_identifier(identifier: &str) -> TokenType {
+	match identifier {
+		"and" => TokenType::And,
+		"class" => TokenType::Class,
+		"else" => TokenType::Else,
+		"false" => TokenType::False,
+		"for" => TokenType::For,
+		"fun" => TokenType::Fun,
+		"if" => TokenType::If,
+		"nil" => TokenType::Nil,
+		"or" => TokenType::Or,
+		"print" => TokenType::Print,
+		"return" => TokenType::Return,
+		"super" => TokenType::Super,
+		"this" => TokenType::This,
+		"true" => TokenType::True,
+		"let" => TokenType::Let,
+		"const" => TokenType::Const,
+		"break" => TokenType::Break,
+		"continue" => TokenType::Continue,
+		"extends" => TokenType::Extends,
+		_ => TokenType::Identifier(identifier.into()),
 	}
 }

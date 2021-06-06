@@ -1,9 +1,18 @@
 use super::{
+	env::InterpreterEnvironment,
 	helpers::unwrap_list,
-	interpreter_env::InterpreterEnvironment,
-	types::*,
+	types::{
+		InterpreterFunction,
+		InterpreterValue,
+		NativeFunctionSignature,
+		RuntimeError,
+	},
 };
-use crate::{env::*, token::*};
+use crate::{
+	env::{DeclaredValue, EnvironmentWrapper},
+	token::Token,
+	try_exact_convert,
+};
 
 use std::{
 	cell::RefCell,
@@ -87,13 +96,24 @@ fn native_len(
 	args: &[InterpreterValue],
 ) -> Result<InterpreterValue, RuntimeError> {
 	match &args[0] {
-		InterpreterValue::String(s) => {
-			Ok(InterpreterValue::Number(s.len() as f64))
-		}
+		InterpreterValue::String(s) => try_exact_convert!(s.len(), usize, f64)
+			.map_err(|_| RuntimeError {
+				message: format!("Cannot conver from {}_usize to f64", s.len(),),
+				token: keyword.clone(),
+			})
+			.map(InterpreterValue::Number),
 		InterpreterValue::List(l) => {
 			let l_borrow = l.borrow();
 
-			Ok(InterpreterValue::Number(l_borrow.len() as f64))
+			try_exact_convert!(l_borrow.len(), usize, f64)
+				.map_err(|_| RuntimeError {
+					message: format!(
+						"Cannot conver from {}_usize to f64",
+						l_borrow.len(),
+					),
+					token: keyword.clone(),
+				})
+				.map(InterpreterValue::Number)
 		}
 		_ => Err(RuntimeError {
 			message: format!("Can't get length of {}", &args[0].human_type()),
@@ -135,7 +155,7 @@ fn native_push(
 	_env: &InterpreterEnvironment,
 	args: &[InterpreterValue],
 ) -> Result<InterpreterValue, RuntimeError> {
-	let mut l_borrow = unwrap_list(&args[0], &keyword, 0, None)?;
+	let mut l_borrow = unwrap_list(&args[0], keyword, 0, None)?;
 
 	l_borrow.push(args[1].clone());
 
@@ -369,36 +389,36 @@ fn native_read(
 }
 
 fn declarator(env: &InterpreterEnvironment, funs: &[FunctionDefinition]) {
-	funs.iter().for_each(|fd| {
+	for definition in funs {
 		env.declare(
-			fd.name.to_owned(),
+			definition.name.to_owned(),
 			DeclaredValue {
 				mutable: true,
 				value: InterpreterValue::Function {
 					fun: Rc::new(InterpreterFunction::Native {
-						arity: fd.arity,
-						fun: fd.fun,
+						arity: definition.arity,
+						fun: definition.fun,
 					}),
 					enclosing_env: env.clone(),
 				},
 			},
 		);
-	})
+	}
 }
 
-pub fn declare_native_functions(env: &InterpreterEnvironment) {
+pub fn declare(env: &InterpreterEnvironment) {
 	declarator(
 		env,
 		&[
 			FunctionDefinition {
 				name: NATIVE_FUNCTION_NAMES[0],
 				arity: 1,
-				fun: |_k, _e, args| Ok(native_str(_k, _e, args)),
+				fun: |keyword, env, args| Ok(native_str(keyword, env, args)),
 			},
 			FunctionDefinition {
 				name: NATIVE_FUNCTION_NAMES[1],
 				arity: 1,
-				fun: |_k, _e, args| Ok(native_typeof(_k, _e, args)),
+				fun: |keyword, env, args| Ok(native_typeof(keyword, env, args)),
 			},
 			FunctionDefinition {
 				name: NATIVE_FUNCTION_NAMES[2],

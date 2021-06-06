@@ -1,7 +1,7 @@
 use super::helpers::assume_resolvable_expr;
 use crate::{
 	ast::expr::Expr,
-	env::*,
+	env::{DeclaredValue, EnvironmentBase, EnvironmentWrapper},
 	interpreter::{
 		helpers::assume_identifier,
 		types::{InterpreterValue, RuntimeError},
@@ -31,11 +31,11 @@ pub struct ResolverEnvironment(
 // I'll always supply Nil here
 impl EnvironmentWrapper<InterpreterValue> for ResolverEnvironment {
 	fn new() -> Self {
-		ResolverEnvironment(Rc::new(RefCell::new(EnvironmentBase::new(None))))
+		Self(Rc::new(RefCell::new(EnvironmentBase::new(None))))
 	}
 
 	fn fork(&self) -> Self {
-		ResolverEnvironment(Rc::new(RefCell::new(EnvironmentBase::new(Some(
+		Self(Rc::new(RefCell::new(EnvironmentBase::new(Some(
 			self.clone(),
 		)))))
 	}
@@ -93,15 +93,15 @@ impl EnvironmentWrapper<InterpreterValue> for ResolverEnvironment {
 	) -> Result<InterpreterValue, RuntimeError> {
 		let entry = self.read(steps, identifier)?;
 
-		if !entry.mutable {
+		if entry.mutable {
+			Ok(InterpreterValue::Nil)
+		} else {
 			let name = assume_identifier(identifier);
 
 			Err(RuntimeError {
 				message: format!("Cannot reassign a const `{}`", name),
 				token: identifier.clone(),
 			})
-		} else {
-			Ok(InterpreterValue::Nil)
 		}
 	}
 }

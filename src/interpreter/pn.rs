@@ -1,8 +1,8 @@
-use crate::ast::expr::*;
+use crate::ast::expr::{Expr, LiteralValue};
 
 
 #[allow(dead_code)]
-pub fn pn_stringify_tree(expr: &Expr) -> String {
+pub fn stringify_tree(expr: &Expr) -> String {
 	match expr {
 		Expr::Binary(v) => {
 			pn_gen(&v.operator.token_type.to_string(), &[&v.left, &v.right])
@@ -23,7 +23,7 @@ pub fn pn_stringify_tree(expr: &Expr) -> String {
 		Expr::Identifier(v) => v.name.token_type.to_string(),
 		Expr::Assignment(v) => pn_gen(&format!("= {}", v.name), &[&v.value]),
 		Expr::Call(v) => pn_gen(
-			&format!("call {}", pn_stringify_tree(&v.calee)),
+			&format!("call {}", stringify_tree(&v.calee)),
 			v.arguments.iter().collect::<Vec<&Expr>>().as_slice(),
 		),
 		// TODO: implement these XD
@@ -39,10 +39,10 @@ pub fn pn_stringify_tree(expr: &Expr) -> String {
 fn pn_gen(name: &str, exprs: &[&Expr]) -> String {
 	let mut res = format!("({}", name);
 
-	exprs.iter().for_each(|expr| {
+	for expr in exprs.iter() {
 		res += " ";
-		res += &pn_stringify_tree(expr);
-	});
+		res += &stringify_tree(expr);
+	}
 
 	res + ")"
 }

@@ -1,15 +1,29 @@
-use super::{resolve, resolver_env::ResolverEnvironment};
+use super::{env::ResolverEnvironment, resolve};
 use crate::{
-	ast::expr::*,
-	env::*,
+	ast::expr::{
+		AssignmentValue,
+		BinaryValue,
+		CallValue,
+		Expr,
+		FunctionValue,
+		GetAccessor,
+		GetValue,
+		IdentifierValue,
+		ObjectValue,
+		SetValue,
+		SuperAccessor,
+		SuperValue,
+		ThisValue,
+	},
+	env::{DeclaredValue, EnvironmentWrapper},
 	interpreter::{
-		helpers::*,
+		helpers::{assume_identifier, guard_function},
 		types::{InterpreterValue, RuntimeError},
 	},
 };
 
 
-#[inline(always)]
+#[inline]
 pub fn identifier_expression(
 	expr: &Expr,
 	v: &IdentifierValue,
@@ -26,7 +40,7 @@ pub fn assignment_expression(
 	env: &ResolverEnvironment,
 ) -> Result<InterpreterValue, RuntimeError> {
 	// that takes care on the variables on the right
-	resolve::resolve_expression(&v.value, env)?;
+	resolve::expression(&v.value, env)?;
 
 	// and this one manages the ones on the left 😎
 	env.resolve_nest_level(expr, &v.name)?;
@@ -82,20 +96,20 @@ pub fn function_expression(
 
 	// evaluating function body
 	if let Some(statements) = &v.body {
-		let e = resolve::resolve_statements(statements, &new_scope)?;
+		let e = resolve::statements(statements, &new_scope)?;
 		Ok(guard_function(e)?)
 	} else {
 		Ok(InterpreterValue::Nil)
 	}
 }
 
-#[inline(always)]
+#[inline]
 pub fn binary_expression(
 	v: &BinaryValue,
 	env: &ResolverEnvironment,
 ) -> Result<InterpreterValue, RuntimeError> {
-	resolve::resolve_expression(&v.left, env)?;
-	resolve::resolve_expression(&v.right, env)?;
+	resolve::expression(&v.left, env)?;
+	resolve::expression(&v.right, env)?;
 
 	Ok(InterpreterValue::Nil)
 }
@@ -104,28 +118,28 @@ pub fn call_expression(
 	v: &CallValue,
 	env: &ResolverEnvironment,
 ) -> Result<InterpreterValue, RuntimeError> {
-	resolve::resolve_expression(&v.calee, env)?;
+	resolve::expression(&v.calee, env)?;
 
 	for arg in &v.arguments {
-		resolve::resolve_expression(arg, env)?;
+		resolve::expression(arg, env)?;
 	}
 
 	Ok(InterpreterValue::Nil)
 }
 
-#[inline(always)]
+#[inline]
 pub fn get_expression(
 	v: &GetValue,
 	env: &ResolverEnvironment,
 ) -> Result<InterpreterValue, RuntimeError> {
-	resolve::resolve_expression(&v.getee, env)?;
+	resolve::expression(&v.getee, env)?;
 
 	match &v.key {
 		GetAccessor::DotEval(key) => {
-			resolve::resolve_expression(key, env)?;
+			resolve::expression(key, env)?;
 		}
 		GetAccessor::SubscriptionEval(expr) => {
-			resolve::resolve_expression(expr, env)?;
+			resolve::expression(expr, env)?;
 		}
 		_ => (),
 	}
@@ -137,17 +151,17 @@ pub fn set_expression(
 	v: &SetValue,
 	env: &ResolverEnvironment,
 ) -> Result<InterpreterValue, RuntimeError> {
-	resolve::resolve_expression(&v.setee, env)?;
-	resolve::resolve_expression(&v.value, env)?;
+	resolve::expression(&v.setee, env)?;
+	resolve::expression(&v.value, env)?;
 
 	if let GetAccessor::DotEval(key) = &v.key {
-		resolve::resolve_expression(key, env)?;
+		resolve::expression(key, env)?;
 	}
 
 	Ok(InterpreterValue::Nil)
 }
 
-#[inline(always)]
+#[inline]
 pub fn this_expression(
 	expr: &Expr,
 	v: &ThisValue,
@@ -176,20 +190,20 @@ pub fn super_expression(
 
 	if let SuperAccessor::Call(args) = &v.accessor {
 		for arg in args.iter() {
-			resolve::resolve_expression(arg, env)?;
+			resolve::expression(arg, env)?;
 		}
 	}
 
 	Ok(InterpreterValue::Nil)
 }
 
-#[inline(always)]
+#[inline]
 pub fn object_expression(
 	v: &ObjectValue,
 	env: &ResolverEnvironment,
 ) -> Result<InterpreterValue, RuntimeError> {
 	for value in v.properties.iter().map(|p| &p.value) {
-		resolve::resolve_expression(&value, env)?;
+		resolve::expression(value, env)?;
 	}
 
 	Ok(InterpreterValue::Nil)

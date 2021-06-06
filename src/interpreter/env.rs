@@ -1,9 +1,10 @@
-use super::{helpers::*, types::*};
+use super::{
+	helpers::assume_identifier,
+	types::{InterpreterValue, RuntimeError},
+};
 use crate::{
-	env::*,
-	token::*,
-	// unwrap_enclosing,
-	// unwrap_scope,
+	env::{DeclaredValue, EnvironmentBase, EnvironmentWrapper},
+	token::Token,
 	unwrap_scope_mut,
 };
 
@@ -30,15 +31,13 @@ impl PartialEq for InterpreterEnvironment {
 
 impl EnvironmentWrapper<InterpreterValue> for InterpreterEnvironment {
 	fn new() -> Self {
-		InterpreterEnvironment(Rc::new(RefCell::new(EnvironmentBase::new(
-			None,
-		))))
+		Self(Rc::new(RefCell::new(EnvironmentBase::new(None))))
 	}
 
 	fn fork(&self) -> Self {
-		InterpreterEnvironment(Rc::new(RefCell::new(EnvironmentBase::new(
-			Some(self.clone()),
-		))))
+		Self(Rc::new(RefCell::new(EnvironmentBase::new(Some(
+			self.clone(),
+		)))))
 	}
 
 	fn read(

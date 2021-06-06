@@ -1,11 +1,31 @@
-use super::{interpret::eval_expression, interpreter_env::*, types::*};
+use super::{
+	env::InterpreterEnvironment,
+	interpret::eval_expression,
+	types::{InterpreterFunction, InterpreterValue, RuntimeError, StmtResult},
+};
 use crate::{
 	ast::expr::{FunctionValue, GetAccessor},
-	env::*,
-	token::*,
+	env::{DeclaredValue, EnvironmentWrapper},
+	token::{Token, TokenType},
 };
 
 use std::{cell::RefMut, rc::Rc};
+
+
+#[macro_export]
+macro_rules! try_exact_convert {
+	($from:expr, $from_t:ty, $to_t:ty) => {{
+		#[allow(clippy::as_conversions)]
+		let converted = $from as $to_t;
+
+		#[allow(clippy::float_cmp, clippy::as_conversions)]
+		if converted as $from_t == $from {
+			Ok(converted)
+		} else {
+			Err("Cannot convert")
+		}
+	}};
+}
 
 
 // A shorthand way to extract identifier's name
@@ -35,13 +55,15 @@ pub fn guard_function(
 	}
 }
 
-#[inline(always)]
+#[inline]
 pub fn confirm_arity(
 	target: usize,
 	value: usize,
 	blame: &Token,
 ) -> Result<(), RuntimeError> {
-	if target != value {
+	if target == value {
+		Ok(())
+	} else {
 		Err(RuntimeError {
 			message: format!(
 				"{} arguments",
@@ -53,12 +75,10 @@ pub fn confirm_arity(
 			),
 			token: blame.clone(),
 		})
-	} else {
-		Ok(())
 	}
 }
 
-#[inline(always)]
+#[inline]
 pub fn map_arguments(
 	parameters: &[Token],
 	arguments: &[InterpreterValue],
@@ -74,10 +94,10 @@ pub fn map_arguments(
 				value: arg.clone(),
 			},
 		);
-	})
+	});
 }
 
-#[inline(always)]
+#[inline]
 pub fn construct_lox_defined_function(
 	fv: &FunctionValue,
 	env: &InterpreterEnvironment,
@@ -118,7 +138,7 @@ pub fn bind_function(
 	}
 }
 
-#[inline(always)]
+#[inline]
 pub fn unwrap_list<'a>(
 	value: &'a InterpreterValue,
 	blame: &Token,
@@ -163,14 +183,15 @@ pub fn extract_subscription_index(
 		_ => unreachable!("Wrong accessor in subscription"),
 	}?;
 
-	if extracted_n.fract() != 0.0 || extracted_n < 0.0 {
-		return Err(RuntimeError {
-			message: format!("Cannot access element on index {}", extracted_n),
+	let index = try_exact_convert!(extracted_n, f64, usize).map_err(|_| {
+		RuntimeError {
+			message: format!(
+				"Cannot access element on erroneous index {}",
+				extracted_n
+			),
 			token: blame.clone(),
-		});
-	}
-
-	let index = extracted_n as usize;
+		}
+	})?;
 
 	if index >= max_len {
 		Err(RuntimeError {
@@ -178,6 +199,6 @@ pub fn extract_subscription_index(
 			token: blame.clone(),
 		})
 	} else {
-		Ok(extracted_n as usize)
+		Ok(index)
 	}
 }

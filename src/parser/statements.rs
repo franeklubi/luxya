@@ -1,18 +1,37 @@
-use super::{expression::*, helpers::*, parse::*, types::*};
+use super::{
+	expressions::{expression, function_declaration},
+	helpers::expect_semicolon,
+	parse::{declaration, statement},
+	types::{ParseError, ParserIter},
+};
 use crate::{
-	ast::{expr::*, stmt::*},
+	ast::{
+		expr::{Expr, IdentifierValue},
+		stmt::{
+			BlockValue,
+			BreakValue,
+			ClassValue,
+			ContinueValue,
+			ExpressionValue,
+			ForValue,
+			IfValue,
+			PrintValue,
+			ReturnValue,
+			Stmt,
+		},
+	},
 	expect,
 	expect_one,
 	match_then_consume,
 	match_then_consume_stmt,
 	peek_matches,
-	token::*,
+	token::{Token, TokenType},
 };
 
-use std::vec;
+use std::{cell::Cell, vec};
 
 
-#[inline(always)]
+#[inline]
 pub fn print_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 	let stmt = Stmt::Print(PrintValue {
 		expression: expression(tokens)?,
@@ -179,10 +198,10 @@ pub fn return_statement(
 	tokens: ParserIter,
 	keyword: Token,
 ) -> Result<Option<Stmt>, ParseError> {
-	let expression = if !peek_matches!(tokens, TokenType::Semicolon) {
-		Some(expression(tokens)?)
-	} else {
+	let expression = if peek_matches!(tokens, TokenType::Semicolon) {
 		None
+	} else {
+		Some(expression(tokens)?)
 	};
 
 	expect_semicolon(tokens)?;
@@ -193,7 +212,7 @@ pub fn return_statement(
 	})))
 }
 
-#[inline(always)]
+#[inline]
 pub fn break_statement(
 	tokens: ParserIter,
 	keyword: Token,
@@ -203,7 +222,7 @@ pub fn break_statement(
 	Ok(Some(Stmt::Break(BreakValue { keyword })))
 }
 
-#[inline(always)]
+#[inline]
 pub fn continue_statement(
 	tokens: ParserIter,
 	keyword: Token,
@@ -227,7 +246,7 @@ pub fn class_statement(tokens: ParserIter) -> Result<Option<Stmt>, ParseError> {
 
 			Some(Expr::Identifier(IdentifierValue {
 				name: superclass_name,
-				env_distance: Default::default(),
+				env_distance: Cell::default(),
 			}))
 		} else {
 			None

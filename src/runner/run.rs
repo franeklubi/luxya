@@ -1,4 +1,4 @@
-use super::{errors, types::*};
+use super::{errors, types::RunError};
 use crate::{interpreter, parser, resolver, scanner};
 
 use std::{
@@ -7,20 +7,29 @@ use std::{
 };
 
 
-pub fn run_file(path: &str) -> Result<(), RunError> {
+/// # Errors
+///
+/// Will return `RunError::Io` if `path`
+/// does not exist or the user does not have permission to read it.
+//
+/// Will return `RunError::Exec` if any execution errors occur.
+pub fn file(path: &str) -> Result<(), RunError> {
 	let mut f = fs::File::open(path)?;
 
 	let mut buffer = String::new();
 	f.read_to_string(&mut buffer)?;
 
-	if let true = run(buffer) {
+	if let true = run(&buffer) {
 		return Err(RunError::Exec);
 	};
 
 	Ok(())
 }
 
-pub fn run_prompt() -> Result<(), io::Error> {
+/// # Errors
+///
+/// Will return `Err` if there are any errors during reading from command line.
+pub fn repl() -> Result<(), io::Error> {
 	loop {
 		print!(">>> ");
 		io::stdout().flush()?;
@@ -37,8 +46,8 @@ pub fn run_prompt() -> Result<(), io::Error> {
 		buffer += ";";
 
 		// TODO: merge envs when doing REPL
-		if run(buffer) {
-			eprintln!("Errors occurred")
+		if run(&buffer) {
+			eprintln!("Errors occurred");
 		}
 	}
 
@@ -50,12 +59,12 @@ pub fn run_prompt() -> Result<(), io::Error> {
 // things to be persistent dont we? (COMBAK: when implementing a better repl)
 //
 // bool indicates if any error(s) occurred
-fn run(source: String) -> bool {
+fn run(source: &str) -> bool {
 	// Scanning
-	let (tokens, errors) = scanner::scan(&source);
+	let (tokens, errors) = scanner::scan(source);
 
 	if !errors.is_empty() {
-		errors::report_errors(&source, "Scan", &errors);
+		errors::report(source, "Scan", &errors);
 
 		return true;
 	}
@@ -64,20 +73,20 @@ fn run(source: String) -> bool {
 	let (statements, errors) = parser::parse(tokens);
 
 	if !errors.is_empty() {
-		errors::report_errors(&source, "Parse", &errors);
+		errors::report(source, "Parse", &errors);
 
 		return true;
 	}
 
 	// Resolving
 	if let Err(error) = resolver::resolve(&statements) {
-		errors::report_errors(&source, "Resolve", &[error]);
+		errors::report(source, "Resolve", &[error]);
 
 		true
 
 	// Interpreting 😇
 	} else if let Err(error) = interpreter::interpret(&statements) {
-		errors::report_errors(&source, "Runtime", &[error]);
+		errors::report(source, "Runtime", &[error]);
 
 		true
 	} else {
