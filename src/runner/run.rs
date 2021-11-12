@@ -19,7 +19,7 @@ pub fn file(path: &str) -> Result<(), RunError> {
 	let mut buffer = String::new();
 	f.read_to_string(&mut buffer)?;
 
-	if let true = run(&buffer) {
+	if source(&buffer) {
 		return Err(RunError::Exec);
 	};
 
@@ -46,7 +46,7 @@ pub fn repl() -> Result<(), io::Error> {
 		buffer += ";";
 
 		// TODO: merge envs when doing REPL
-		if run(&buffer) {
+		if source(&buffer) {
 			eprintln!("Errors occurred");
 		}
 	}
@@ -57,9 +57,11 @@ pub fn repl() -> Result<(), io::Error> {
 // TODO: maybe change the signature to return parsed tree of vars and functions
 // so that we can merge that with the last tree in the REPL mode - we want
 // things to be persistent dont we? (COMBAK: when implementing a better repl)
-//
-// bool indicates if any error(s) occurred
-fn run(source: &str) -> bool {
+/// Runs the provided source
+///
+/// returned bool indicates if any error(s) occurred
+#[must_use]
+pub fn source(source: &str) -> bool {
 	// Scanning
 	let (tokens, errors) = scanner::scan(source);
 

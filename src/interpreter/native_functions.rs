@@ -81,7 +81,7 @@ fn native_number(
 			Ok(InterpreterValue::Number(s.parse().or(Ok(f64::NAN))?))
 		}
 		InterpreterValue::Char(c) => Ok(InterpreterValue::Number(
-			c.to_digit(10).map_or(f64::NAN, |d| d.into()),
+			c.to_digit(10).map_or(f64::NAN, std::convert::Into::into),
 		)),
 		_ => Err(RuntimeError {
 			message: format!("Can't parse {} to number", input.human_type()),

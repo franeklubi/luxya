@@ -105,10 +105,10 @@ pub fn construct_lox_defined_function(
 	InterpreterValue::Function {
 		enclosing_env: env.clone(),
 		fun: Rc::new(InterpreterFunction::LoxDefined(FunctionValue {
-			body: fv.body.as_ref().map(|b| Rc::clone(b)),
+			body: fv.body.as_ref().map(Rc::clone),
 			keyword: fv.keyword.clone(),
 			name: fv.name.clone(),
-			params: fv.params.as_ref().map(|p| Rc::clone(p)),
+			params: fv.params.as_ref().map(Rc::clone),
 		})),
 	}
 }

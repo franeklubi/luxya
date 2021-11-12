@@ -1,4 +1,3 @@
-#![feature(option_result_unwrap_unchecked)]
 #![warn(
 	clippy::all,
 	clippy::pedantic,
